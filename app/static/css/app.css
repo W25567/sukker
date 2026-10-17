@@ -307,6 +307,17 @@ body:has(.bottomnav) .page { padding-bottom: 88px; }
 .faq summary { cursor: pointer; list-style-position: inside; padding: 10px 0; }
 .faq summary h2 { display: inline; font-size: 1.02rem; margin: 0; }
 .faq details p { margin-top: 0; }
+.early-bird-card { border-color: var(--accent); background: var(--info-bg); }
+.early-bird-card h2 { color: var(--accent); }
+.early-bird-banner {
+  display: block; margin: 0 auto 20px; max-width: 34rem; padding: 14px 16px; border-radius: var(--radius);
+  border: 1px solid var(--accent); background: var(--info-bg); text-align: center; text-decoration: none; color: var(--text);
+}
+.early-bird-banner strong { color: var(--accent); }
+.help-list ul { list-style: none; margin: 0; padding: 0; }
+.help-list li { border-bottom: 1px solid var(--border); }
+.help-list li:last-child { border-bottom: 0; }
+.help-list a { display: flex; min-height: 48px; align-items: center; text-decoration: none; }
 .site-footer { padding: 24px 16px; border-top: 1px solid var(--border); text-align: center; color: var(--muted); font-size: 0.88rem; }
 .site-footer nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 16px; margin-bottom: 8px; }
 .site-footer a { color: var(--muted); }

@@ -1,11 +1,12 @@
 from flask import Blueprint, abort, flash, g, redirect, render_template, request, send_file, url_for
 from flask_wtf import FlaskForm
 from sqlalchemy import or_, select
-from wtforms import EmailField, SelectField, StringField, TextAreaField
+from wtforms import DateField, EmailField, SelectField, StringField, TextAreaField
 from wtforms.validators import DataRequired, Email, Length
 
 from ..auth.models import User
 from ..auth.roles import admin_required, moderator_required
+from ..core.settings import get_setting
 from ..extensions import db, limiter
 from ..media import storage
 from ..media.models import ProfileImage
@@ -22,6 +23,11 @@ class NoteForm(FlaskForm):
 class DecisionForm(FlaskForm):
     decision = SelectField("Afgørelse", choices=DECISIONS)
     note = TextAreaField("Begrundelse", validators=[DataRequired("Skriv en begrundelse."), Length(max=2000)])
+
+
+class RetentionForm(FlaskForm):
+    until = DateField("Opbevar beviser til og med", validators=[DataRequired("Vælg en dato.")])
+    reason = StringField("Begrundelse", validators=[DataRequired("Skriv en begrundelse."), Length(max=500)])
 
 
 class AccessForm(FlaskForm):
@@ -53,7 +59,7 @@ def _case_or_404(case_id):
 def queue():
     closed = request.args.get("lukkede") == "1"
     cases = services.queue(("closed",) if closed else ("open", "in_progress"))
-    users = {u.id: u.username for u in db.session.scalars(
+    users = {u.id: u.display_name for u in db.session.scalars(
         select(User).where(User.id.in_({c.subject_user_id for c in cases if c.subject_user_id})))}
     return render_template("moderation/queue.html", cases=cases, users=users, closed=closed,
                            reasons=REASON_LABELS, statuses=dict(STATUSES))
@@ -64,6 +70,7 @@ def queue():
 def case(case_id):
     case = _case_or_404(case_id)
     note_form, decision_form = NoteForm(prefix="note"), DecisionForm(prefix="decision")
+    retention_form = RetentionForm(prefix="retention")
     action = request.form.get("action")
     if request.method == "POST":
         try:
@@ -73,6 +80,8 @@ def case(case_id):
                 services.add_note(case, g.user, note_form.text.data.strip())
             elif action == "decide" and decision_form.validate_on_submit():
                 services.decide(case, g.user, decision_form.decision.data, decision_form.note.data.strip())
+            elif action == "retain" and retention_form.validate_on_submit():
+                services.retain_evidence(case, g.user, retention_form.until.data, retention_form.reason.data.strip())
             elif action == "reopen" and FlaskForm().validate_on_submit():
                 services.reopen(case, g.user)
             else:
@@ -88,7 +97,8 @@ def case(case_id):
         "moderation/case.html", case=case, events=services.case_events(case),
         subject=db.session.get(User, case.subject_user_id) if case.subject_user_id else None,
         reporter=db.session.get(User, case.reporter_id) if case.reporter_id else None,
-        note_form=note_form, decision_form=decision_form, action_form=FlaskForm(),
+        note_form=note_form, decision_form=decision_form, retention_form=retention_form, action_form=FlaskForm(),
+        retention_months=get_setting("data_retention_months"),
         reasons=REASON_LABELS, statuses=dict(STATUSES), decisions=dict(DECISIONS),
     )
 
@@ -114,7 +124,7 @@ def users():
     results = []
     if query:
         results = db.session.scalars(
-            select(User).where(or_(User.username.ilike(f"%{query}%"), User.email == query.lower())).order_by(User.username).limit(50)
+            select(User).where(or_(User.display_name.ilike(f"%{query}%"), User.email == query.lower())).order_by(User.display_name).limit(50)
         ).all()
     return render_template("moderation/users.html", query=query, results=results)
 

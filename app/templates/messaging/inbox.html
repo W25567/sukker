@@ -15,9 +15,9 @@
       {% for item in items %}
         <li>
           <a class="inbox-item{% if item.unread %} unread{% endif %}"
-             href="{{ url_for('messaging.conversation', conversation_id=item.conversation.id) if item.conversation else url_for('messaging.start', username=item.other.username) }}">
+             href="{{ url_for('messaging.conversation', conversation_id=item.conversation.id) if item.conversation else url_for('messaging.start', handle=item.other.handle) }}">
             <span class="inbox-name">
-              {{ item.other.username if item.other else 'Slettet bruger' }}
+              {{ item.other.display_name if item.other else 'Slettet bruger' }}
               {% if item.unread %}<span class="unread-count">{{ item.unread }}</span>{% endif %}
               {% if item.locked %}<span class="lock-badge">Låst</span>{% endif %}
             </span>

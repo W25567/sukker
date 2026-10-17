@@ -10,10 +10,10 @@
       <ul class="person-list">
         {% for other, age in matches %}
           <li>
-            <a href="{{ url_for('profiles.view', username=other.username, fra=url_for('matches.index')) }}">{{ other.username }}, {{ age }}</a>
+            <a href="{{ url_for('profiles.view', handle=other.handle, fra=url_for('matches.index')) }}">{{ other.display_name }}, {{ age }}</a>
             <span class="row-actions">
-              <a class="button small" href="{{ url_for('messaging.start', username=other.username) }}">Skriv</a>
-              <a class="muted small-link" href="{{ url_for('matches.remove', username=other.username) }}">Fjern match</a>
+              <a class="button small" href="{{ url_for('messaging.start', handle=other.handle) }}">Skriv</a>
+              <a class="muted small-link" href="{{ url_for('matches.remove', handle=other.handle) }}">Fjern match</a>
             </span>
           </li>
         {% endfor %}
@@ -30,8 +30,8 @@
         <ul class="person-list">
           {% for liker, age in likers %}
             <li>
-              <a href="{{ url_for('profiles.view', username=liker.username, fra=url_for('matches.index')) }}">{{ liker.username }}, {{ age }}</a>
-              {{ like_button(liker.username, False, False, url_for('matches.index'), compact=True) }}
+              <a href="{{ url_for('profiles.view', handle=liker.handle, fra=url_for('matches.index')) }}">{{ liker.display_name }}, {{ age }}</a>
+              {{ like_button(liker.handle, False, False, url_for('matches.index'), compact=True) }}
             </li>
           {% endfor %}
         </ul>

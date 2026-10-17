@@ -1,0 +1,27 @@
+# Sukker.nu ({{env}}). Styres af deploy.py – ændringer her overskrives ved næste udgivelse.
+[Unit]
+Description=Sukker.nu ({{env}})
+After=network.target postgresql.service
+Wants=postgresql.service
+OnFailure={{service}}-alert@%n.service
+
+[Service]
+Type=simple
+User={{user}}
+Group={{user}}
+WorkingDirectory={{app_root}}/current
+EnvironmentFile={{env_file}}
+ExecStart={{app_root}}/current/.venv/bin/gunicorn --config {{app_root}}/current/deployment/gunicorn.conf.py --bind unix:/run/{{service}}/gunicorn.sock wsgi:app
+ExecReload=/bin/kill -s HUP $MAINPID
+KillMode=mixed
+TimeoutStopSec=30
+Restart=on-failure
+RestartSec=3
+RuntimeDirectory={{service}}
+RuntimeDirectoryMode=0750
+UMask=0027
+{{hardening}}
+ReadWritePaths={{data_root}}
+
+[Install]
+WantedBy=multi-user.target

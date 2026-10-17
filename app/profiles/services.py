@@ -42,5 +42,6 @@ def can_view_profile(viewer, owner):
     return True
 
 
-def find_user_by_username(username):
-    return db.session.scalar(db.select(User).where(db.func.lower(User.username) == username.lower()))
+def find_user_by_handle(handle):
+    """Brugere findes via deres tilfældige handle i URL'en, aldrig via det viste navn (som ikke er unikt)."""
+    return db.session.scalar(db.select(User).where(User.handle == handle))

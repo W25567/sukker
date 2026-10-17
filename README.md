@@ -16,7 +16,7 @@ Mobilorienteret datingside bygget med Flask og PostgreSQL. Specifikationen ligge
 | M6 Tryghed og moderation | Skjul, blokér, anmeld med kopi, moderationssager, afgørelser, begrænsning og suspendering, klagevej, moderatoradgang med uændrelig revisionslog | Færdig |
 | M7 Rettigheder og administration | Central rettighedsmodel (niveau → funktioner, global slukning, individuelle tildelinger med udløb), admin-indstillinger, brugere, abonnementer, roller og status, dashboard uden testkonti, testkonti pr. niveau, uændrelig administrationslog | Færdig |
 | M8 Offentlige sider og SEO | Forside, Sådan virker det, Tryghed, Premium, FAQ, Om og kontakt, vilkår, privatlivspolitik og cookiepolitik. Metadata, canonical, Open Graph, JSON-LD, sitemap.xml og robots.txt. Vilkårsversioner med ny accept, hent egne data | Færdig (teksterne er udkast til juridisk gennemgang) |
-| M9 | Deploy, staging, backup, sletning efter 12 måneder, monitorering | Ikke startet |
+| M9 Drift | `deploy.py` og `deployment/server_setup.py` (idempotent udgivelse med health-check og rollback), staging, systemd-timere, krypteret backup med rotation og kopi uden for serveren, sletning efter 12-månedersreglen, overvågning med alarmer | Bygget og testet lokalt. Mangler afprøvning på en rigtig server (tjekliste i [deployment/README.md](deployment/README.md)) |
 
 ## Kom i gang lokalt (Windows)
 
@@ -99,5 +99,28 @@ linje i registret.
   `python scripts\make_brand_images.py`. Brugerbilleder indgår aldrig.
 - **Staging**: `SUKKER_NOINDEX_ALL=1` giver noindex på alt og `Disallow: /` i robots.txt.
 
-Til M9 (Nginx og drift): 301 fra http og www til `https://sukker.nu`, gzip/brotli, lange cacheheadere på
-`/static/`, adgangskode på staging, Google Search Console og evt. cookiefri besøgsstatistik.
+Nginx-sitet (M9) sender http og www videre til `https://sukker.nu` med 301, komprimerer med gzip og cacher
+statiske filer i et år. Det er sikkert, fordi alle statiske URL'er har `?v=<indholdshash>`. Staging kræver
+adgangskode. Google Search Console og evt. cookiefri besøgsstatistik sættes op ved lancering.
+
+## Drift og udgivelse
+
+Udgivelse, backup, overvågning og gendannelse er beskrevet i [deployment/README.md](deployment/README.md).
+
+```powershell
+python deploy.py --env staging     # udgiv til staging
+python deploy.py                    # udgiv til produktion
+```
+
+Baggrundsopgaverne kan også køres lokalt:
+
+```powershell
+.\.venv\Scripts\python.exe -m flask sukker maintenance    # sletning efter opbevaringsreglen og oprydning
+.\.venv\Scripts\python.exe -m flask sukker monitor        # overvågning (alarmer kræver SUKKER_ALERT_EMAIL)
+.\.venv\Scripts\python.exe -m flask sukker backup --label manual   # kræver pg_dump (SUKKER_PG_BIN_DIR)
+.\.venv\Scripts\python.exe -m flask sukker verify-media   # passer billedposter og -filer sammen?
+```
+
+Kendte begrænsninger: Rate limiting gemmes i hukommelsen pr. Gunicorn-proces, så grænserne er reelt
+lidt højere med flere processer. E-mail før Premium-perioden udløber (specifikation 10.1) og
+notifikationer (12.4) er endnu ikke bygget.

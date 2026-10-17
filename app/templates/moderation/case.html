@@ -11,9 +11,9 @@
       <div><dt>Status</dt><dd>{{ statuses[case.status] }}{% if case.decision %} · {{ decisions[case.decision] }}{% endif %}</dd></div>
       <div><dt>Kilde</dt><dd>{{ case.source }}</dd></div>
       <div><dt>Bruger</dt><dd>
-        {% if subject %}<a href="{{ url_for('moderation.user', user_id=subject.id) }}">{{ subject.username }}</a> · konto: {{ subject.status }}{% else %}–{% endif %}
+        {% if subject %}<a href="{{ url_for('moderation.user', user_id=subject.id) }}">{{ subject.display_name }}</a> · konto: {{ subject.status }}{% else %}–{% endif %}
       </dd></div>
-      <div><dt>Anmeldt af</dt><dd>{{ reporter.username if reporter else '–' }}</dd></div>
+      <div><dt>Anmeldt af</dt><dd>{{ reporter.display_name if reporter else '–' }}</dd></div>
       <div><dt>Oprettet</dt><dd>{{ case.created_at | local_datetime }}</dd></div>
       {% if case.description %}<div><dt>Beskrivelse</dt><dd>{{ case.description }}</dd></div>{% endif %}
     </dl>
@@ -32,7 +32,7 @@
           <p><strong>{{ m.sender }}</strong> · {{ m.sent_at | local_datetime }}<br><span class="evidence-text">{{ m.body }}</span></p>
         {% endfor %}
       {% elif ev.type == 'profile' %}
-        <p><strong>{{ ev.username }}</strong>, {{ ev.age }}</p>
+        <p><strong>{{ ev.display_name }}</strong>, {{ ev.age }}</p>
         <dl class="facts">{% for label, value in ev.fields.items() %}<div><dt>{{ label }}</dt><dd>{{ value }}</dd></div>{% endfor %}</dl>
         <div class="image-grid evidence-images">
           {% for public_id in ev.get('copied_images', []) %}
@@ -42,6 +42,25 @@
       {% endif %}
     </section>
   {% endif %}
+
+  <section class="card">
+    <h2>Opbevaring af beviser</h2>
+    {% if case.evidence_purged_at %}
+      <p>Beviserne blev slettet {{ case.evidence_purged_at | local_datetime }} efter opbevaringsreglen.</p>
+    {% else %}
+      <p class="muted">
+        Beviser slettes {{ retention_months }} måneder efter, at sagen er afsluttet.
+        {% if case.evidence_retained_until %}De opbevares dog mindst til og med {{ case.evidence_retained_until.strftime('%d-%m-%Y') }}.{% endif %}
+        I alvorlige sager, fx svindel, trusler, mistanke om mindreårige eller politianmeldelse, kan du forlænge opbevaringen med højst et år ad gangen.
+      </p>
+      <form method="post" class="form" novalidate>
+        {{ retention_form.hidden_tag() }}<input type="hidden" name="action" value="retain">
+        {{ field(retention_form.until) }}
+        {{ field(retention_form.reason) }}
+        <button type="submit" class="button secondary">Forlæng opbevaringen</button>
+      </form>
+    {% endif %}
+  </section>
 
   <section class="card">
     <h2>Handlinger</h2>

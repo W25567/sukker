@@ -1,0 +1,14 @@
+# Sukker.nu ({{env}}): Nginx-logge. Styres af deploy.py.
+{{log_dir}}/*.log {
+    daily
+    rotate 14
+    missingok
+    notifempty
+    compress
+    delaycompress
+    create 0640 root {{user}}
+    sharedscripts
+    postrotate
+        [ -s /run/nginx.pid ] && kill -USR1 "$(cat /run/nginx.pid)"
+    endscript
+}

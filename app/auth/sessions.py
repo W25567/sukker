@@ -8,7 +8,7 @@ from datetime import timedelta
 from functools import wraps
 from urllib.parse import urlsplit
 
-from flask import flash, g, redirect, request, session, url_for
+from flask import current_app, flash, g, redirect, request, session, url_for
 from sqlalchemy import select, update
 
 from ..core.timeutil import now_utc
@@ -69,6 +69,12 @@ def _load_current_user():
         session.clear()
         return
     now = now_utc()
+    if now - user_session.last_seen_at > current_app.config["PERMANENT_SESSION_LIFETIME"]:
+        # Udløbet på serveren, også selvom browseren stadig har cookien.
+        user_session.revoked_at = now
+        db.session.commit()
+        session.clear()
+        return
     if now - user_session.last_seen_at > LAST_SEEN_INTERVAL:
         user_session.last_seen_at = now
         db.session.commit()

@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Hjælp – Sukker.nu{% endblock %}
+{% block content %}
+  <h1>Hjælp</h1>
+  <nav class="card help-list" aria-label="Hjælp og vilkår">
+    <ul>
+      {% for page in pages %}
+        <li><a href="{{ url_for(page.endpoint) }}">{{ page.nav_label }}</a></li>
+      {% endfor %}
+    </ul>
+  </nav>
+  <section class="card">
+    <h2>Kontakt</h2>
+    <p>Skriv til <a href="mailto:{{ contact_email }}">{{ contact_email }}</a>. Vil du anmelde en profil eller en besked, så brug Anmeld ved profilen eller i samtalen.</p>
+  </section>
+  <section class="card">
+    <h2>Dine data</h2>
+    <p class="muted">Hent dine data, log ud på andre enheder eller slet din profil under <a href="{{ url_for('account.overview') }}">Konto</a>.</p>
+  </section>
+{% endblock %}

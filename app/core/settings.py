@@ -10,6 +10,9 @@ from ..extensions import db
 
 DEFAULTS = {
     "signup_premium_months": 3,
+    # Tidlige fugle: Premium for livstid, mens der er få brugere. None som grænse = ingen grænse.
+    "early_bird_enabled": True,
+    "early_bird_limit": None,
     "free_match_limit_enabled": False,
     "free_match_limit": 30,
     "premium_match_limit": None,
@@ -32,6 +35,8 @@ DEFAULTS = {
 # "bool", "int" (heltal) eller "optional_int" (heltal eller tomt for ubegrænset).
 SETTING_META = [
     ("signup_premium_months", "Premium-måneder ved oprettelse", "int"),
+    ("early_bird_enabled", "Tidlige fugle får Premium for livstid", "bool"),
+    ("early_bird_limit", "Højst antal tidlige fugle (tom = ingen grænse)", "optional_int"),
     ("free_match_limit_enabled", "Match-loft for Free er aktivt", "bool"),
     ("free_match_limit", "Match-loft for Free", "int"),
     ("premium_match_limit", "Match-loft for Premium (tom = ubegrænset)", "optional_int"),

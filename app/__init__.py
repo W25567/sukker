@@ -1,5 +1,8 @@
+import hashlib
+import logging
 import os
 from datetime import datetime
+from functools import lru_cache
 
 from flask import Flask
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -8,12 +11,30 @@ from .config import get_config
 from .extensions import csrf, db, limiter, migrate
 
 
+def _static_version(path):
+    try:
+        return _hash_file(path, os.path.getmtime(path))
+    except OSError:
+        return None
+
+
+@lru_cache(maxsize=512)
+def _hash_file(path, mtime):
+    with open(path, "rb") as fh:
+        return hashlib.sha256(fh.read()).hexdigest()[:10]
+
+
 def create_app(config_name=None):
-    app = Flask(__name__, instance_relative_config=True)
+    # På serveren er versionsmappen skrivebeskyttet, så instance-mappen ligger under de vedvarende data.
+    app = Flask(__name__, instance_relative_config=True, instance_path=os.environ.get("SUKKER_INSTANCE_PATH"))
     app.config.from_object(get_config(config_name))
     os.makedirs(app.instance_path, exist_ok=True)
     if not app.config["MEDIA_ROOT"]:
         app.config["MEDIA_ROOT"] = os.path.join(app.instance_path, "media")
+    try:
+        os.makedirs(app.config["MEDIA_ROOT"], exist_ok=True)
+    except OSError:
+        pass  # på serveren oprettes mappen af deploy.py med de rigtige rettigheder; /health/ready melder fejlen
 
     if app.config["PROXY_FIX"]:
         app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
@@ -38,12 +59,13 @@ def create_app(config_name=None):
     from .safety.routes import bp as safety_bp
     from .media.routes import bp as media_bp
     from .profiles.routes import bp as profiles_bp
-    from .pages import legal
+    from .pages import legal, onboarding
     from .pages.routes import bp as pages_bp
 
     security.init_app(app)
     sessions.init_app(app)
     legal.init_app(app)  # efter sessions, så g.user er sat
+    onboarding.init_app(app)  # efter vilkårene
     errors.init_app(app)
     register_cli(app)
 
@@ -67,6 +89,8 @@ def create_app(config_name=None):
     def local_datetime(moment):
         if isinstance(moment, str):  # ISO-tidspunkter fra gemte kopier i moderationssager
             moment = datetime.fromisoformat(moment)
+        if moment and moment.year >= 9999:  # Premium for livstid
+            return "livstid"
         return moment.astimezone(DANISH_TZ).strftime("%d-%m-%Y %H:%M") if moment else ""
 
     @app.context_processor
@@ -76,10 +100,25 @@ def create_app(config_name=None):
         user = g.get("user")
         return {"unread_messages": total_unread(user) if user is not None else 0}
 
-    from .pages.content import PUBLIC_PAGES
+    @app.url_defaults
+    def static_version(endpoint, values):
+        # ?v=<indholdshash> på statiske filer, så Nginx kan cache dem længe, og en ny version slår igennem med det samme.
+        if endpoint == "static" and "filename" in values and "v" not in values:
+            version = _static_version(os.path.join(app.static_folder, values["filename"]))
+            if version:
+                values["v"] = version
+
+    if not app.debug and not app.testing:
+        app.logger.setLevel(logging.INFO)  # til journalen via Gunicorns errorlog
+
+    from .pages.content import visible_pages
 
     @app.context_processor
     def inject_footer():
-        return {"footer_pages": PUBLIC_PAGES[1:], "current_year": datetime.now(DANISH_TZ).year}
+        # En funktion, så databasen kun spørges, når sidefoden faktisk vises (kun for besøgende).
+        from .subscriptions.services import early_bird_open
+
+        return {"footer_pages": lambda: visible_pages()[1:], "current_year": datetime.now(DANISH_TZ).year,
+                "early_bird_open": early_bird_open}
 
     return app

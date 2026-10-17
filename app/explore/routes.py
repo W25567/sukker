@@ -2,8 +2,9 @@ from flask import Blueprint, g, render_template, request
 
 from ..auth.sessions import login_required
 from ..core.features import has_feature
+from ..profiles import choices
 from .forms import FilterForm
-from .services import search
+from .services import search, seeking_genders
 
 bp = Blueprint("explore", __name__)
 
@@ -17,6 +18,7 @@ def index():
     filters_allowed = has_feature(g.user, "search.filters")
     criteria = form.criteria() if filters_allowed else None
     cards, has_more = search(g.user, criteria, page)
+    seeking = choices.labels(choices.GENDERS_PLURAL, seeking_genders(g.user))
 
     next_args = request.args.to_dict(flat=False)
     next_args["side"] = [str(page + 1)]
@@ -30,4 +32,5 @@ def index():
         page=page,
         next_args=next_args,
         has_kommune=g.user.kommune_code is not None,
+        seeking=seeking,
     )

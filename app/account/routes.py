@@ -90,7 +90,7 @@ def export_data():
     if not ActionForm().validate_on_submit():
         return redirect(url_for("account.overview"))
     body = json.dumps(export_user_data(g.user), ensure_ascii=False, indent=2)
-    filename = f"sukker-data-{g.user.username}-{today_local().isoformat()}.json"
+    filename = f"sukker-data-{g.user.handle}-{today_local().isoformat()}.json"
     return Response(body, mimetype="application/json",
                     headers={"Content-Disposition": f'attachment; filename="{filename}"', "Cache-Control": "no-store"})
 

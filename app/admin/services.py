@@ -25,8 +25,8 @@ class AdminError(ValueError):
 
 def audit(admin, action, target=None, **details):
     db.session.add(AdminAuditLog(
-        admin_id=admin.id, admin_username=admin.username,
-        target_user_id=target.id if target else None, target_username=target.username if target else None,
+        admin_id=admin.id, admin_username=admin.display_name,
+        target_user_id=target.id if target else None, target_username=target.display_name if target else None,
         action=action, details=details or None,
     ))
 
@@ -126,7 +126,7 @@ TEST_ACCOUNTS = [("Test_free", "free"), ("Test_premium", "premium"), ("Test_prem
 
 def create_test_accounts(admin=None, domain="example.com"):
     """Opretter (eller nulstiller) én testkonto pr. niveau. Testkonti kan kun se og kontakte andre testkonti.
-    Returnerer [(brugernavn, e-mail, password)]. Passwordet vises kun én gang."""
+    Returnerer [(vist navn, e-mail, password)]. Passwordet vises kun én gang."""
     created = []
     for username, tier in TEST_ACCOUNTS:
         email = f"{username.lower()}@{domain}"
@@ -134,7 +134,7 @@ def create_test_accounts(admin=None, domain="example.com"):
         user = db.session.scalar(select(User).where(User.email == email))
         if user is None:
             kommuner = kommuner_for_postcode("8000")
-            user = User(username=username, email=email, birthdate=datetime(1990, 1, 1).date(), postcode="8000",
+            user = User(display_name=username, email=email, birthdate=datetime(1990, 1, 1).date(), postcode="8000",
                         kommune_code=kommuner[0].code if kommuner else None,
                         password_hash="", terms_accepted_at=now_utc(), terms_version=TERMS_VERSION,
                         email_verified_at=now_utc(), is_test=True)
@@ -152,7 +152,7 @@ def create_test_accounts(admin=None, domain="example.com"):
 
 
 def test_accounts():
-    return db.session.scalars(select(User).where(User.is_test.is_(True)).order_by(User.username)).all()
+    return db.session.scalars(select(User).where(User.is_test.is_(True)).order_by(User.display_name)).all()
 
 
 def parse_setting(kind, raw):

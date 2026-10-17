@@ -2,7 +2,8 @@
 import os
 from xml.sax.saxutils import escape
 
-from flask import Blueprint, Response, current_app, flash, g, redirect, render_template, request, send_from_directory, url_for
+from flask import Blueprint, Response, abort, current_app, flash, g, redirect, render_template, request, send_from_directory, url_for
+from flask_wtf import FlaskForm
 
 from ..auth.sessions import login_required, safe_next_url
 from ..core.features import disabled_features, tier_features
@@ -10,7 +11,8 @@ from ..core.security import is_public_endpoint, public_page
 from ..core.settings import get_setting
 from ..core.timeutil import now_utc
 from ..extensions import db
-from .content import PUBLIC_PAGES, absolute_url, faq_items, seo_for
+from ..subscriptions.services import active_subscription, early_bird_open, grant_early_bird
+from .content import absolute_url, faq_items, seo_for, visible_pages
 from .forms import AcceptTermsForm
 from .legal import TERMS_EFFECTIVE, TERMS_VERSION
 
@@ -31,6 +33,15 @@ def _legal_context():
         "retention_months": get_setting("data_retention_months"),
         "signup_months": get_setting("signup_premium_months"),
     }
+
+
+@bp.route("/tidlige-fugle")
+@public_page
+def early_bird():
+    """Kampagneside. Findes kun, mens kampagnen er åben – bagefter svarer den 410 Gone (specifikation 12.5)."""
+    if not early_bird_open():
+        abort(410)
+    return _render("pages/early_bird.html", "pages.early_bird")
 
 
 @bp.route("/saadan-virker-det")
@@ -105,6 +116,33 @@ def cookies():
     return _render("pages/cookies.html", "pages.cookies", **_legal_context())
 
 
+@bp.route("/hjaelp")
+@login_required
+def help():
+    """Hjælp for medlemmer: de offentlige sider samlet ét sted, da sidefoden kun vises for besøgende."""
+    return render_template("pages/help.html", pages=visible_pages()[1:], contact_email=current_app.config["CONTACT_EMAIL"])
+
+
+@bp.route("/velkommen", methods=["GET", "POST"])
+@login_required
+def welcome():
+    """Vises én gang (app/pages/onboarding.py). Giver Premium for livstid til tidlige fugle."""
+    next_url = safe_next_url(request.args.get("next")) or url_for("profiles.edit")
+    form = FlaskForm()
+    if request.method == "POST":
+        if form.validate_on_submit():
+            g.user.welcomed_at = now_utc()
+            db.session.commit()
+        return redirect(next_url)
+    early_bird = grant_early_bird(g.user)
+    db.session.commit()
+    return render_template(
+        "pages/welcome.html", form=form, newly_granted=early_bird is not None,
+        subscription=active_subscription(g.user.id), early_bird_open=early_bird_open(),
+        signup_months=get_setting("signup_premium_months"),
+    )
+
+
 @bp.route("/vilkaar/accepter", methods=["GET", "POST"])
 @login_required
 def accept_terms():
@@ -133,7 +171,7 @@ def sitemap():
     entries = "".join(
         f"  <url><loc>{escape(absolute_url(page.endpoint))}</loc><lastmod>{page.updated.isoformat()}</lastmod>"
         f"<priority>{page.priority}</priority></url>\n"
-        for page in PUBLIC_PAGES
+        for page in visible_pages()
     )
     xml = ('<?xml version="1.0" encoding="UTF-8"?>\n'
            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + entries + "</urlset>\n")

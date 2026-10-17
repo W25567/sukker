@@ -1,3 +1,5 @@
+import os
+
 from flask import Blueprint, current_app, g, jsonify, redirect, render_template, url_for
 from sqlalchemy import text
 
@@ -26,7 +28,15 @@ def home():
              "publisher": {"@id": base + "#organization"}},
         ],
     }
-    return render_template("core/home.html", seo=seo_for("core.home"), structured=structured,
+    from ..subscriptions.services import early_bird_open
+
+    early_bird = early_bird_open()
+    seo = seo_for("core.home")
+    if early_bird:
+        # Tilbuddet skal også kunne findes i søgemaskinerne, mens det gælder.
+        seo["description"] = ("Sukker.nu er en ny, diskret datingside for voksne. Opret en gratis profil nu, og få "
+                              "Premium for livstid som tidlig fugl – mens vi stadig er få.")
+    return render_template("core/home.html", seo=seo, structured=structured, early_bird=early_bird,
                            signup_months=get_setting("signup_premium_months"))
 
 
@@ -44,4 +54,7 @@ def ready():
     except Exception:
         db.session.rollback()
         return jsonify(status="error", database="unavailable"), 503
-    return jsonify(status="ok", database="ok")
+    # Billeder skal kunne gemmes. Uden adgang til filområdet er versionen ikke klar.
+    if not os.access(current_app.config["MEDIA_ROOT"], os.W_OK):
+        return jsonify(status="error", database="ok", media="unavailable"), 503
+    return jsonify(status="ok", database="ok", media="ok")

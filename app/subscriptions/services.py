@@ -1,4 +1,6 @@
-from sqlalchemy import select
+from datetime import UTC, datetime
+
+from sqlalchemy import func, select
 
 from ..core.settings import get_setting
 from ..core.timeutil import add_months, now_utc
@@ -54,6 +56,45 @@ def grant_period(user, months, *, tier="premium", source, granted_by=None, note=
         note=note,
     )
     db.session.add(subscription)
+    return subscription
+
+
+# Premium for livstid gemmes som en periode, der aldrig udløber i praksis. En dag før årets udgang, så
+# omregning til dansk tid ikke løber over år 9999.
+LIFETIME_END = datetime(9999, 12, 30, tzinfo=UTC)
+
+
+def early_bird_count():
+    from ..auth.models import User
+
+    return db.session.scalar(
+        select(func.count(Subscription.id)).join(User, User.id == Subscription.user_id)
+        .where(Subscription.source == "early_bird", User.is_test.is_(False))
+    )
+
+
+def early_bird_open():
+    """Er kampagnen for tidlige fugle åben? Styres af administrator (indstillingerne early_bird_*)."""
+    if not get_setting("early_bird_enabled"):
+        return False
+    limit = get_setting("early_bird_limit")
+    return limit is None or early_bird_count() < limit
+
+
+def has_early_bird(user):
+    return db.session.scalar(
+        select(Subscription.id).where(Subscription.user_id == user.id, Subscription.source == "early_bird").limit(1)
+    ) is not None
+
+
+def grant_early_bird(user):
+    """Premium for livstid til en bekræftet bruger, mens kampagnen er åben. Gives højst én gang."""
+    if user.is_test or not user.is_verified or has_early_bird(user) or not early_bird_open():
+        return None
+    subscription = Subscription(user_id=user.id, tier="premium", source="early_bird", starts_at=now_utc(),
+                                expires_at=LIFETIME_END, note="Tidlig fugl")
+    db.session.add(subscription)
+    db.session.flush()
     return subscription
 
 

@@ -11,23 +11,23 @@ from app.extensions import db
 from app.pages.content import PUBLIC_PAGES
 from app.pages.legal import TERMS_VERSION
 
-from .conftest import link_from, login, register
+from .conftest import h, link_from, login, register
 
-PUBLIC_PATHS = ["/", "/saadan-virker-det", "/tryghed", "/premium", "/ofte-stillede-spoergsmaal", "/om",
+PUBLIC_PATHS = ["/", "/tidlige-fugle", "/saadan-virker-det", "/tryghed", "/premium", "/ofte-stillede-spoergsmaal", "/om",
                 "/vilkaar", "/privatlivspolitik", "/cookies"]
 
 
 def make_user(app, outbox, username):
     client = app.test_client()
     email = f"{username.lower()}@example.com"
-    register(client, username=username, email=email)
+    register(client, display_name=username, email=email)
     client.get(link_from(outbox[-1], "/bekraeft-email/"))
     login(client, email=email)
     return client
 
 
 def user(username):
-    return db.session.scalar(select(User).where(User.username == username))
+    return db.session.scalar(select(User).where(User.display_name == username))
 
 
 def meta(html, name):
@@ -60,7 +60,7 @@ def test_public_page_is_indexable_with_metadata(client, path):
     assert len(re.findall(r"<h1[ >]", html)) == 1
     assert meta(html, "description")
     assert f'<link rel="canonical" href="http://localhost{path}">' in html
-    assert meta(html, "og:image") == "http://localhost/static/images/og.jpg"
+    assert meta(html, "og:image").startswith("http://localhost/static/images/og.jpg?v=")
     assert "/billede/" not in html  # aldrig brugerbilleder
 
 
@@ -125,6 +125,7 @@ def test_premium_page_follows_settings(app, ctx, client):
     assert "Filtrere på alder" in client.get("/premium").get_data(as_text=True)
     set_setting("disabled_features", ["search.filters"])
     set_setting("signup_premium_months", 6)
+    set_setting("early_bird_enabled", False)  # ellers nævnes livstid i stedet for perioden
     db.session.commit()
     html = client.get("/premium").get_data(as_text=True)
     assert "Filtrere på alder" not in html and "6 måneders Premium" in html
@@ -181,7 +182,8 @@ def test_icons_logos_and_manifest_exist(client):
     html = client.get("/").get_data(as_text=True)
     paths = set(re.findall(r'(?:href|src|srcset)="(/static/[^"]+)"', html))
     paths.add(meta(html, "og:image").removeprefix("http://localhost"))
-    assert {"/static/images/site.webmanifest", "/static/images/full-logo-280.webp"} <= paths
+    assert {"/static/images/site.webmanifest", "/static/images/full-logo-280.webp"} <= {p.split("?")[0] for p in paths}
+    assert all("?v=" in p for p in paths)  # cache-busting, så Nginx kan cache statiske filer længe
     for path in paths:
         assert client.get(path).status_code == 200, path
 
@@ -211,7 +213,7 @@ def test_outdated_terms_must_be_accepted(app, outbox, ctx):
 
     response = anna.get("/udforsk")
     assert response.status_code == 302 and "/vilkaar/accepter?next=/udforsk" in response.headers["Location"]
-    assert anna.post("/like/Bodil").status_code == 302  # handlinger er også spærret
+    assert anna.post(f"/like/{h('Bodil')}").status_code == 302  # handlinger er også spærret
     assert anna.get("/vilkaar").status_code == 200  # vilkårene kan læses
     assert anna.get("/konto/slet").status_code == 200  # og profilen kan slettes
 
@@ -239,13 +241,13 @@ def test_export_contains_own_data_only(app, outbox, ctx):
     bodil = make_user(app, outbox, "Bodil")
     carl = make_user(app, outbox, "Carl")
     dorte = make_user(app, outbox, "Dorte")
-    anna.post("/like/Bodil")
-    dorte.post("/like/Anna")
-    carl.post("/bruger/Anna/bloker")
+    anna.post(f"/like/{h('Bodil')}")
+    dorte.post(f"/like/{h('Anna')}")
+    carl.post(f"/bruger/{h('Anna')}/bloker")
 
     response = anna.post("/konto/mine-data")
     assert response.status_code == 200
-    assert response.headers["Content-Disposition"].startswith('attachment; filename="sukker-data-Anna-')
+    assert response.headers["Content-Disposition"].startswith(f'attachment; filename="sukker-data-{h("Anna")}-')
     assert response.headers["Cache-Control"] == "no-store"
     data = json.loads(response.get_data(as_text=True))
     assert data["konto"]["email"] == "anna@example.com"

@@ -8,15 +8,15 @@ from ..extensions import db, limiter
 from ..messaging import services as messaging
 from ..messaging.models import Conversation, Message
 from ..moderation import services as moderation
-from ..profiles.services import can_view_profile, find_user_by_username
+from ..profiles.services import can_view_profile, find_user_by_handle
 from . import services
 from .forms import ReportForm
 
 bp = Blueprint("safety", __name__)
 
 
-def _user_or_404(username):
-    user = find_user_by_username(username)
+def _user_or_404(handle):
+    user = find_user_by_handle(handle)
     if user is None or user.id == g.user.id:
         abort(404)
     return user
@@ -25,26 +25,26 @@ def _user_or_404(username):
 # --- Skjul og blokér -------------------------------------------------------------------------------------
 
 
-@bp.route("/bruger/<username>/skjul", methods=["POST"])
+@bp.route("/bruger/<handle>/skjul", methods=["POST"])
 @login_required
-def hide(username):
-    target = _user_or_404(username)
+def hide(handle):
+    target = _user_or_404(handle)
     if ActionForm().validate_on_submit():
         services.hide(g.user, target)
         db.session.commit()
-        flash(f"{target.username} vises ikke længere for dig i Udforsk. Du kan fortryde under Konto.", "info")
+        flash(f"{target.display_name} vises ikke længere for dig i Udforsk. Du kan fortryde under Konto.", "info")
     return redirect(url_for("explore.index"))
 
 
-@bp.route("/bruger/<username>/bloker", methods=["GET", "POST"])
+@bp.route("/bruger/<handle>/bloker", methods=["GET", "POST"])
 @login_required
-def block(username):
-    target = _user_or_404(username)
+def block(handle):
+    target = _user_or_404(handle)
     form = ActionForm()
     if form.validate_on_submit():
         services.block(g.user, target)
         db.session.commit()
-        flash(f"{target.username} er blokeret. I kan ikke længere se eller kontakte hinanden.", "info")
+        flash(f"{target.display_name} er blokeret. I kan ikke længere se eller kontakte hinanden.", "info")
         return redirect(url_for("explore.index"))
     return render_template("safety/confirm_block.html", target=target, form=form)
 
@@ -98,16 +98,16 @@ def _handle_report(form, target, evidence, back_url, what):
     return render_template("safety/report.html", form=form, target=target, back_url=back_url, what=what)
 
 
-@bp.route("/anmeld/profil/<username>", methods=["GET", "POST"])
+@bp.route("/anmeld/profil/<handle>", methods=["GET", "POST"])
 @login_required
 @limiter.limit("20 per day", methods=["POST"])
-def report_profile(username):
-    target = _user_or_404(username)
+def report_profile(handle):
+    target = _user_or_404(handle)
     has_conversation = messaging.access(g.user, messaging.find_conversation(g.user.id, target.id)) is not None
     if not (can_view_profile(g.user, target) or has_conversation):
         abort(404)
     return _handle_report(ReportForm(), target, moderation.profile_evidence(target),
-                          url_for("profiles.view", username=target.username), "profilen")
+                          url_for("profiles.view", handle=target.handle), "profilen")
 
 
 @bp.route("/anmeld/samtale/<int:conversation_id>", methods=["GET", "POST"])
@@ -120,7 +120,7 @@ def report_conversation(conversation_id):
         abort(404)
     messages = messaging.visible_messages(g.user, conversation)
     ids = {m.sender_id for m in messages if m.sender_id}
-    usernames = {u.id: u.username for u in db.session.scalars(select(User).where(User.id.in_(ids)))}
+    usernames = {u.id: u.display_name for u in db.session.scalars(select(User).where(User.id.in_(ids)))}
     evidence = moderation.conversation_evidence(conversation, messages, usernames)
     return _handle_report(ReportForm(), current.other, evidence,
                           url_for("messaging.conversation", conversation_id=conversation.id), "samtalen")

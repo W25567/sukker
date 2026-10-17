@@ -1,10 +1,10 @@
 {% extends "base.html" %}
-{% block title %}{{ data.user.username }} – Moderation{% endblock %}
+{% block title %}{{ data.user.display_name }} – Moderation{% endblock %}
 {% block content %}
   {% include "moderation/_nav.html" %}
   {% set u = data.user %}
   {% set names = data.names %}
-  <h1>{{ u.username }}</h1>
+  <h1>{{ u.display_name }}</h1>
   <p class="muted">Adgangen er registreret i revisionsloggen. Visningen ændrer intet for brugeren.</p>
 
   <section class="card">

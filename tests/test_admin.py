@@ -15,13 +15,13 @@ from app.extensions import db
 from app.subscriptions.models import Subscription
 from app.subscriptions.services import effective_tier
 
-from .conftest import link_from, login, register
+from .conftest import h, link_from, login, register
 
 
 def make_user(app, outbox, username, role="user"):
     client = app.test_client()
     email = f"{username.lower()}@example.com"
-    register(client, username=username, email=email)
+    register(client, display_name=username, email=email)
     client.get(link_from(outbox[-1], "/bekraeft-email/"))
     login(client, email=email)
     if role != "user":
@@ -31,7 +31,7 @@ def make_user(app, outbox, username, role="user"):
 
 
 def user(username):
-    return db.session.scalar(select(User).where(User.username == username))
+    return db.session.scalar(select(User).where(User.display_name == username))
 
 
 def make_free(username):
@@ -93,7 +93,7 @@ def test_global_switch_overrides_everything(app, outbox, ctx):
 def test_tier_mapping_is_central_and_editable(app, outbox, ctx):
     admin = make_user(app, outbox, "Admin", role="admin")
     anna = make_user(app, outbox, "Anna")  # Premium
-    make_user(app, outbox, "Bodil").post("/like/Anna")
+    make_user(app, outbox, "Bodil").post(f"/like/{h('Anna')}")
     assert "Bodil" in anna.get("/likes").get_data(as_text=True)
 
     mapping = {"premium": ["messages.read", "messages.reply", "search.filters", "media.animated"]}
@@ -196,8 +196,8 @@ def test_test_accounts_are_separated_from_real_users(app, outbox, ctx):
     assert [effective_tier(user(name).id) for name, _, _ in accounts] == ["free", "premium", "premium_plus"]
 
     assert "Test_" not in anna.get("/udforsk").get_data(as_text=True)
-    assert anna.get("/bruger/Test_free").status_code == 404
-    assert anna.post("/like/Test_free").status_code == 404
+    assert anna.get(f"/bruger/{h('Test_free')}").status_code == 404
+    assert anna.post(f"/like/{h('Test_free')}").status_code == 404
 
     tester = app.test_client()
     login(tester, email=accounts[1][1], password=accounts[1][2])

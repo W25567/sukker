@@ -4,7 +4,8 @@ from wtforms.validators import DataRequired, Email, EqualTo, Length, Regexp, Val
 
 from ..core.timeutil import age_on, today_local
 
-USERNAME_PATTERN = r"^[A-Za-z0-9ÆØÅæøå_.-]{3,30}$"
+# Vist navn: behøver ikke være unikt. Bogstaver (også æøå og accenter), tal og enkelte skilletegn.
+DISPLAY_NAME_PATTERN = r"^[^\W_][\w .'\-]{0,28}[^\W_]$"  # starter og slutter med bogstav eller tal
 MIN_AGE = 18
 PASSWORD_MIN = 10
 PASSWORD_MAX = 128
@@ -12,6 +13,11 @@ PASSWORD_MAX = 128
 
 def _strip(value):
     return value.strip() if isinstance(value, str) else value
+
+
+def normalize_display_name(value):
+    """Fjerner mellemrum i enderne og samler gentagne mellemrum."""
+    return " ".join(value.split()) if isinstance(value, str) else value
 
 
 def _lower(value):
@@ -29,12 +35,12 @@ def _new_password_field(label="Password"):
 
 
 class RegistrationForm(FlaskForm):
-    username = StringField(
-        "Brugernavn",
-        filters=[_strip],
+    display_name = StringField(
+        "Vist navn",
+        filters=[normalize_display_name],
         validators=[
-            DataRequired("Vælg et brugernavn."),
-            Regexp(USERNAME_PATTERN, message="3-30 tegn: bogstaver, tal, punktum, bindestreg eller understregning."),
+            DataRequired("Skriv det navn, andre skal se."),
+            Regexp(DISPLAY_NAME_PATTERN, message="2-30 tegn: bogstaver, tal, mellemrum, punktum, bindestreg eller apostrof."),
         ],
     )
     email = EmailField(

@@ -33,6 +33,15 @@
     {% endif %}
   </details>
 
+  <p class="muted">
+    {% if seeking %}
+      Viser {% if seeking | length > 1 %}{{ seeking[:-1] | join(', ') }} og {{ seeking[-1] }}{% else %}{{ seeking[0] }}{% endif %}, som du har valgt under "Interesseret i".
+    {% else %}
+      Vælg under "Interesseret i", hvem du vil se.
+    {% endif %}
+    <a href="{{ url_for('profiles.edit') }}">Ret på din profil</a>
+  </p>
+
   {% if not has_kommune %}
     <p class="muted">Afstande vises, når kommunedata er indlæst.</p>
   {% endif %}
@@ -41,15 +50,15 @@
     <ul class="cards">
       {% for card in cards %}
         <li class="profile-card">
-          <a class="profile-card-link" href="{{ url_for('profiles.view', username=card.username, fra=request.full_path) }}">
+          <a class="profile-card-link" href="{{ url_for('profiles.view', handle=card.handle, fra=request.full_path) }}">
             {% if card.image_id %}
               <img src="{{ url_for('media.image', public_id=card.image_id, variant='lille') }}"
                    alt="" loading="{{ 'eager' if loop.index <= 4 else 'lazy' }}">
             {% else %}
-              <div class="card-no-photo" aria-hidden="true">{{ card.username[:1] | upper }}</div>
+              <div class="card-no-photo" aria-hidden="true">{{ card.display_name[:1] | upper }}</div>
             {% endif %}
             <div class="card-body">
-              <strong>{{ card.username }}, {{ card.age }}</strong>
+              <strong>{{ card.display_name }}, {{ card.age }}</strong>
               <span class="muted">
                 {{ card.distance_label or '' }}{% if card.distance_label and card.kommune %} · {% endif %}{{ card.kommune or '' }}
               </span>
@@ -57,7 +66,7 @@
               {% if card.presentation %}<p class="card-text">{{ card.presentation }}</p>{% endif %}
             </div>
           </a>
-          <div class="card-actions">{{ like_button(card.username, card.liked, card.matched, request.full_path, compact=True) }}</div>
+          <div class="card-actions">{{ like_button(card.handle, card.liked, card.matched, request.full_path, compact=True) }}</div>
         </li>
       {% endfor %}
     </ul>

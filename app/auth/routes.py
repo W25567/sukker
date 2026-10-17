@@ -27,17 +27,14 @@ def register():
     form = RegistrationForm()
     if form.validate_on_submit():
         kommune_code = _resolve_kommune(form)
-        if services.username_taken(form.username.data):
-            form.username.errors.append("Brugernavnet er taget. Vælg et andet.")
-        elif kommune_code is not False:
+        if kommune_code is not False:
             try:
                 services.register_user(form, kommune_code)
                 db.session.commit()
             except IntegrityError:
+                # Samtidig oprettelse med samme e-mail: samme svar som altid, så siden ikke afslører noget.
                 db.session.rollback()
-                form.username.errors.append("Brugernavnet er taget. Vælg et andet.")
-            else:
-                return render_template("auth/check_email.html", email=form.email.data)
+            return render_template("auth/check_email.html", email=form.email.data)
     return render_template("auth/register.html", form=form)
 
 

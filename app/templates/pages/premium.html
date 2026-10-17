@@ -4,7 +4,7 @@
 {% block content %}
   <article class="prose">
     <h1>Free, Premium og Premium+</h1>
-    <p class="lead">Sukker.nu har tre niveauer. Det er gratis at være med, og {% if signup_months %}alle nye profiler får {{ signup_months }} måneders Premium, når e-mailen er bekræftet{% else %}du kan altid oprette en profil, like og matche gratis{% endif %}.</p>
+    <p class="lead">Sukker.nu har tre niveauer. Det er gratis at være med, og {% if early_bird_open() %}lige nu får nye profiler <a href="{{ url_for('pages.early_bird') }}">Premium for livstid som tidlige fugle</a>{% elif signup_months %}alle nye profiler får {{ signup_months }} måneders Premium, når e-mailen er bekræftet{% else %}du kan altid oprette en profil, like og matche gratis{% endif %}.</p>
 
     <div class="table-scroll">
       <table class="compare">

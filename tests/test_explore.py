@@ -4,6 +4,8 @@ Bruger syntetiske kommuner, så testene ikke afhænger af de rigtige DAGI-data:
     A og B er naboer (0 km), C ligger 37 km væk, D ligger 140 km væk.
     Postnummer 1000 ligger i A, 2000 i B, 3000 i C, 4000 i D, og 5000 dækker både A (70 %) og B (30 %).
 """
+import re
+
 import pytest
 from sqlalchemy import select
 
@@ -16,7 +18,7 @@ from app.location.models import Kommune, KommuneDistance, Postcode, PostcodeKomm
 from app.profiles.models import Profile
 from app.subscriptions.models import Subscription
 
-from .conftest import link_from, login, register
+from .conftest import h, link_from, login, register
 
 KM = {("A", "B"): 0, ("A", "C"): 37, ("A", "D"): 140, ("B", "C"): 30, ("B", "D"): 130, ("C", "D"): 100}
 
@@ -42,12 +44,12 @@ def geo(ctx):
 
 def make_user(app, outbox, username, postcode, *, birthdate="1990-05-17", verify=True, **profile_fields):
     client = app.test_client()
-    register(client, username=username, email=f"{username.lower()}@example.com", postcode=postcode, birthdate=birthdate)
+    register(client, display_name=username, email=f"{username.lower()}@example.com", postcode=postcode, birthdate=birthdate)
     if verify:
         client.get(link_from(outbox[-1], "/bekraeft-email/"))
     login(client, email=f"{username.lower()}@example.com")
     if profile_fields:
-        user = db.session.scalar(select(User).where(User.username == username))
+        user = db.session.scalar(select(User).where(User.display_name == username))
         profile = db.session.get(Profile, user.id)
         for key, value in profile_fields.items():
             setattr(profile, key, value)
@@ -63,7 +65,7 @@ def usernames(response):
 
 def make_free(username):
     """Lader brugerens Premium-periode udløbe."""
-    user = db.session.scalar(select(User).where(User.username == username))
+    user = db.session.scalar(select(User).where(User.display_name == username))
     for subscription in db.session.scalars(select(Subscription).where(Subscription.user_id == user.id)):
         subscription.starts_at = now_utc().replace(year=2020)
         subscription.expires_at = now_utc()
@@ -132,7 +134,7 @@ def test_explore_sorts_by_coarse_distance_and_shows_labels(app, outbox, geo):
     assert usernames(response) == ["Nabo", "Midt", "Fjern"]
     html = response.get_data(as_text=True)
     assert "I nærheden" in html and "ca. 40 km" in html and "ca. 140 km" in html
-    assert "37" not in html  # den præcise afstand vises aldrig
+    assert not re.search(r"\b37\s*km", html)  # den præcise afstand vises aldrig
 
 
 def test_explore_excludes_self_unverified_paused_hidden_and_matches_only(app, outbox, geo):
@@ -151,7 +153,7 @@ def test_kommune_only_shown_when_allowed(app, outbox, geo):
     make_user(app, outbox, "Viser", "3000", show_kommune=True)
     make_user(app, outbox, "Skjuler", "4000")
     html = viewer.get("/udforsk").get_data(as_text=True)
-    assert "Cby" in html and "Dby" not in html
+    assert re.search(r"\bCby\b", html) and not re.search(r"\bDby\b", html)  # ordgrænser: ikke inde i tokens
 
 
 def test_free_users_cannot_filter(app, outbox, geo):
@@ -183,6 +185,24 @@ def test_filters_skip_profiles_that_hide_the_field(app, outbox, geo):
 
     assert usernames(viewer.get("/udforsk?koen=kvinde")) == ["Aaben"]
     assert sorted(usernames(viewer.get("/udforsk?soeger=kaereste"))) == ["Aaben", "Lukket"]
+
+
+def test_interested_in_always_applies_also_for_free(app, outbox, geo):
+    viewer = make_user(app, outbox, "Viewer", "1000", seeking_genders=["kvinde"])
+    make_user(app, outbox, "Kvinden", "2000", gender="kvinde")
+    make_user(app, outbox, "Manden", "2000", gender="mand")
+    make_user(app, outbox, "Skjult", "2000", gender="kvinde", hidden_fields=["gender"])
+    make_user(app, outbox, "Ukendt", "2000")
+    make_free("Viewer")
+
+    response = viewer.get("/udforsk")
+    assert usernames(response) == ["Kvinden"]
+    assert "Viser kvinder" in response.get_data(as_text=True)
+
+    other = make_user(app, outbox, "Begge", "1000", seeking_genders=["kvinde", "mand"])
+    assert sorted(usernames(other.get("/udforsk"))) == ["Kvinden", "Manden"]
+    alle = make_user(app, outbox, "Alle", "1000")
+    assert len(usernames(alle.get("/udforsk"))) == 6  # uden valg vises alle andre
 
 
 def test_photos_only_filter(app, outbox, geo):
@@ -217,9 +237,9 @@ def test_pagination(app, outbox, geo, monkeypatch):
 def test_profile_view_shows_distance_and_safe_back_link(app, outbox, geo):
     viewer = make_user(app, outbox, "Viewer", "1000")
     make_user(app, outbox, "Midt", "3000")
-    html = viewer.get("/bruger/Midt?fra=/udforsk%3Fside%3D2").get_data(as_text=True)
+    html = viewer.get(f"/bruger/{h('Midt')}?fra=/udforsk%3Fside%3D2").get_data(as_text=True)
     assert "ca. 40 km" in html and 'href="/udforsk?side=2"' in html
-    html = viewer.get("/bruger/Midt?fra=https://evil.example/").get_data(as_text=True)
+    html = viewer.get(f"/bruger/{h('Midt')}?fra=https://evil.example/").get_data(as_text=True)
     assert 'href="https://evil.example' not in html and "Tilbage til Udforsk" not in html
 
 
@@ -254,7 +274,7 @@ def test_build_and_load_geo(tmp_path, ctx):
 
     build.write_csv(tmp_path, *result)
     db.session.add(User(
-        username="Gammel", email="gammel@example.com", password_hash="x", birthdate=today_local().replace(year=1980),
+        display_name="Gammel", email="gammel@example.com", password_hash="x", birthdate=today_local().replace(year=1980),
         postcode="1111", terms_accepted_at=now_utc(), terms_version="1",
     ))
     db.session.commit()
@@ -262,4 +282,4 @@ def test_build_and_load_geo(tmp_path, ctx):
     counts = load(str(tmp_path))
     db.session.commit()
     assert counts["kommuner"] == 3 and counts["brugere"] == 1
-    assert db.session.scalar(select(User.kommune_code).where(User.username == "Gammel")) == "0101"
+    assert db.session.scalar(select(User.kommune_code).where(User.display_name == "Gammel")) == "0101"

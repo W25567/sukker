@@ -16,6 +16,7 @@ from ..messaging.models import Conversation, Message
 from ..moderation.models import ModerationCase
 from ..profiles.models import Profile
 from ..subscriptions.models import Subscription
+from ..subscriptions.services import early_bird_count
 
 REAL = User.is_test.is_(False)
 
@@ -47,6 +48,7 @@ def collect():
             Subscription.user_id.in_(real_ids)))
         for tier in ("premium", "premium_plus")
     }
+    paying["early_birds"] = early_bird_count()
 
     activity = {
         "likes_7": _count(select(Like.id).where(Like.created_at > week, Like.liker_id.in_(real_ids))),

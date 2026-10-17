@@ -31,8 +31,8 @@ def users():
     results = []
     if query:
         results = db.session.scalars(
-            select(User).where(or_(User.username.ilike(f"%{query}%"), User.email == query.lower()))
-            .order_by(User.username).limit(50)
+            select(User).where(or_(User.display_name.ilike(f"%{query}%"), User.email == query.lower()))
+            .order_by(User.display_name).limit(50)
         ).all()
     return render_template("admin/users.html", query=query, results=results, tests=services.test_accounts())
 

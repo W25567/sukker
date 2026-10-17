@@ -7,6 +7,14 @@ GENDERS = [
     ("andet", "Andet"),
 ]
 
+# Flertal til sætninger som "Viser kvinder og mænd".
+GENDERS_PLURAL = [
+    ("kvinde", "kvinder"),
+    ("mand", "mænd"),
+    ("ikke_binaer", "ikke-binære"),
+    ("andet", "personer med andet køn"),
+]
+
 RELATIONSHIP_TYPES = [
     ("kaereste", "Kæreste"),
     ("dating", "Dating"),

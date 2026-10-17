@@ -1,0 +1,11 @@
+Overvågning af Sukker.nu ({{ environment }})
+{% if problems %}
+Problemer lige nu:
+{% for problem in problems %}
+- {{ problem.message }}{% endfor %}
+{% endif %}{% if resolved %}
+Løst siden sidst:
+{% for key in resolved %}
+- {{ key }}{% endfor %}
+{% endif %}
+Driftsvejledning: deployment/README.md i projektet.

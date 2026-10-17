@@ -74,4 +74,10 @@
       <button type="submit" class="button secondary">{{ 'Aktivér profilen igen' if profile.is_paused else 'Sæt profilen på pause' }}</button>
     </form>
   </section>
+
+  <section class="card">
+    <h2>Hjælp</h2>
+    <p class="muted">Sådan virker Sukker.nu, tryghed, spørgsmål og svar, vilkår og kontakt.</p>
+    <a class="button secondary" href="{{ url_for('pages.help') }}">Hjælp og vilkår</a>
+  </section>
 {% endblock %}

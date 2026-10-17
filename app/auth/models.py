@@ -1,16 +1,29 @@
+import secrets
 from datetime import date, datetime
 
-from sqlalchemy import BigInteger, Boolean, CheckConstraint, Date, DateTime, ForeignKey, Identity, Index, String, func
+from sqlalchemy import BigInteger, Boolean, CheckConstraint, Date, DateTime, ForeignKey, Identity, Index, String, func, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from ..extensions import db
+
+HANDLE_ALPHABET = "abcdefghijkmnpqrstuvwxyz23456789"  # uden tegn, der let forveksles (l, o, 0, 1)
+
+
+def generate_handle():
+    return "".join(secrets.choice(HANDLE_ALPHABET) for _ in range(10))
 
 
 class User(db.Model):
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
-    username: Mapped[str] = mapped_column(String(30), nullable=False)
+    # Det navn, andre ser. Behøver ikke være unikt: kun e-mailen er unik. Kolonnen hedder "username" i
+    # databasen af hensyn til bagudkompatible migrationer.
+    display_name: Mapped[str] = mapped_column("username", String(30), nullable=False,
+                                              comment="Vist navn (display_name i koden). Ikke unikt.")
+    # Tilfældigt, offentligt id til URL'er (/bruger/<handle>). Afslører hverken navn eller antal brugere.
+    handle: Mapped[str] = mapped_column(String(12), nullable=False, default=lambda: generate_handle(),
+                                        server_default=text("substr(md5(random()::text || clock_timestamp()::text), 1, 10)"))
     email: Mapped[str] = mapped_column(String(254), nullable=False)  # gemmes altid med små bogstaver
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     birthdate: Mapped[date] = mapped_column(Date, nullable=False)
@@ -21,6 +34,8 @@ class User(db.Model):
     # Den version af vilkår og privatlivspolitik, brugeren senest har accepteret (app/pages/legal.py).
     terms_version: Mapped[str] = mapped_column(String(20), nullable=False)
     email_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Hvornår brugeren har set velkomstsiden. NULL = vises ved næste besøg (app/pages/onboarding.py).
+    welcomed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     password_changed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
     # Roller er adskilte: moderator behandler sager, administrator styrer platformen (specifikation 9.3).
@@ -49,9 +64,8 @@ class User(db.Model):
         return self.status == "active"
 
 
-# Brugernavn og e-mail er unikke uanset store og små bogstaver.
-Index("uq_users_username_lower", func.lower(User.username), unique=True)
 Index("uq_users_email", User.email, unique=True)
+Index("uq_users_handle", User.handle, unique=True)
 
 
 class UserSession(db.Model):

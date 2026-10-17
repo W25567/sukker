@@ -14,7 +14,7 @@ from ..media import services as media
 from ..media.processing import ACCEPT, ImageRejected
 from .fields import completeness, visible_fields
 from .forms import ProfileForm, VisibilityForm
-from .services import age_of, can_view_profile, find_user_by_username, get_or_create_profile
+from .services import age_of, can_view_profile, find_user_by_handle, get_or_create_profile
 
 bp = Blueprint("profiles", __name__)
 
@@ -108,10 +108,10 @@ def preview():
     return _render_profile_view(g.user, preview=True)
 
 
-@bp.route("/bruger/<username>")
+@bp.route("/bruger/<handle>")
 @login_required
-def view(username):
-    user = find_user_by_username(username)
+def view(handle):
+    user = find_user_by_handle(handle)
     if user is None or not can_view_profile(g.user, user):
         abort(404)
     if user.id == g.user.id:

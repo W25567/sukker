@@ -1,14 +1,14 @@
 {# Like-knap uden JavaScript. `next_url` er siden, brugeren sendes tilbage til. #}
-{% macro like_button(username, liked, matched, next_url, compact=False) %}
+{% macro like_button(handle, liked, matched, next_url, compact=False) %}
   {% if matched %}
     <span class="like-state matched">Match</span>
   {% elif liked %}
-    <form method="post" action="{{ url_for('matches.unlike', username=username, fra=next_url) }}" class="like-form">
+    <form method="post" action="{{ url_for('matches.unlike', handle=handle, fra=next_url) }}" class="like-form">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <button type="submit" class="like-button liked" aria-pressed="true">{{ 'Liket' if compact else 'Du har liket · fortryd' }}</button>
     </form>
   {% else %}
-    <form method="post" action="{{ url_for('matches.like', username=username, fra=next_url) }}" class="like-form">
+    <form method="post" action="{{ url_for('matches.like', handle=handle, fra=next_url) }}" class="like-form">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <button type="submit" class="like-button" aria-pressed="false">Like</button>
     </form>

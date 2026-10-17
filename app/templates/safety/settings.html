@@ -10,7 +10,7 @@
       <ul class="person-list">
         {% for user, since in blocked %}
           <li>
-            <span>{{ user.username }} <span class="muted">· {{ since | local_datetime }}</span></span>
+            <span>{{ user.display_name }} <span class="muted">· {{ since | local_datetime }}</span></span>
             <form method="post" action="{{ url_for('safety.unblock', user_id=user.id) }}">
               {{ action_form.hidden_tag() }}
               <button type="submit" class="link">Ophæv</button>
@@ -29,7 +29,7 @@
       <ul class="person-list">
         {% for user, since in hidden %}
           <li>
-            <span>{{ user.username }} <span class="muted">· {{ since | local_datetime }}</span></span>
+            <span>{{ user.display_name }} <span class="muted">· {{ since | local_datetime }}</span></span>
             <form method="post" action="{{ url_for('safety.unhide', user_id=user.id) }}">
               {{ action_form.hidden_tag() }}
               <button type="submit" class="link">Vis igen</button>

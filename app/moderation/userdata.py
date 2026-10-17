@@ -20,7 +20,7 @@ from .models import ModerationCase
 
 def _usernames(ids):
     ids = {i for i in ids if i}
-    return {u.id: u.username for u in db.session.scalars(select(User).where(User.id.in_(ids)))} if ids else {}
+    return {u.id: u.display_name for u in db.session.scalars(select(User).where(User.id.in_(ids)))} if ids else {}
 
 
 def collect(user):

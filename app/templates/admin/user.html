@@ -1,9 +1,9 @@
 {% extends "base.html" %}
-{% block title %}{{ target.username }} – Administration{% endblock %}
+{% block title %}{{ target.display_name }} – Administration{% endblock %}
 {% macro csrf() %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endmacro %}
 {% block content %}
   {% include "admin/_nav.html" %}
-  <h1>{{ target.username }}{% if target.is_test %} <span class="lock-badge">Testkonto</span>{% endif %}</h1>
+  <h1>{{ target.display_name }}{% if target.is_test %} <span class="lock-badge">Testkonto</span>{% endif %}</h1>
 
   <section class="card">
     <h2>Konto</h2>

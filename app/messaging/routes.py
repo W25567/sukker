@@ -7,7 +7,7 @@ from ..auth.forms import ActionForm
 from ..auth.sessions import login_required
 from ..extensions import db, limiter
 from ..matches.queries import has_active_match
-from ..profiles.services import find_user_by_username
+from ..profiles.services import find_user_by_handle
 from . import services
 from .models import Conversation, Message
 
@@ -37,11 +37,11 @@ def inbox():
     return render_template("messaging/inbox.html", items=services.inbox(g.user, archived=archived), archived=archived)
 
 
-@bp.route("/med/<username>")
+@bp.route("/med/<handle>")
 @login_required
-def start(username):
+def start(handle):
     """Åbner samtalen med et match og opretter den, første gang den åbnes."""
-    other = find_user_by_username(username)
+    other = find_user_by_handle(handle)
     if other is None or not has_active_match(g.user.id, other.id):
         abort(404)
     conversation = services.get_or_create_conversation(g.user.id, other.id)

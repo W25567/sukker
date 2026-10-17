@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% from "_like.html" import like_button %}
-{% block title %}{{ user.username }} – Sukker.nu{% endblock %}
+{% block title %}{{ user.display_name }} – Sukker.nu{% endblock %}
 {% block content %}
   {% if back_url %}
     <a class="back-link" href="{{ back_url }}">← Tilbage til Udforsk</a>
@@ -18,26 +18,26 @@
       <div class="gallery">
         {% for image in images %}
           <img src="{{ url_for('media.image', public_id=image.public_id, variant='stor') }}"
-               alt="Billede {{ loop.index }} af {{ user.username }}"
+               alt="Billede {{ loop.index }} af {{ user.display_name }}"
                width="{{ image.width }}" height="{{ image.height }}"
                {% if not loop.first %}loading="lazy"{% endif %}>
         {% endfor %}
       </div>
     {% else %}
-      <div class="no-photo" aria-hidden="true">{{ user.username[:1] | upper }}</div>
+      <div class="no-photo" aria-hidden="true">{{ user.display_name[:1] | upper }}</div>
     {% endif %}
 
-    <h1>{{ user.username }}, {{ age }}</h1>
+    <h1>{{ user.display_name }}, {{ age }}</h1>
     {% if distance or kommune %}
       <p class="muted">{{ distance or '' }}{% if distance and kommune %} · {% endif %}{{ kommune or '' }}</p>
     {% endif %}
 
     {% if not preview %}
       <div class="profile-actions">
-        {{ like_button(user.username, liked, matched, request.full_path) }}
+        {{ like_button(user.handle, liked, matched, request.full_path) }}
         {% if matched %}
-          <a class="button wide" href="{{ url_for('messaging.start', username=user.username) }}">Skriv besked</a>
-          <a class="muted small-link center" href="{{ url_for('matches.remove', username=user.username) }}">Fjern match</a>
+          <a class="button wide" href="{{ url_for('messaging.start', handle=user.handle) }}">Skriv besked</a>
+          <a class="muted small-link center" href="{{ url_for('matches.remove', handle=user.handle) }}">Fjern match</a>
         {% endif %}
       </div>
     {% endif %}
@@ -57,12 +57,12 @@
 
     {% if not preview %}
       <div class="safety-actions">
-        <form method="post" action="{{ url_for('safety.hide', username=user.username) }}" class="inline">
+        <form method="post" action="{{ url_for('safety.hide', handle=user.handle) }}" class="inline">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <button type="submit" class="link">Skjul</button>
         </form>
-        <a href="{{ url_for('safety.block', username=user.username) }}">Blokér</a>
-        <a href="{{ url_for('safety.report_profile', username=user.username) }}">Anmeld</a>
+        <a href="{{ url_for('safety.block', handle=user.handle) }}">Blokér</a>
+        <a href="{{ url_for('safety.report_profile', handle=user.handle) }}">Anmeld</a>
       </div>
     {% endif %}
   </article>

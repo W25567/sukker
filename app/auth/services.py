@@ -1,12 +1,12 @@
 from flask import current_app, url_for
-from sqlalchemy import func, select
+from sqlalchemy import select
 
 from ..core.mail import send_mail
 from ..core.timeutil import now_utc
 from ..extensions import db
 from ..pages.legal import TERMS_VERSION
 from ..profiles.services import get_or_create_profile
-from ..subscriptions.services import grant_signup_bonus
+from ..subscriptions.services import grant_early_bird, grant_signup_bonus
 from . import tokens
 from .models import User
 from .passwords import burn_verification_time, hash_password, needs_rehash, verify_password
@@ -15,10 +15,6 @@ from .sessions import revoke_sessions
 
 def find_user_by_email(email):
     return db.session.scalar(select(User).where(User.email == email.strip().lower()))
-
-
-def username_taken(username):
-    return db.session.scalar(select(User.id).where(func.lower(User.username) == username.lower())) is not None
 
 
 def _absolute_url(endpoint, **values):
@@ -38,14 +34,14 @@ def register_user(form, kommune_code=None):
             existing.email,
             "Nogen forsøgte at oprette en profil med din e-mail",
             "mail/signup_existing.txt",
-            username=existing.username,
+            name=existing.display_name,
             login_url=_absolute_url("auth.login"),
             reset_url=_absolute_url("auth.forgot_password"),
         )
         return None
 
     user = User(
-        username=form.username.data,
+        display_name=form.display_name.data,
         email=form.email.data,
         password_hash=hash_password(form.password.data),
         birthdate=form.birthdate.data,
@@ -67,7 +63,7 @@ def send_verification_mail(user):
         user.email,
         "Bekræft din e-mail på Sukker.nu",
         "mail/verify_email.txt",
-        username=user.username,
+        name=user.display_name,
         verify_url=_absolute_url("auth.verify_email", token=raw),
         hours=int(current_app.config["EMAIL_VERIFY_TTL"].total_seconds() // 3600),
     )
@@ -87,7 +83,9 @@ def verify_email(raw_token):
         return None
     if user.email_verified_at is None:
         user.email_verified_at = now_utc()
-        grant_signup_bonus(user)
+        # Tidlige fugle får Premium for livstid. Er kampagnen lukket, gælder den almindelige Premium-periode.
+        if grant_early_bird(user) is None:
+            grant_signup_bonus(user)
     return user
 
 
@@ -113,7 +111,7 @@ def request_password_reset(email):
         user.email,
         "Nulstil dit password på Sukker.nu",
         "mail/reset_password.txt",
-        username=user.username,
+        name=user.display_name,
         reset_url=_absolute_url("auth.reset_password", token=raw),
         minutes=int(current_app.config["PASSWORD_RESET_TTL"].total_seconds() // 60),
     )

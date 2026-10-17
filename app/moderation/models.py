@@ -1,7 +1,7 @@
 """Moderationssager og revisionslog (specifikation 9.1 og 9.3)."""
-from datetime import datetime
+from datetime import date, datetime
 
-from sqlalchemy import DDL, BigInteger, CheckConstraint, DateTime, ForeignKey, Identity, Index, String, Text, event, func
+from sqlalchemy import DDL, BigInteger, CheckConstraint, Date, DateTime, ForeignKey, Identity, Index, String, Text, event, func
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -52,6 +52,10 @@ class ModerationCase(db.Model):
     decision_note: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
     closed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Beviser slettes efter opbevaringsperioden, regnet fra sagen blev afsluttet. I alvorlige sager kan en
+    # moderator forlænge opbevaringen med en begrundelse, højst et år ad gangen (specifikation 13.1).
+    evidence_retained_until: Mapped[date | None] = mapped_column(Date)
+    evidence_purged_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class CaseEvent(db.Model):
@@ -71,7 +75,7 @@ class ModeratorAccessLog(db.Model):
     """Revisionslog over moderatorers adgang til brugerdata (specifikation 9.3).
 
     Rækkerne kan ikke ændres eller slettes. Det håndhæves af en trigger i databasen. Derfor er der ingen
-    fremmednøgler, der kunne udløse ændringer, og brugernavnene gemmes som de var på tidspunktet.
+    fremmednøgler, der kunne udløse ændringer, og navnene gemmes som de var på tidspunktet.
     """
 
     __tablename__ = "moderator_access_log"

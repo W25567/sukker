@@ -10,13 +10,13 @@ from app.messaging.models import Conversation, Message
 from app.profiles.models import Profile
 from app.subscriptions.models import Subscription
 
-from .conftest import link_from, login, register
+from .conftest import h, link_from, login, register
 
 
 def make_user(app, outbox, username, *, verify=True):
     client = app.test_client()
     email = f"{username.lower()}@example.com"
-    register(client, username=username, email=email)
+    register(client, display_name=username, email=email)
     if verify:
         client.get(link_from(outbox[-1], "/bekraeft-email/"))
     login(client, email=email)
@@ -24,7 +24,7 @@ def make_user(app, outbox, username, *, verify=True):
 
 
 def user(username):
-    return db.session.scalar(select(User).where(User.username == username))
+    return db.session.scalar(select(User).where(User.display_name == username))
 
 
 def make_free(username):
@@ -37,13 +37,13 @@ def make_free(username):
 def matched_pair(app, outbox):
     anna = make_user(app, outbox, "Anna")
     bodil = make_user(app, outbox, "Bodil")
-    anna.post("/like/Bodil")
-    bodil.post("/like/Anna")
+    anna.post(f"/like/{h('Bodil')}")
+    bodil.post(f"/like/{h('Anna')}")
     return anna, bodil
 
 
 def open_conversation(client, username):
-    response = client.get(f"/beskeder/med/{username}")
+    response = client.get(f"/beskeder/med/{h(username)}")
     assert response.status_code == 302, response.status_code
     return response.headers["Location"]
 
@@ -77,7 +77,7 @@ def test_matches_can_write_and_read(app, outbox, ctx):
 def test_cannot_write_without_a_match(app, outbox, ctx):
     anna = make_user(app, outbox, "Anna")
     make_user(app, outbox, "Bodil")
-    assert anna.get("/beskeder/med/Bodil").status_code == 404
+    assert anna.get(f"/beskeder/med/{h('Bodil')}").status_code == 404
 
 
 def test_outsiders_cannot_open_a_conversation(app, outbox, ctx):
@@ -147,14 +147,14 @@ def test_removed_match_hides_conversation_and_rematch_restores_it(app, outbox, c
     anna, bodil = matched_pair(app, outbox)
     url = open_conversation(anna, "Bodil")
     send(anna, url, "Første besked")
-    anna.post("/match/Bodil/fjern")
+    anna.post(f"/match/{h('Bodil')}/fjern")
 
     assert anna.get(url).status_code == 404
     assert bodil.get(url).status_code == 404
     assert "Første besked" not in bodil.get("/beskeder/").get_data(as_text=True)
 
-    anna.post("/like/Bodil")
-    bodil.post("/like/Anna")
+    anna.post(f"/like/{h('Bodil')}")
+    bodil.post(f"/like/{h('Anna')}")
     html = bodil.get(url).get_data(as_text=True)
     assert "Første besked" in html
     assert "Match fjernet" in html
@@ -173,9 +173,9 @@ def test_delete_message_only_for_me_and_it_never_returns(app, outbox, ctx):
     assert "Hemmelig" not in anna.get(url).get_data(as_text=True)
     assert "Hemmelig" in bodil.get(url).get_data(as_text=True)
 
-    anna.post("/match/Bodil/fjern")
-    anna.post("/like/Bodil")
-    bodil.post("/like/Anna")
+    anna.post(f"/match/{h('Bodil')}/fjern")
+    anna.post(f"/like/{h('Bodil')}")
+    bodil.post(f"/like/{h('Anna')}")
     assert "Hemmelig" not in anna.get(url).get_data(as_text=True)
 
 
@@ -236,7 +236,7 @@ def test_conversation_hidden_by_removed_match_stays_hidden_after_account_deletio
     anna, bodil = matched_pair(app, outbox)
     url = open_conversation(anna, "Bodil")
     send(anna, url, "Skjult historik")
-    anna.post("/match/Bodil/fjern")
+    anna.post(f"/match/{h('Bodil')}/fjern")
     anna.post("/konto/slet", data={"password": "et-langt-password", "confirm": "y"})
     assert bodil.get(url).status_code == 404
     assert db.session.scalar(select(Conversation.hidden_at)) is not None

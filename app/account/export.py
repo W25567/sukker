@@ -25,7 +25,7 @@ def _iso(moment):
 
 def _names(ids):
     ids = {i for i in ids if i}
-    return {u.id: u.username for u in db.session.scalars(select(User).where(User.id.in_(ids)))} if ids else {}
+    return {u.id: u.display_name for u in db.session.scalars(select(User).where(User.id.in_(ids)))} if ids else {}
 
 
 def export_user_data(user):
@@ -44,7 +44,7 @@ def export_user_data(user):
     return {
         "udtrukket": _iso(now_utc()),
         "konto": {
-            "brugernavn": user.username,
+            "vist_navn": user.display_name,
             "email": user.email,
             "foedselsdato": user.birthdate.isoformat(),
             "postnummer": user.postcode,

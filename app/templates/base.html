@@ -82,12 +82,15 @@
     {% block content %}{% endblock %}
   </main>
 
-  <footer class="site-footer">
-    <nav aria-label="Om Sukker.nu">
-      {% for page in footer_pages %}<a href="{{ url_for(page.endpoint) }}">{{ page.nav_label }}</a>{% endfor %}
-    </nav>
-    <p class="footer-note">© {{ current_year }} Sukker.nu · Kun for personer på 18 år eller derover</p>
-  </footer>
+  {% if not current_user %}
+    {# Kun for besøgende. Medlemmer finder de samme sider under Min profil → Hjælp. #}
+    <footer class="site-footer">
+      <nav aria-label="Om Sukker.nu">
+        {% for page in footer_pages() %}<a href="{{ url_for(page.endpoint) }}">{{ page.nav_label }}</a>{% endfor %}
+      </nav>
+      <p class="footer-note">© {{ current_year }} Sukker.nu · Kun for personer på 18 år eller derover</p>
+    </footer>
+  {% endif %}
 
   {% if current_user %}
     {# Fast bundnavigation på mobil, topnavigation på større skærme (specifikation 6.1). #}

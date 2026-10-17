@@ -19,6 +19,8 @@ class PublicPage:
     description: str
     updated: date
     priority: str = "0.5"
+    # Sider, der kun findes, mens en kampagne er aktiv (fx tidlige fugle). None = altid.
+    only_if: str | None = None
 
 
 PUBLIC_PAGES = [
@@ -27,6 +29,12 @@ PUBLIC_PAGES = [
         "Sukker.nu er en moderne og diskret datingside for voksne. Opret en gratis profil på få minutter, "
         "og mød nye mennesker i nærheden – du bestemmer selv, hvor meget du deler.",
         date(2026, 10, 17), "1.0",
+    ),
+    PublicPage(
+        "pages.early_bird", "Tidlige fugle", "Premium for livstid til tidlige fugle – Sukker.nu",
+        "Sukker.nu er en ny dansk datingside. Opret en gratis profil nu, mens vi er få, og få Premium for livstid "
+        "som tidlig fugl: skriv med dine matches, se hvem der har liket dig, og filtrér i Udforsk.",
+        date(2026, 10, 17), "0.9", only_if="early_bird",
     ),
     PublicPage(
         "pages.how", "Sådan virker det", "Sådan virker Sukker.nu – profil, likes, matches og beskeder",
@@ -81,6 +89,19 @@ PUBLIC_PAGES = [
 PAGES_BY_ENDPOINT = {page.endpoint: page for page in PUBLIC_PAGES}
 
 
+def page_active(page):
+    if page.only_if == "early_bird":
+        from ..subscriptions.services import early_bird_open
+
+        return early_bird_open()
+    return True
+
+
+def visible_pages():
+    """De offentlige sider, der findes lige nu. Bruges af sitemap, sidefod og hjælpesiden."""
+    return [page for page in PUBLIC_PAGES if page_active(page)]
+
+
 def absolute_url(endpoint, **values):
     return current_app.config["BASE_URL"].rstrip("/") + url_for(endpoint, **values)
 
@@ -98,12 +119,22 @@ def seo_for(endpoint):
 
 def faq_items():
     """(spørgsmål, svar) – bruges både på siden og i FAQPage-data, så de altid er ens."""
+    from ..subscriptions.services import early_bird_open
+
     months = get_setting("signup_premium_months")
-    bonus = (
-        f"Nye profiler får {months} måneders Premium gratis, så snart e-mailen er bekræftet."
-        if months else "Premium tildeles i øjeblikket ikke automatisk ved oprettelse."
-    )
-    return [
+    early_bird = early_bird_open()
+    if early_bird:
+        bonus = "Lige nu får nye profiler Premium for livstid som tidlige fugle, når e-mailen er bekræftet."
+    elif months:
+        bonus = f"Nye profiler får {months} måneders Premium gratis, så snart e-mailen er bekræftet."
+    else:
+        bonus = "Premium tildeles i øjeblikket ikke automatisk ved oprettelse."
+    early_bird_items = [
+        ("Hvad er en tidlig fugl?",
+         "Sukker.nu er ny, og der er endnu ikke så mange profiler. Opretter du en profil nu og bekræfter din e-mail, "
+         "får du Premium for livstid som tak, fordi du er med fra starten. Det kræver ingen betaling og intet abonnement."),
+    ] if early_bird else []
+    return early_bird_items + [
         ("Hvad koster Sukker.nu?",
          f"Det er gratis at oprette en profil, like andre og få matches. {bonus} "
          "Der er endnu ikke indført betaling. Kommer der betaling, får du besked, før noget koster penge."),

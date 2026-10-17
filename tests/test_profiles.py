@@ -10,7 +10,7 @@ from app.media import storage
 from app.media.models import ProfileImage
 from app.profiles.models import Profile
 
-from .conftest import link_from, login, register
+from .conftest import h, link_from, login, register
 
 
 # --- Hjælpere ----------------------------------------------------------------------------
@@ -51,7 +51,7 @@ def verify(client, outbox):
 def setup_two_users(app):
     anna, bo = app.test_client(), app.test_client()
     register(anna)
-    register(bo, username="Bodil", email="bodil@example.com")
+    register(bo, display_name="Bodil", email="bodil@example.com")
     login(anna)
     login(bo, email="bodil@example.com")
     return anna, bo
@@ -66,7 +66,7 @@ def images_of():
 
 def test_profile_pages_require_login(client):
     assert client.get("/profil").status_code == 302
-    assert client.get("/bruger/Anna_K").status_code == 302
+    assert client.get("/bruger/abcdefghij").status_code == 302
 
 
 def test_edit_profile_saves_fields(client, ctx):
@@ -108,7 +108,7 @@ def test_hidden_fields_are_not_shown_to_others(app, ctx):
     anna, bo = setup_two_users(app)
     anna.post("/profil/rediger", data={"occupation": "Tømrer", "interests": "Klatring", "hidden_fields": ["occupation"]})
 
-    seen_by_bo = bo.get("/bruger/Anna_K").get_data(as_text=True)
+    seen_by_bo = bo.get(f"/bruger/{h('Anna_K')}").get_data(as_text=True)
     assert "Klatring" in seen_by_bo
     assert "Tømrer" not in seen_by_bo
     preview = anna.get("/profil/forhaandsvisning").get_data(as_text=True)
@@ -117,15 +117,15 @@ def test_hidden_fields_are_not_shown_to_others(app, ctx):
 
 def test_paused_or_matches_only_profiles_are_hidden_from_others(app, ctx):
     anna, bo = setup_two_users(app)
-    assert bo.get("/bruger/Anna_K").status_code == 200
+    assert bo.get(f"/bruger/{h('Anna_K')}").status_code == 200
 
     anna.post("/profil/pause")
-    assert bo.get("/bruger/Anna_K").status_code == 404
+    assert bo.get(f"/bruger/{h('Anna_K')}").status_code == 404
     anna.post("/profil/pause")
-    assert bo.get("/bruger/Anna_K").status_code == 200
+    assert bo.get(f"/bruger/{h('Anna_K')}").status_code == 200
 
     anna.post("/profil/synlighed", data={"matches_only": "y"})
-    assert bo.get("/bruger/Anna_K").status_code == 404
+    assert bo.get(f"/bruger/{h('Anna_K')}").status_code == 404
     assert anna.get("/profil/forhaandsvisning").status_code == 200
 
 

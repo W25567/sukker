@@ -1,4 +1,4 @@
-Hej {{ username }}
+Hej {{ name }}
 
 Nogen har forsøgt at oprette en ny profil på Sukker.nu med din e-mail. Du har allerede en profil, så der er ikke oprettet en ny.
 

@@ -6,7 +6,9 @@
 
   <section class="card">
     <h2>Abonnement</h2>
-    {% if subscription %}
+    {% if subscription and subscription.is_lifetime %}
+      <p><strong>{{ tier_label }} for livstid</strong>{% if subscription.source == 'early_bird' %} – tak, fordi du er tidlig fugl{% endif %}.</p>
+    {% elif subscription %}
       <p><strong>{{ tier_label }}</strong> til og med {{ subscription.expires_at.strftime('%d-%m-%Y') }}.</p>
     {% else %}
       <p><strong>Free</strong></p>

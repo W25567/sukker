@@ -8,7 +8,7 @@ from sqlalchemy import select
 
 from ..auth.models import User
 from ..auth.sessions import revoke_sessions
-from ..core.timeutil import now_utc
+from ..core.timeutil import now_utc, today_local
 from ..extensions import db
 from ..media import storage
 from ..media.services import list_images
@@ -55,7 +55,7 @@ def assign(case, moderator):
     case.assigned_to_id = moderator.id
     if case.status == "open":
         case.status = "in_progress"
-    add_event(case, moderator, "assigned", f"Tildelt {moderator.username}")
+    add_event(case, moderator, "assigned", f"Tildelt {moderator.display_name}")
 
 
 def add_note(case, moderator, text):
@@ -82,6 +82,23 @@ def set_account_status(user, status):
         revoke_sessions(user.id)
 
 
+MAX_RETENTION = timedelta(days=366)
+
+
+def retain_evidence(case, moderator, until, reason):
+    """Forlænger opbevaringen af beviser i en alvorlig sag, fx ved politianmeldelse (specifikation 13.1).
+
+    Højst et år ad gangen, så behovet bliver vurderet igen mindst hvert år.
+    """
+    today = today_local()
+    if case.evidence_purged_at is not None:
+        raise ModerationError("Beviserne i sagen er allerede slettet.")
+    if not today < until <= today + MAX_RETENTION:
+        raise ModerationError("Vælg en dato i fremtiden, højst et år frem.")
+    case.evidence_retained_until = until
+    add_event(case, moderator, "retention", f"Beviser opbevares til {until.strftime('%d-%m-%Y')}: {reason}")
+
+
 def reopen(case, moderator):
     case.status, case.closed_at = "in_progress", None
     add_event(case, moderator, "status", "Sagen er genåbnet")
@@ -96,7 +113,7 @@ def queue(status_filter=("open", "in_progress")):
 
 def case_events(case):
     return db.session.execute(
-        select(CaseEvent, User.username).outerjoin(User, User.id == CaseEvent.actor_id)
+        select(CaseEvent, User.display_name).outerjoin(User, User.id == CaseEvent.actor_id)
         .where(CaseEvent.case_id == case.id).order_by(CaseEvent.at, CaseEvent.id)
     ).all()
 
@@ -110,7 +127,7 @@ def profile_evidence(user):
     return {
         "type": "profile",
         "user_id": user.id,
-        "username": user.username,
+        "username": user.display_name,
         "age": age_of(user),
         "fields": fields,
         "hidden_fields": list(profile.hidden_fields) if profile else [],
@@ -125,7 +142,7 @@ def message_evidence(message, sender):
         "message_id": message.id,
         "conversation_id": message.conversation_id,
         "sender_id": sender.id if sender else None,
-        "sender_username": sender.username if sender else None,
+        "sender_username": sender.display_name if sender else None,
         "body": message.body,
         "sent_at": message.created_at.isoformat(),
         "captured_at": now_utc().isoformat(),
@@ -179,13 +196,13 @@ def log_access(moderator, target, reason, case=None):
     if not reason:
         raise ModerationError("Skriv en begrundelse for adgangen.")
     entry = ModeratorAccessLog(
-        moderator_id=moderator.id, moderator_username=moderator.username,
-        target_user_id=target.id, target_username=target.username,
+        moderator_id=moderator.id, moderator_username=moderator.display_name,
+        target_user_id=target.id, target_username=target.display_name,
         case_id=case.id if case else None, reason=reason,
     )
     db.session.add(entry)
     if case is not None:
-        add_event(case, moderator, "access", f"Åbnede {target.username}s data: {reason}")
+        add_event(case, moderator, "access", f"Åbnede {target.display_name}s data: {reason}")
     return entry
 
 

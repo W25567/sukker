@@ -1,0 +1,17 @@
+# Sukker.nu ({{env}}): {{description}}. Styres af deploy.py.
+[Unit]
+Description=Sukker.nu ({{env}}): {{description}}
+After=network.target postgresql.service
+OnFailure={{service}}-alert@%n.service
+
+[Service]
+Type=oneshot
+User={{user}}
+Group={{user}}
+WorkingDirectory={{app_root}}/current
+EnvironmentFile={{env_file}}
+ExecStart={{app_root}}/current/.venv/bin/flask --app wsgi:app sukker {{command}}
+TimeoutStartSec={{timeout}}
+UMask=0027
+{{hardening}}
+ReadWritePaths={{data_root}} {{backup_dir}}

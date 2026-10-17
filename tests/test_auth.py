@@ -11,6 +11,14 @@ from app.subscriptions.services import effective_tier, grant_period
 from .conftest import link_from, login, register, registration_data
 
 
+def disable_early_bird():
+    """Tester den almindelige Premium-periode ved oprettelse, som gælder, når kampagnen er lukket."""
+    from app.core.settings import set_setting
+
+    set_setting("early_bird_enabled", False)
+    db.session.commit()
+
+
 def _user(email="anna@example.com"):
     return db.session.scalar(select(User).where(User.email == email))
 
@@ -24,7 +32,7 @@ def test_register_creates_unverified_user_and_sends_verification_mail(client, ou
     assert "Tjek din e-mail" in response.get_data(as_text=True)
 
     user = _user()
-    assert user.username == "Anna_K"
+    assert user.display_name == "Anna_K"
     assert user.email_verified_at is None
     assert user.password_hash != "et-langt-password"
     assert len(outbox) == 1 and outbox[0]["to"] == "anna@example.com"
@@ -52,18 +60,28 @@ def test_register_requires_accepting_terms(client, ctx):
     assert _user() is None
 
 
-def test_register_rejects_taken_username_case_insensitively(client, ctx):
-    register(client)
-    response = register(client, username="anna_k", email="other@example.com")
-    assert "Brugernavnet er taget" in response.get_data(as_text=True)
-    assert _user("other@example.com") is None
+def test_display_name_does_not_have_to_be_unique(client, ctx):
+    register(client, display_name="Anna")
+    register(client, display_name="Anna", email="other@example.com")
+    first, second = _user(), _user("other@example.com")
+    assert first.display_name == second.display_name == "Anna"
+    assert first.handle != second.handle and len(first.handle) == 10
+
+
+def test_display_name_is_normalised_and_validated(client, ctx):
+    register(client, display_name="  Anna   Sofie ")
+    assert _user().display_name == "Anna Sofie"
+    response = register(client, display_name="-", email="other@example.com")
+    assert "2-30 tegn" in response.get_data(as_text=True) and _user("other@example.com") is None
+    register(client, display_name="Søren Ågård", email="soren@example.com")
+    assert _user("soren@example.com").display_name == "Søren Ågård"
 
 
 def test_register_with_existing_email_reveals_nothing(client, outbox, ctx):
     register(client)
     outbox.clear()
 
-    response = register(client, username="SomeoneElse")
+    response = register(client, display_name="SomeoneElse")
     assert response.status_code == 200
     assert "Tjek din e-mail" in response.get_data(as_text=True)
     assert db.session.scalar(select(func.count(User.id))) == 1
@@ -75,6 +93,7 @@ def test_register_with_existing_email_reveals_nothing(client, outbox, ctx):
 
 
 def test_verifying_email_grants_three_months_premium(client, outbox, ctx):
+    disable_early_bird()
     register(client)
     assert effective_tier(_user().id) == "free"
 
@@ -135,6 +154,7 @@ def test_new_verification_mail_invalidates_the_old_link(client, outbox, ctx):
 
 
 def test_signup_bonus_is_only_granted_once(client, outbox, ctx):
+    disable_early_bird()
     register(client)
     client.get(link_from(outbox[0], "/bekraeft-email/"))
     user = _user()
@@ -148,6 +168,7 @@ def test_signup_bonus_is_only_granted_once(client, outbox, ctx):
 
 
 def test_admin_grant_extends_from_current_expiry(client, outbox, ctx):
+    disable_early_bird()
     register(client)
     client.get(link_from(outbox[0], "/bekraeft-email/"))
     user = _user()

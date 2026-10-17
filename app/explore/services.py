@@ -22,7 +22,8 @@ PRESENTATION_PREVIEW = 120
 
 @dataclass
 class Card:
-    username: str
+    handle: str
+    display_name: str
     age: int
     distance_label: str | None
     kommune: str | None
@@ -43,6 +44,11 @@ def _years_ago(years):
 
 def _not_hidden(field_name):
     return ~(literal(field_name) == any_(Profile.hidden_fields))
+
+
+def seeking_genders(viewer):
+    profile = db.session.get(Profile, viewer.id)
+    return list(profile.seeking_genders) if profile and profile.seeking_genders else []
 
 
 def search(viewer, criteria=None, page=1):
@@ -85,6 +91,12 @@ def search(viewer, criteria=None, page=1):
         )
     )
 
+    # "Interesseret i" fra brugerens egen profil gælder altid, også for Free. Det er brugerens grundvalg,
+    # ikke et Premium-filter. Profiler, der har skjult deres køn, kan ikke matches mod valget og vises ikke.
+    seeking = seeking_genders(viewer)
+    if seeking:
+        query = query.where(Profile.gender.in_(seeking), _not_hidden("gender"))
+
     if criteria:
         if criteria["max_km"] is not None:
             query = query.where(bucket <= criteria["max_km"])
@@ -111,7 +123,8 @@ def search(viewer, criteria=None, page=1):
     recent_after = now_utc() - RECENTLY_ACTIVE
     cards = [
         Card(
-            username=user.username,
+            handle=user.handle,
+            display_name=user.display_name,
             age=age_of(user),
             distance_label=label_for_bucket(row_bucket),
             kommune=kommune_name if profile.show_kommune else None,

@@ -2,7 +2,7 @@ import os
 import re
 
 import pytest
-from sqlalchemy import text
+from sqlalchemy import select, text
 
 from app import create_app
 from app.extensions import SCHEMA, db
@@ -54,9 +54,16 @@ def ctx(app):
         yield
 
 
+def h(display_name):
+    """Handle (til URL'er) for brugeren med det viste navn. Testene bruger forskellige navne pr. bruger."""
+    from app.auth.models import User
+
+    return db.session.scalar(select(User.handle).where(User.display_name == display_name))
+
+
 def registration_data(**overrides):
     data = {
-        "username": "Anna_K",
+        "display_name": "Anna_K",
         "email": "anna@example.com",
         "password": "et-langt-password",
         "password_confirm": "et-langt-password",

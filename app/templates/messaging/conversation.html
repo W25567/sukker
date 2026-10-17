@@ -6,7 +6,7 @@
   <div class="heading-row">
     <h1>
       {% if access.other %}
-        <a href="{{ url_for('profiles.view', username=access.other.username) }}">{{ access.other.username }}</a>
+        <a href="{{ url_for('profiles.view', handle=access.other.handle) }}">{{ access.other.display_name }}</a>
       {% else %}
         {{ deleted_user }}
       {% endif %}
@@ -60,6 +60,6 @@
   <p class="muted">Sletter du beskeder, forsvinder de kun for dig. Den anden person beholder sin historik.</p>
   <div class="safety-actions">
     <a href="{{ url_for('safety.report_conversation', conversation_id=conversation.id) }}">Anmeld samtalen</a>
-    {% if access.other %}<a href="{{ url_for('safety.block', username=access.other.username) }}">Blokér {{ access.other.username }}</a>{% endif %}
+    {% if access.other %}<a href="{{ url_for('safety.block', handle=access.other.handle) }}">Blokér {{ access.other.display_name }}</a>{% endif %}
   </div>
 {% endblock %}

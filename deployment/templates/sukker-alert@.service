@@ -1,0 +1,14 @@
+# Sukker.nu ({{env}}): alarm, når en enhed fejler (OnFailure=). Styres af deploy.py.
+[Unit]
+Description=Sukker.nu ({{env}}): alarm om %i
+
+[Service]
+Type=oneshot
+User={{user}}
+Group={{user}}
+WorkingDirectory={{app_root}}/current
+EnvironmentFile={{env_file}}
+ExecStart={{app_root}}/current/.venv/bin/flask --app wsgi:app sukker alert %i
+UMask=0027
+{{hardening}}
+ReadWritePaths={{data_root}} {{backup_dir}}

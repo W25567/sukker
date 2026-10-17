@@ -4,13 +4,13 @@
   {% include "moderation/_nav.html" %}
   <h1>Find bruger</h1>
   <form method="get" class="form">
-    <div class="field"><label for="q">Brugernavn eller e-mail</label><input id="q" name="q" type="text" value="{{ query }}"></div>
+    <div class="field"><label for="q">Navn eller e-mail</label><input id="q" name="q" type="text" value="{{ query }}"></div>
     <button type="submit" class="button">Søg</button>
   </form>
   {% if query %}
     <ul class="person-list">
       {% for user in results %}
-        <li><a href="{{ url_for('moderation.user', user_id=user.id) }}">{{ user.username }}</a> <span class="muted">{{ user.status }}</span></li>
+        <li><a href="{{ url_for('moderation.user', user_id=user.id) }}">{{ user.display_name }}</a> <span class="muted">{{ user.status }}</span></li>
       {% else %}
         <li class="muted">Ingen brugere fundet.</li>
       {% endfor %}

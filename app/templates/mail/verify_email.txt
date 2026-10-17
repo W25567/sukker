@@ -1,4 +1,4 @@
-Hej {{ username }}
+Hej {{ name }}
 
 Tak fordi du har oprettet en profil på Sukker.nu.
 

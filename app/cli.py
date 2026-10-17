@@ -1,4 +1,4 @@
-"""Kommandoer til administration, indtil administrationspanelet er bygget (M7)."""
+"""Kommandolinje: administration, geodata og driftsopgaver (`flask sukker --help`)."""
 import os
 
 import click
@@ -25,7 +25,7 @@ def grant_premium(email, months, tier, note):
     db.session.commit()
     current = active_subscription(user.id)
     click.echo(
-        f"{user.username}: {TIER_LABELS[tier]} til {subscription.expires_at:%d-%m-%Y}. "
+        f"{user.display_name}: {TIER_LABELS[tier]} til {subscription.expires_at:%d-%m-%Y}. "
         f"Aktivt niveau nu: {TIER_LABELS[current.tier] if current else 'Free'}."
     )
 
@@ -40,7 +40,7 @@ def set_role(email, role):
         raise click.ClickException(f"Ingen bruger med e-mailen {email}.")
     user.role = role
     db.session.commit()
-    click.echo(f"{user.username} har nu rollen {role}.")
+    click.echo(f"{user.display_name} har nu rollen {role}.")
 
 
 @sukker_cli.command("create-test-accounts")
@@ -115,6 +115,67 @@ def load_geo(directory):
         f"Indlæste {counts['kommuner']} kommuner, {counts['postnumre']} postnumre og {counts['afstande']} afstande. "
         f"{counts['brugere']} brugere fik en kommune."
     )
+
+
+# --- Drift (kaldes af systemd-timerne, specifikation 14.6) -----------------------------------------------------
+
+
+@sukker_cli.command("maintenance")
+def maintenance():
+    """Daglig oprydning og sletning efter opbevaringsreglen (specifikation 13.1)."""
+    from .maintenance import retention
+
+    counts = retention.run()
+    click.echo("Oprydning: " + ", ".join(f"{key} {value}" for key, value in counts.items()))
+
+
+@sukker_cli.command("backup")
+@click.option("--label", default="nightly", show_default=True, help="nightly roteres med BACKUP_KEEP, andre beholder 3.")
+@click.option("--db-only", is_flag=True, help="Kun databasen, fx før en migration.")
+def backup_command(label, db_only):
+    """Krypteret backup af database og billedfiler (specifikation 14.8)."""
+    from .maintenance import backup
+
+    try:
+        result = backup.run_backup(label=label, db_only=db_only)
+    except backup.BackupError as error:
+        raise click.ClickException(str(error))
+    click.echo(f"Backup: {result['file']} (krypteret: {'ja' if result['encrypted'] else 'nej'}, "
+               f"uden for serveren: {result['offsite']}, billeder i databasen: {result['images_in_database']})")
+
+
+@sukker_cli.command("monitor")
+def monitor_command():
+    """Tjekker backup, certifikat, diskplads, fejlrate og systemd-enheder og sender alarmer."""
+    from .maintenance import monitor
+
+    problems, sent = monitor.run()
+    click.echo(f"{len(problems)} problem(er). Alarm sendt: {'ja' if sent else 'nej'}.")
+    for problem in problems:
+        click.echo(f"  - {problem.message}")
+
+
+@sukker_cli.command("alert")
+@click.argument("unit")
+def alert_command(unit):
+    """Sender en alarm om en fejlet systemd-enhed (bruges af OnFailure=)."""
+    from .maintenance import monitor
+
+    monitor.alert_unit_failure(unit)
+
+
+@sukker_cli.command("verify-media")
+def verify_media_command():
+    """Kontrollerer efter en gendannelse, at billedposter og billedfiler passer sammen."""
+    from .maintenance import backup
+
+    result = backup.verify_media()
+    click.echo(f"{result['images']} billeder i databasen. Mangler filer: {len(result['missing'])}. "
+               f"Mapper uden post: {len(result['orphans'])}.")
+    for item in result["missing"][:50]:
+        click.echo(f"  mangler: {item}")
+    if result["missing"]:
+        raise SystemExit(1)
 
 
 def register_cli(app):

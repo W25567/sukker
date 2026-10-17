@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block page_class %}public{% endblock %}
+{% block content %}
+  <article class="prose">
+    <h1>Premium for livstid til tidlige fugle</h1>
+    <p class="lead">Sukker.nu er en ny dansk datingside. Vi er lige startet, og der er endnu ikke så mange profiler. Derfor får alle, der er med fra starten, Premium for livstid – helt gratis.</p>
+
+    <p><a class="button" href="{{ url_for('auth.register') }}">Bliv tidlig fugl</a></p>
+
+    <h2>Hvorfor gør vi det?</h2>
+    <p>En datingside er kun så god som de mennesker, der er på den. Når du opretter en profil nu, er du med til at gøre Sukker.nu levende for alle, der kommer efter dig. Det vil vi gerne sige tak for – ikke med en rabat, men med Premium resten af tiden.</p>
+
+    <h2>Det får du med Premium</h2>
+    <ul>
+      <li>Skriv med alle dine matches – også dem, der ikke selv har Premium.</li>
+      <li>Se hvem der har liket dig.</li>
+      <li>Filtrér i Udforsk på alder, afstand, køn og hvad folk søger.</li>
+      <li>Animerede billeder på din profil.</li>
+    </ul>
+    <p>Sikkerhed og privatliv er altid gratis for alle: skjul, blokér, anmeld og bestem selv, hvem der ser din profil.</p>
+
+    <h2>Sådan bliver du tidlig fugl</h2>
+    <ol>
+      <li>Opret en gratis profil. Det tager et par minutter.</li>
+      <li>Bekræft din e-mail via linket, vi sender dig.</li>
+      <li>Så har du Premium for livstid. Ingen betaling, intet abonnement, intet der skal opsiges.</li>
+    </ol>
+    <p class="muted">Tilbuddet gælder, så længe kampagnen kører, og vi kan lukke den, når der er kommet flere profiler. Har du først fået Premium for livstid, beholder du det, så længe du har din profil. Læs mere i <a href="{{ url_for('pages.terms') }}">brugervilkårene</a>.</p>
+
+    <p><a class="button" href="{{ url_for('auth.register') }}">Opret gratis profil</a></p>
+  </article>
+{% endblock %}

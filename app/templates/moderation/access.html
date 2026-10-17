@@ -3,7 +3,7 @@
 {% block title %}Adgang til brugerdata – Moderation{% endblock %}
 {% block content %}
   {% include "moderation/_nav.html" %}
-  <h1>{{ target.username }}</h1>
+  <h1>{{ target.display_name }}</h1>
   <div class="card notice-card">
     <p>Du får adgang til alle gemte data om brugeren, også beskeder og private billeder. Adgangen registreres i revisionsloggen
       med din begrundelse og gælder i to timer. Brugeren får ingen besked.</p>

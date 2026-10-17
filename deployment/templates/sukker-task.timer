@@ -1,0 +1,12 @@
+# Sukker.nu ({{env}}): {{description}}. Styres af deploy.py.
+[Unit]
+Description=Sukker.nu ({{env}}): {{description}}
+
+[Timer]
+OnCalendar={{calendar}}
+RandomizedDelaySec={{delay}}
+Persistent=true
+Unit={{service}}-{{task}}.service
+
+[Install]
+WantedBy=timers.target
