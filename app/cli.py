@@ -43,7 +43,21 @@ def set_role(email, role):
     click.echo(f"{user.username} har nu rollen {role}.")
 
 
-GEO_DIR =os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "geo")
+@sukker_cli.command("create-test-accounts")
+def create_test_accounts():
+    """Opretter eller nulstiller én testkonto pr. niveau (Free, Premium og Premium+) med nye passwords.
+
+    Testkonti kan kun se og kontakte andre testkonti og tæller ikke med i målinger (specifikation 11)."""
+    from .admin.services import create_test_accounts as create
+
+    accounts = create()
+    db.session.commit()
+    click.echo("Testkonti (passwordene vises kun nu):")
+    for username, email, password in accounts:
+        click.echo(f"  {username:<18} {email:<32} {password}")
+
+
+GEO_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "geo")
 
 
 @sukker_cli.command("build-geo")

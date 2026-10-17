@@ -1,5 +1,3 @@
-from functools import wraps
-
 from flask import Blueprint, abort, flash, g, redirect, render_template, request, send_file, url_for
 from flask_wtf import FlaskForm
 from sqlalchemy import or_, select
@@ -7,7 +5,7 @@ from wtforms import EmailField, SelectField, StringField, TextAreaField
 from wtforms.validators import DataRequired, Email, Length
 
 from ..auth.models import User
-from ..auth.sessions import login_required
+from ..auth.roles import admin_required, moderator_required
 from ..extensions import db, limiter
 from ..media import storage
 from ..media.models import ProfileImage
@@ -15,27 +13,6 @@ from . import services, userdata
 from .models import DECISIONS, REASON_LABELS, STATUSES, ModerationCase
 
 bp = Blueprint("moderation", __name__)
-
-
-def moderator_required(view):
-    """Kun brugere med moderatorrollen. Andre får 404, så værktøjet ikke kan opdages."""
-    @wraps(view)
-    @login_required
-    def wrapped(*args, **kwargs):
-        if not g.user.is_moderator:
-            abort(404)
-        return view(*args, **kwargs)
-    return wrapped
-
-
-def admin_required(view):
-    @wraps(view)
-    @login_required
-    def wrapped(*args, **kwargs):
-        if g.user.role != "admin":
-            abort(404)
-        return view(*args, **kwargs)
-    return wrapped
 
 
 class NoteForm(FlaskForm):

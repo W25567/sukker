@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Brugere – Administration{% endblock %}
+{% block content %}
+  {% include "admin/_nav.html" %}
+  <h1>Brugere</h1>
+  <form method="get" class="form">
+    <div class="field"><label for="q">Brugernavn eller e-mail</label><input id="q" name="q" type="text" value="{{ query }}"></div>
+    <button type="submit" class="button">Søg</button>
+  </form>
+  {% if query %}
+    <ul class="person-list">
+      {% for u in results %}
+        <li><a href="{{ url_for('admin.user', user_id=u.id) }}">{{ u.username }}</a>
+          <span class="muted">{{ u.role }} · {{ u.status }}{% if u.is_test %} · testkonto{% endif %}</span></li>
+      {% else %}
+        <li class="muted">Ingen brugere fundet.</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+
+  <section class="card">
+    <h2>Testkonti</h2>
+    <p class="muted">Testkonti kan kun se og kontakte andre testkonti og tæller ikke med i målinger.
+      Opret eller nulstil dem med <code>flask sukker create-test-accounts</code>.</p>
+    <ul class="person-list">
+      {% for u in tests %}
+        <li><a href="{{ url_for('admin.user', user_id=u.id) }}">{{ u.username }}</a> <span class="muted">{{ u.email }}</span></li>
+      {% else %}
+        <li class="muted">Ingen testkonti endnu.</li>
+      {% endfor %}
+    </ul>
+  </section>
+{% endblock %}

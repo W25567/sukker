@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Administration – Sukker.nu{% endblock %}
+{% block content %}
+  {% include "admin/_nav.html" %}
+  <h1>Overblik</h1>
+  <p class="muted">Aggregerede tal uden testkonti. Ingen beskedindhold eller placering.</p>
+
+  <section class="card">
+    <h2>Brugere</h2>
+    <dl class="stats">
+      <div><dt>Profiler</dt><dd>{{ m.users.total }}</dd></div>
+      <div><dt>Bekræftede</dt><dd>{{ m.users.verified }}</dd></div>
+      <div><dt>Nye, 7 dage</dt><dd>{{ m.users.new_7 }}</dd></div>
+      <div><dt>Nye, 30 dage</dt><dd>{{ m.users.new_30 }}</dd></div>
+      <div><dt>Aktive, 7 dage</dt><dd>{{ m.users.active_7 }}</dd></div>
+      <div><dt>På pause</dt><dd>{{ m.users.paused }}</dd></div>
+      <div><dt>Premium</dt><dd>{{ m.paying.premium }}</dd></div>
+      <div><dt>Premium+</dt><dd>{{ m.paying.premium_plus }}</dd></div>
+    </dl>
+  </section>
+
+  <section class="card">
+    <h2>Aktivitet</h2>
+    <dl class="stats">
+      <div><dt>Likes, 7 dage</dt><dd>{{ m.activity.likes_7 }}</dd></div>
+      <div><dt>Nye matches, 7 dage</dt><dd>{{ m.activity.matches_7 }}</dd></div>
+      <div><dt>Aktive matches</dt><dd>{{ m.activity.active_matches }}</dd></div>
+      <div><dt>Beskeder, 7 dage</dt><dd>{{ m.activity.messages_7 }}</dd></div>
+      <div><dt>Nye samtaler, 30 dage</dt><dd>{{ m.activity.conversations_started_30 }}</dd></div>
+      <div><dt>Svarprocent</dt><dd>{{ m.activity.reply_rate ~ ' %' if m.activity.reply_rate is not none else '–' }}</dd></div>
+      <div><dt>Låste Free/Free-matches</dt><dd>{{ m.activity.locked_free_free }}</dd></div>
+      <div><dt>Henvendelser uden match</dt><dd>fase 2</dd></div>
+    </dl>
+  </section>
+
+  <section class="card">
+    <h2>Tryghed</h2>
+    <dl class="stats">
+      <div><dt>Anmeldelser, 30 dage</dt><dd>{{ m.safety.reports_30 }}</dd></div>
+      <div><dt>Åbne sager</dt><dd>{{ m.safety.open_cases }}</dd></div>
+      <div><dt>Heraf høj prioritet</dt><dd>{{ m.safety.high_open }}</dd></div>
+      <div><dt>Begrænsede / suspenderede</dt><dd>{{ m.users.restricted }} / {{ m.users.suspended }}</dd></div>
+    </dl>
+  </section>
+
+  <section class="card">
+    <h2>Systemstatus</h2>
+    <dl class="facts">
+      <div><dt>Database</dt><dd>{{ system.database }} · migration {{ system.migration or '?' }}</dd></div>
+      <div><dt>Kommunedata</dt><dd>{{ system.kommuner }} kommuner · {{ system.postnumre }} postnumre</dd></div>
+      <div><dt>Mail</dt><dd>{{ system.mail_backend }}</dd></div>
+      <div><dt>Billedmappe</dt><dd>{{ system.media_root }}</dd></div>
+    </dl>
+    <p class="muted">Køb af abonnementer, fornyelser og frafald måles, når betaling er integreret (fase 3).</p>
+  </section>
+{% endblock %}

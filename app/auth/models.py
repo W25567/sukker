@@ -1,6 +1,6 @@
 from datetime import date, datetime
 
-from sqlalchemy import BigInteger, CheckConstraint, Date, DateTime, ForeignKey, Identity, Index, String, func
+from sqlalchemy import BigInteger, Boolean, CheckConstraint, Date, DateTime, ForeignKey, Identity, Index, String, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from ..extensions import db
@@ -26,6 +26,8 @@ class User(db.Model):
     # active, restricted (kan hverken ses, like eller skrive) eller suspended (kan ikke logge ind).
     status: Mapped[str] = mapped_column(String(20), nullable=False, server_default="active")
     status_changed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Testkonti til at afprøve adgangsregler. De vises aldrig for rigtige brugere og tæller ikke med i målinger.
+    is_test: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
 
     __table_args__ = (
         CheckConstraint("role IN ('user', 'moderator', 'admin')", name="role"),

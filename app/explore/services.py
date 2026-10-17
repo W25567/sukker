@@ -75,6 +75,7 @@ def search(viewer, criteria=None, page=1):
         .where(
             User.id != viewer.id,
             User.status == "active",
+            User.is_test.is_(viewer.is_test),
             ~blocked_either_way(viewer.id, User.id),
             ~hidden_by(viewer.id, User.id),
             User.email_verified_at.isnot(None),

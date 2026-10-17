@@ -5,7 +5,7 @@ from sqlalchemy import func, select
 from ..core.settings import get_setting
 from ..extensions import db
 from ..profiles.services import can_view_profile
-from ..subscriptions.services import effective_tier
+from ..core.features import has_feature
 from . import storage
 from .models import ProfileImage
 from .processing import ImageRejected, process_upload
@@ -26,7 +26,7 @@ def _count(user_id, *conditions):
 
 
 def _animated_refusal(user):
-    if effective_tier(user.id) == "free":
+    if not has_feature(user, "media.animated"):
         return "Animerede billeder kræver Premium eller Premium+."
     limit = get_setting("max_animated_images")
     if limit is not None and _count(user.id, ProfileImage.is_animated.is_(True)) >= limit:

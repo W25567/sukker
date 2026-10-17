@@ -23,7 +23,29 @@ DEFAULTS = {
     "max_animated_images": 3,
     "max_upload_mb_still": 15,
     "max_upload_mb_animated": 8,
+    # Rettighedsmodellen (app/core/features.py). None betyder standardfordelingen i koden.
+    "tier_features": None,
+    "disabled_features": [],
 }
+
+# Beskrivelse af de indstillinger, der redigeres i administrationen. Typen styrer formularfeltet:
+# "bool", "int" (heltal) eller "optional_int" (heltal eller tomt for ubegrænset).
+SETTING_META = [
+    ("signup_premium_months", "Premium-måneder ved oprettelse", "int"),
+    ("free_match_limit_enabled", "Match-loft for Free er aktivt", "bool"),
+    ("free_match_limit", "Match-loft for Free", "int"),
+    ("premium_match_limit", "Match-loft for Premium (tom = ubegrænset)", "optional_int"),
+    ("premium_plus_match_limit", "Match-loft for Premium+ (tom = ubegrænset)", "optional_int"),
+    ("premium_plus_daily_contacts", "Nye modtagere uden match pr. dag (Premium+)", "int"),
+    ("distance_nearby_km", "Afstand, der vises som \"I nærheden\" (km)", "int"),
+    ("distance_rounding_km", "Afrunding af viste afstande (km)", "int"),
+    ("data_retention_months", "Opbevaring af skjulte og slettede data (måneder)", "int"),
+    ("max_public_images", "Offentlige billeder pr. bruger", "int"),
+    ("max_private_images", "Billeder i privat arkiv pr. bruger", "int"),
+    ("max_animated_images", "Animerede billeder pr. bruger", "int"),
+    ("max_upload_mb_still", "Maks. filstørrelse for billeder (MB)", "int"),
+    ("max_upload_mb_animated", "Maks. filstørrelse for animationer (MB)", "int"),
+]
 
 
 class Setting(db.Model):

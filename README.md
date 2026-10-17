@@ -14,7 +14,8 @@ Mobilorienteret datingside bygget med Flask og PostgreSQL. Specifikationen ligge
 | M4 Likes og matches | Likes, matches, hvem har liket dig (Premium), fjern match, match igen, match-loft | Færdig |
 | M5 Beskeder | Samtaler mellem matches, låsning af Free/Free, pause, skjult historik ved fjernet match, slet for mig, arkiv, slet konto og "Slettet bruger" | Færdig |
 | M6 Tryghed og moderation | Skjul, blokér, anmeld med kopi, moderationssager, afgørelser, begrænsning og suspendering, klagevej, moderatoradgang med uændrelig revisionslog | Færdig |
-| M7–M9 | Administration, offentlige sider, drift | Ikke startet |
+| M7 Rettigheder og administration | Central rettighedsmodel (niveau → funktioner, global slukning, individuelle tildelinger med udløb), admin-indstillinger, brugere, abonnementer, roller og status, dashboard uden testkonti, testkonti pr. niveau, uændrelig administrationslog | Færdig |
+| M8–M9 | Offentlige sider og SEO, drift | Ikke startet |
 
 ## Kom i gang lokalt (Windows)
 
@@ -68,12 +69,14 @@ Uden kommunedata kører appen stadig, men uden kommune og afstand.
 
 ## Administration fra kommandolinjen
 
-Indtil administrationspanelet findes (M7):
+Det meste klares i administrationspanelet under `/admin/`. Den første administrator skal dog oprettes fra kommandolinjen:
 
 ```powershell
-.\.venv\Scripts\flask.exe sukker grant-premium anna@example.test --months 3 --note "Testbruger"
-.\.venv\Scripts\flask.exe sukker set-role anna@example.test moderator   # user, moderator eller admin
+.\.venv\Scripts\python.exe -m flask sukker set-role anna@example.com admin   # user, moderator eller admin
+.\.venv\Scripts\python.exe -m flask sukker grant-premium anna@example.com --months 3 --note "Testbruger"
+.\.venv\Scripts\python.exe -m flask sukker create-test-accounts   # Test_free, Test_premium, Test_premiumplus
 ```
 
 Moderator og administrator er adskilte roller. Moderatorer behandler sager under `/moderation/`.
-Administratorer ser revisionsloggen under `/moderation/log`.
+Administratorer ser moderatorernes revisionslog under `/moderation/log` og administrationsloggen under `/admin/log`.
+Testkonti kan kun se andre testkonti og tæller ikke med i målingerne. Passwordene vises kun, når kontiene oprettes.

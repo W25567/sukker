@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Indstillinger – Administration{% endblock %}
+{% block content %}
+  {% include "admin/_nav.html" %}
+  <h1>Indstillinger</h1>
+  <form method="post" class="form">
+    {{ form.hidden_tag() }}
+    <section class="card">
+      <h2>Grænser og værdier</h2>
+      {% for key, label, kind, value in settings %}
+        {% if kind == 'bool' %}
+          <div class="field checkbox"><label><input type="checkbox" name="{{ key }}" value="y"{% if value %} checked{% endif %}> {{ label }}</label></div>
+        {% else %}
+          <div class="field">
+            <label for="{{ key }}">{{ label }}</label>
+            <input id="{{ key }}" name="{{ key }}" type="number" min="0" value="{{ '' if value is none else value }}">
+          </div>
+        {% endif %}
+      {% endfor %}
+    </section>
+
+    <section class="card">
+      <h2>Rettigheder pr. niveau</h2>
+      <table class="mod-table">
+        <thead><tr><th>Funktion</th>{% for tier in tiers %}<th>{{ tier_labels[tier] }}</th>{% endfor %}<th>Slået fra</th></tr></thead>
+        <tbody>
+          {% for key, label in features.items() %}
+            <tr>
+              <td>{{ label }}<br><code>{{ key }}</code></td>
+              {% for tier in tiers %}
+                <td><input type="checkbox" name="tier:{{ tier }}:{{ key }}" value="1" aria-label="{{ tier_labels[tier] }}: {{ key }}"{% if key in mapping[tier] %} checked{% endif %}></td>
+              {% endfor %}
+              <td><input type="checkbox" name="disabled:{{ key }}" value="1" aria-label="Slå {{ key }} fra for alle"{% if key in disabled %} checked{% endif %}></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <p class="muted">"Slået fra" gælder for alle, også individuelle regler.</p>
+    </section>
+
+    <button type="submit" class="button wide">Gem indstillinger</button>
+  </form>
+{% endblock %}

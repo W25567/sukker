@@ -1,7 +1,8 @@
 {% extends "base.html" %}
 {% block title %}Revisionslog – Sukker.nu{% endblock %}
 {% block content %}
-  <h1>Revisionslog</h1>
+  {% include "admin/_nav.html" %}
+  <h1>Moderatorers adgang</h1>
   <p class="muted">Moderatorers adgang til brugerdata. Loggen kan ikke ændres eller slettes.</p>
   <table class="mod-table">
     <thead><tr><th>Tid</th><th>Moderator</th><th>Bruger</th><th>Sag</th><th>Begrundelse</th></tr></thead>

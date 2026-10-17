@@ -13,7 +13,7 @@
     <nav class="topnav">
       {% if current_user %}
         {% if current_user.is_moderator %}<a href="{{ url_for('moderation.queue') }}">Moderation</a>{% endif %}
-        {% if current_user.role == 'admin' %}<a href="{{ url_for('moderation.log') }}">Revisionslog</a>{% endif %}
+        {% if current_user.role == 'admin' %}<a href="{{ url_for('admin.dashboard') }}">Administration</a>{% endif %}
         <a href="{{ url_for('account.overview') }}">Konto</a>
         <form method="post" action="{{ url_for('auth.logout') }}" class="inline">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

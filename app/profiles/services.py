@@ -33,6 +33,9 @@ def can_view_profile(viewer, owner):
         return True
     if owner.status != "active" or is_blocked_between(viewer.id, owner.id):
         return False
+    # Testkonti og rigtige brugere kan aldrig se hinanden, så testkonti aldrig fremstår som rigtige profiler.
+    if owner.is_test != viewer.is_test:
+        return False
     profile = db.session.get(Profile, owner.id)
     if profile is not None and (profile.is_paused or profile.matches_only):
         return has_active_match(viewer.id, owner.id)

@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}{{ target.username }} – Administration{% endblock %}
+{% macro csrf() %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endmacro %}
+{% block content %}
+  {% include "admin/_nav.html" %}
+  <h1>{{ target.username }}{% if target.is_test %} <span class="lock-badge">Testkonto</span>{% endif %}</h1>
+
+  <section class="card">
+    <h2>Konto</h2>
+    <dl class="facts">
+      <div><dt>E-mail</dt><dd>{{ target.email }}{% if not target.is_verified %} (ubekræftet){% endif %}</dd></div>
+      <div><dt>Oprettet</dt><dd>{{ target.created_at | local_datetime }}</dd></div>
+      <div><dt>Status</dt><dd>{{ target.status }}</dd></div>
+      <div><dt>Rolle</dt><dd>{{ target.role }}</dd></div>
+    </dl>
+    <form method="post" class="inline-form">
+      {{ csrf() }}<input type="hidden" name="action" value="status">
+      <select name="status" aria-label="Status">
+        {% for s in ['active', 'restricted', 'suspended'] %}<option value="{{ s }}"{% if s == target.status %} selected{% endif %}>{{ s }}</option>{% endfor %}
+      </select>
+      <input name="note" type="text" placeholder="Begrundelse" aria-label="Begrundelse">
+      <button type="submit" class="button small">Skift status</button>
+    </form>
+    <form method="post" class="inline-form">
+      {{ csrf() }}<input type="hidden" name="action" value="role">
+      <select name="role" aria-label="Rolle">
+        {% for r in ['user', 'moderator', 'admin'] %}<option value="{{ r }}"{% if r == target.role %} selected{% endif %}>{{ r }}</option>{% endfor %}
+      </select>
+      <button type="submit" class="button small">Skift rolle</button>
+    </form>
+  </section>
+
+  <section class="card">
+    <h2>Abonnement: {{ tier_label }}{% if subscription %} til {{ subscription.expires_at | local_datetime }}{% endif %}</h2>
+    <form method="post" class="inline-form">
+      {{ csrf() }}<input type="hidden" name="action" value="period">
+      <select name="tier" aria-label="Niveau"><option value="premium">Premium</option><option value="premium_plus">Premium+</option></select>
+      <input name="months" type="number" min="1" max="36" value="3" aria-label="Måneder">
+      <input name="note" type="text" placeholder="Note" aria-label="Note">
+      <button type="submit" class="button small">Giv mere tid</button>
+    </form>
+    <form method="post" class="inline-form">
+      {{ csrf() }}<input type="hidden" name="action" value="set_tier">
+      <select name="tier" aria-label="Niveau">
+        {% for key, label in tier_labels.items() %}<option value="{{ key }}">{{ label }}</option>{% endfor %}
+      </select>
+      <input name="until" type="date" aria-label="Til og med">
+      <input name="note" type="text" placeholder="Note" aria-label="Note">
+      <button type="submit" class="button small">Skift niveau fra nu</button>
+    </form>
+    <table class="mod-table">
+      <thead><tr><th>Niveau</th><th>Kilde</th><th>Fra</th><th>Til</th><th>Note</th></tr></thead>
+      <tbody>
+        {% for p in periods %}
+          <tr><td>{{ tier_labels[p.tier] }}</td><td>{{ p.source }}</td><td>{{ p.starts_at | local_datetime }}</td>
+            <td>{{ p.expires_at | local_datetime }}</td><td>{{ p.note or '' }}</td></tr>
+        {% else %}<tr><td colspan="5" class="muted">Ingen perioder.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </section>
+
+  <section class="card">
+    <h2>Rettigheder lige nu</h2>
+    <table class="mod-table">
+      <thead><tr><th>Funktion</th><th>Har den</th><th>Hvorfor</th></tr></thead>
+      <tbody>
+        {% for key, label, has, why in feature_rows %}
+          <tr><td>{{ label }}<br><code>{{ key }}</code></td><td>{{ 'Ja' if has else 'Nej' }}</td><td>{{ why }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <h3>Individuelle regler</h3>
+    <form method="post" class="inline-form">
+      {{ csrf() }}<input type="hidden" name="action" value="grant">
+      <select name="feature" aria-label="Funktion">
+        {% for key, label in feature_labels.items() %}<option value="{{ key }}">{{ key }}</option>{% endfor %}
+      </select>
+      <select name="granted" aria-label="Giv eller fratag"><option value="1">Giv</option><option value="0">Fratag</option></select>
+      <input name="expires" type="date" aria-label="Udløber">
+      <input name="note" type="text" placeholder="Note" aria-label="Note">
+      <button type="submit" class="button small">Tilføj regel</button>
+    </form>
+    <ul class="person-list">
+      {% for grant in grants %}
+        <li>
+          <span><code>{{ grant.feature }}</code> · {{ 'givet' if grant.granted else 'frataget' }}
+            {% if grant.expires_at %} · til {{ grant.expires_at | local_datetime }}{% endif %}{% if grant.note %} · {{ grant.note }}{% endif %}</span>
+          <form method="post">{{ csrf() }}<input type="hidden" name="action" value="remove_grant"><input type="hidden" name="grant_id" value="{{ grant.id }}">
+            <button type="submit" class="link">Fjern</button></form>
+        </li>
+      {% else %}<li class="muted">Ingen individuelle regler.</li>{% endfor %}
+    </ul>
+  </section>
+{% endblock %}

@@ -1,4 +1,5 @@
 """Samler alle modeller, så de er registreret hos SQLAlchemy og Alembic."""
+from .admin.models import AdminAuditLog, UserFeatureGrant  # noqa: F401
 from .auth.models import EmailToken, User, UserSession  # noqa: F401
 from .core.settings import Setting  # noqa: F401
 from .location.models import Kommune, KommuneDistance, Postcode, PostcodeKommune  # noqa: F401

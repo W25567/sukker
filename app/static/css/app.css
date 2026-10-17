@@ -254,6 +254,19 @@ body:has(.bottomnav) .page { padding-bottom: 88px; }
 .evidence-text { white-space: pre-line; overflow-wrap: anywhere; }
 .mod-conversation { margin-bottom: 10px; }
 .mod-conversation summary { cursor: pointer; font-weight: 600; }
+
+/* Administration (M7) */
+.stats { margin: 0; display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.stats div { padding: 10px; border-radius: 10px; background: var(--info-bg); }
+.stats dt { font-size: 0.8rem; color: var(--muted); }
+.stats dd { margin: 0; font-size: 1.3rem; font-weight: 700; }
+.inline-form { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 10px 0; }
+.inline-form select, .inline-form input {
+  min-height: 36px; padding: 4px 8px; font: inherit; color: var(--text); background: var(--surface);
+  border: 1px solid var(--border); border-radius: 8px;
+}
+.inline-form input[type=number] { width: 80px; }
+@media (min-width: 768px) { .stats { grid-template-columns: repeat(4, 1fr); } }
 .button.danger-fill { background: var(--error); color: #fff; }
 
 @media (min-width: 768px) {

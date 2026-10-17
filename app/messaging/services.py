@@ -19,7 +19,7 @@ from ..matches.queries import find_match, has_active_match, pair
 from ..matches.services import active_matches
 from ..profiles.models import Profile
 from ..safety.queries import is_blocked_between
-from ..subscriptions.services import effective_tier
+from ..core.features import has_feature
 from .models import Conversation, ConversationMember, Message, MessageDeletion
 
 MAX_LENGTH = 2000
@@ -84,7 +84,8 @@ def write_block_reason(sender, other):
     profile = db.session.get(Profile, sender.id)
     if profile is not None and profile.is_paused:
         return "Din profil er på pause. Aktivér den for at skrive beskeder."
-    if effective_tier(sender.id) == "free" and effective_tier(other.id) == "free":
+    # Har mindst én af de to funktionen, kan begge skrive (specifikation 8.2).
+    if not (has_feature(sender, "messages.reply") or has_feature(other, "messages.reply")):
         return ("I har begge Free, så samtalen er låst. Når en af jer har Premium eller Premium+, "
                 "kan I skrive sammen igen. I kan stadig læse jeres tidligere beskeder.")
     return None
@@ -94,6 +95,8 @@ def access(user, conversation):
     """Adgangen til en samtale, eller None hvis brugeren ikke må se den. Kontrolleres på serveren ved
     hver forespørgsel."""
     if conversation is None or conversation.hidden_at is not None or membership(conversation, user.id) is None:
+        return None
+    if not has_feature(user, "messages.read"):
         return None
     other_id = conversation.other_id(user.id)
     other = db.session.get(User, other_id) if other_id else None

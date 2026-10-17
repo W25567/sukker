@@ -27,6 +27,7 @@ def create_app(config_name=None):
     from .auth import sessions
     from .auth.routes import bp as auth_bp
     from .account.routes import bp as account_bp
+    from .admin.routes import bp as admin_bp
     from .cli import register_cli
     from .core import errors, security
     from .core.views import bp as core_bp
@@ -53,6 +54,7 @@ def create_app(config_name=None):
     app.register_blueprint(messaging_bp)
     app.register_blueprint(safety_bp)
     app.register_blueprint(moderation_bp)
+    app.register_blueprint(admin_bp)
 
     from .core.timeutil import DANISH_TZ
     from .messaging.services import total_unread

@@ -1,7 +1,7 @@
 from flask import Blueprint, g, render_template, request
 
 from ..auth.sessions import login_required
-from ..subscriptions.services import effective_tier
+from ..core.features import has_feature
 from .forms import FilterForm
 from .services import search
 
@@ -14,7 +14,7 @@ def index():
     page = max(1, request.args.get("side", 1, type=int) or 1)
     form = FilterForm(request.args)
     # Al filtrering kræver Premium eller Premium+ (specifikation 6.3). Håndhæves her på serveren.
-    filters_allowed = effective_tier(g.user.id) != "free"
+    filters_allowed = has_feature(g.user, "search.filters")
     criteria = form.criteria() if filters_allowed else None
     cards, has_more = search(g.user, criteria, page)
 

@@ -4,7 +4,7 @@ from ..auth.forms import ActionForm
 from ..auth.sessions import login_required, safe_next_url
 from ..extensions import db, limiter
 from ..profiles.services import age_of, can_view_profile, find_user_by_username
-from ..subscriptions.services import effective_tier
+from ..core.features import has_feature
 from . import services
 from .queries import find_match
 
@@ -54,7 +54,7 @@ def unlike(username):
 @login_required
 def index():
     """Matches og likes til brugeren (specifikation 6.1 og 7)."""
-    can_see_likers = effective_tier(g.user.id) != "free"
+    can_see_likers = has_feature(g.user, "likes.view_received")
     likes = services.received_likes(g.user)
     return render_template(
         "matches/index.html",
