@@ -3,6 +3,7 @@
 {% block title %}Konto – Sukker.nu{% endblock %}
 {% block content %}
   <h1>Konto</h1>
+  <div class="panels">
 
   <section class="card">
     <h2>Dig</h2>
@@ -79,4 +80,5 @@
     <p class="muted">Sletter din profil, dine billeder, likes og matches. Det kan ikke fortrydes.</p>
     <a class="button secondary danger" href="{{ url_for('account.delete') }}">Slet min profil</a>
   </section>
+  </div>
 {% endblock %}

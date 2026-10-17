@@ -166,3 +166,17 @@ def test_admin_thread_live_updates(app, outbox, ctx):
     assert anna.get(f"/beskeder/administrator/nye?version={version}").status_code == 204
     admin.post(f"/admin/bruger/{user('Anna').id}/samtale", data={"body": "Er du der?"})
     assert "Er du der?" in anna.get(f"/beskeder/administrator/nye?version={version}").get_json()["html"]
+
+
+def test_admin_side_of_thread_live_updates(app, outbox, ctx):
+    admin = make_user(app, outbox, "Hanne", role="admin")
+    anna = make_user(app, outbox, "Anna")
+    url = f"/admin/bruger/{user('Anna').id}/samtale"
+    admin.post(url, data={"body": "Hej"})
+    version = re.search(r'data-version="([^"]+)"', admin.get(url).get_data(as_text=True)).group(1)
+    assert admin.get(f"{url}/nye?version={version}").status_code == 204
+    anna.post("/beskeder/administrator", data={"body": "Hej igen"})
+    html = admin.get(f"{url}/nye?version={version}").get_json()["html"]
+    assert "Hej igen" in html and "Administrator (Hanne)" in html
+    assert "Henvendelser" in admin.get("/admin/").get_data(as_text=True)
+    assert anna.get(f"{url}/nye").status_code == 404  # kun administratorer

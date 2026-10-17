@@ -11,6 +11,7 @@
   --success: #1f7a4d;
   --info-bg: #f3eef6;
   --radius: 14px;
+  --app-width: 1100px;  /* indholdsbredden på desktop for indloggede og administrationen */
 }
 
 @media (prefers-color-scheme: dark) {
@@ -264,7 +265,7 @@ a.stat .stat-value { color: var(--accent); }
 .stat.warn { border-color: var(--error); }
 .stat-label { font-size: 0.8rem; color: var(--muted); }
 .stat-value { font-size: 1.3rem; font-weight: 700; }
-.page.admin-wide { max-width: 1100px; }
+.page.admin-wide { max-width: var(--app-width); }
 .section-nav { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 0 0 16px; font-size: 0.92rem; }
 .admin-filter { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; margin-bottom: 8px; }
 .admin-filter .field { margin: 0; }
@@ -369,4 +370,25 @@ body:has(.bottomnav) .site-footer { padding-bottom: 80px; }
   .bottomnav { order: 1; }
   .notice { order: 2; }
   .page { order: 3; width: 100%; }
+
+  /* Indloggede på desktop: topbjælke, menu og indhold følger samme bredde som administrationen,
+     i stedet for en forstørret mobilside. Offentlige sider og log ind beholder den smalle læsebredde. */
+  .member .page { max-width: var(--app-width); }
+  .member .topbar { padding-inline: max(16px, calc((100% - var(--app-width)) / 2 + 16px)); }
+  .member .bottomnav { display: flex; gap: 4px; max-width: var(--app-width); padding: 0 16px; }
+  .member .bottomnav a { min-height: 48px; padding: 0 18px; }
+  .member .page > p, .member .page > .form:not(:has(.panels)):not(.composer), .member .page.public > * { max-width: 760px; }
+  .member .page > .button.wide { max-width: 360px; }
+  .form > .button { justify-self: start; width: auto; min-width: 200px; }
+  .actions { display: flex; flex-wrap: wrap; }
+  .panels { columns: 2; column-gap: 16px; }
+  .panels > * { break-inside: avoid; }
+  .cards { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+  .image-grid { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); }
+  .filters .form { grid-template-columns: 1fr 1fr; column-gap: 24px; }
+  .filters .form > .checkbox, .filters .form > .actions { grid-column: 1 / -1; }
+  .profile { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 24px; align-items: start; }
+  .profile .gallery { position: sticky; top: 16px; }
+  .profile h1 { margin-top: 0; }
+  .bubble { max-width: min(85%, 640px); }
 }

@@ -9,18 +9,14 @@
   <p class="muted">Brugeren ser beskederne som fra <strong>Administrator</strong> – ikke hvem af jer, der skriver. Hver besked registreres i administrationsloggen.
     {% if thread and thread.user_hidden_at %}Brugeren slettede samtalen {{ thread.user_hidden_at | local_datetime }}. Skriver du igen, vises hele historikken for brugeren igen.{% endif %}</p>
 
-  <ol class="thread">
-    {% for m in messages %}
-      <li class="bubble{% if m.from_admin %} mine{% endif %}">
-        <span class="sender">{{ ('Administrator (' ~ admins.get(m.admin_id, 'tidligere administrator') ~ ')') if m.from_admin else target.display_name }}</span>
-        <p>{{ m.body }}</p>
-        <span class="bubble-meta">{{ m.created_at | local_datetime }}</span>
-      </li>
-    {% else %}
-      <li class="muted center">Ingen beskeder endnu. Skriv en henstilling eller et spørgsmål til brugeren.</li>
-    {% endfor %}
+  {# Brugerens svar hentes automatisk (static/js/conversation.js). #}
+  <ol class="thread" id="thread"
+      data-poll-url="{{ url_for('admin.user_thread_updates', user_id=target.id) }}" data-version="{{ version }}">
+    {% include "admin/_user_thread.html" %}
   </ol>
+  <p id="thread-status" class="visually-hidden" aria-live="polite"></p>
   <span id="bund"></span>
+  <script src="{{ url_for('static', filename='js/conversation.js') }}" defer></script>
 
   <form method="post" class="form composer">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

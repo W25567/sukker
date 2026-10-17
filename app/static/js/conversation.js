@@ -1,12 +1,15 @@
-// Henter nye beskeder i en åben samtale, så man ikke skal genindlæse siden.
-// Spørger hvert sekund, mens fanen er synlig. Serveren svarer 204, når intet er ændret.
+// Samtaler: Ruller til de nyeste beskeder, når samtalen åbnes, og henter nye beskeder, så man ikke skal
+// genindlæse siden. Spørger hvert sekund, mens fanen er synlig. Serveren svarer 204, når intet er ændret.
+// Bruges både af brugernes samtaler og af administrationens samtaler med en bruger.
 (function () {
   "use strict";
 
   var thread = document.getElementById("thread");
-  if (!thread || !window.fetch) {
+  if (!thread) {
     return;
   }
+  var composer = document.querySelector(".composer");
+  var bottomnav = document.querySelector(".bottomnav");
   var status = document.getElementById("thread-status");
   var url = thread.getAttribute("data-poll-url");
   var version = thread.getAttribute("data-version");
@@ -16,8 +19,24 @@
   var timer = null;
   var stopped = false;
 
-  function nearBottom() {
-    return window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 160;
+  // Højden på den faste bundmenu på mobil. På større skærme ligger menuen øverst og fylder ikke i bunden.
+  function coveredBottom() {
+    return bottomnav && window.getComputedStyle(bottomnav).position === "fixed" ? bottomnav.offsetHeight : 0;
+  }
+
+  function visibleHeight() {
+    return window.innerHeight - coveredBottom();
+  }
+
+  // Ruller, så den nyeste besked og skrivefeltet er synlige.
+  function showLatest() {
+    var target = composer || thread;
+    var bottom = target.getBoundingClientRect().bottom + window.scrollY;
+    window.scrollTo(0, Math.max(0, bottom - visibleHeight() + 16));
+  }
+
+  function latestInView() {
+    return thread.getBoundingClientRect().bottom <= visibleHeight() + 120;
   }
 
   function messageCount(key) {
@@ -57,13 +76,13 @@
       return response.json();
     }).then(function (data) {
       if (data) {
-        var stick = nearBottom();
+        var stick = latestInView();
         var newMessages = messageCount(data.version) > messageCount(version);
         thread.innerHTML = data.html;
         version = data.version;
         failures = 0;
         if (stick) {
-          window.scrollTo(0, document.documentElement.scrollHeight);
+          showLatest();
         }
         if (newMessages && status) {
           // Tøm først, så skærmlæsere også annoncerer den næste nye besked.
@@ -74,6 +93,18 @@
     }).catch(function () {
       failures += 1;
     }).then(schedule);
+  }
+
+  // Åbn samtalen ved de nyeste beskeder, medmindre adressen peger på noget bestemt på siden.
+  if (!window.location.hash || window.location.hash === "#bund") {
+    if ("scrollRestoration" in window.history) {
+      window.history.scrollRestoration = "manual";
+    }
+    showLatest();
+  }
+
+  if (!url || !window.fetch) {
+    return;
   }
 
   document.addEventListener("visibilitychange", function () {

@@ -24,6 +24,7 @@
   <form method="post" novalidate class="form">
     {{ form.hidden_tag() }}
 
+    <div class="panels">
     <section class="card">
       <h2>Grundlæggende</h2>
       <div class="field" id="stjernetegn">
@@ -62,6 +63,7 @@
       {{ field(form.long_distance_ok) }}{{ hide_toggle('long_distance_ok') }}
       {{ field(form.expectations) }}{{ hide_toggle('expectations') }}
     </section>
+    </div>
 
     <button type="submit" class="button wide">Gem profil</button>
   </form>

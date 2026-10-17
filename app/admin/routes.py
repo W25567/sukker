@@ -1,6 +1,6 @@
 from datetime import datetime, time
 
-from flask import Blueprint, abort, current_app, flash, g, redirect, render_template, request, send_file, url_for
+from flask import Blueprint, abort, current_app, flash, g, jsonify, redirect, render_template, request, send_file, url_for
 from flask_wtf import FlaskForm
 from sqlalchemy import select
 
@@ -166,11 +166,34 @@ def user_thread(user_id):
     admin_threads.mark_read_by_admin(target.id)
     db.session.commit()
     thread = admin_threads.thread_for(target.id)
-    admins = {u.id: u.display_name for u in db.session.scalars(select(User).where(User.role == "admin"))}
     return render_template(
-        "admin/user_thread.html", target=target, form=form, thread=thread, admins=admins,
-        messages=admin_threads.messages(target.id), unread_thread=0,
+        "admin/user_thread.html", target=target, form=form, thread=thread, admins=_admin_names(),
+        messages=admin_threads.messages(target.id), version=admin_threads.version(target.id), unread_thread=0,
     )
+
+
+def _admin_names():
+    return {u.id: u.display_name for u in db.session.scalars(select(User).where(User.role == "admin"))}
+
+
+@bp.route("/bruger/<int:user_id>/samtale/nye")
+@admin_required
+def user_thread_updates(user_id):
+    """Automatisk opdatering af samtalen med brugeren. Svarer 204, når intet er ændret, ellers tråden som HTML."""
+    target = db.session.get(User, user_id)
+    if target is None:
+        abort(404)
+    version = admin_threads.version(target.id)
+    if request.args.get("version") == version:
+        response = current_app.response_class(status=204)
+    else:
+        admin_threads.mark_read_by_admin(target.id)  # administratoren har samtalen åben og ser svaret
+        db.session.commit()
+        html = render_template("admin/_user_thread.html", target=target, admins=_admin_names(),
+                               messages=admin_threads.messages(target.id))
+        response = jsonify(version=version, html=html)
+    response.headers["Cache-Control"] = "no-store"
+    return response
 
 
 @bp.route("/bruger/<int:user_id>/billede/<public_id>/<variant>.webp")

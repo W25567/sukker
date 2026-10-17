@@ -27,6 +27,7 @@
       <div class="no-photo" aria-hidden="true">{{ user.display_name[:1] | upper }}</div>
     {% endif %}
 
+    <div class="profile-info">
     <h1>{{ user.display_name }}, {{ age }}</h1>
     {% if zodiac %}<p class="zodiac"><span aria-hidden="true">{{ zodiac.symbol }}</span> {{ zodiac.name }}</p>{% endif %}
     {% if distance or kommune %}
@@ -66,5 +67,6 @@
         <a href="{{ url_for('safety.report_profile', handle=user.handle) }}">Anmeld</a>
       </div>
     {% endif %}
+    </div>
   </article>
 {% endblock %}

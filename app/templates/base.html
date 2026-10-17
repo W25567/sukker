@@ -35,7 +35,7 @@
   <meta name="theme-color" content="#a8325a">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
 </head>
-<body>
+<body{% if current_user %} class="member"{% endif %}>
   <header class="topbar">
     <a class="brand" href="{{ url_for('core.home') }}">
       <img src="{{ url_for('static', filename='images/logo-64.webp') }}" width="38" height="32" alt=""><span class="brand-name">Sukker<span>.nu</span></span>
