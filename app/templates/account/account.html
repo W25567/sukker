@@ -5,6 +5,16 @@
   <h1>Konto</h1>
 
   <section class="card">
+    <h2>Dig</h2>
+    <p>Logget ind som <strong>{{ current_user.email }}</strong>. <span class="muted">E-mailen vises aldrig for andre.</span></p>
+    <form method="post" action="{{ url_for('account.change_display_name') }}" novalidate class="form">
+      {{ name_form.hidden_tag() }}
+      {{ field(name_form.display_name, autocomplete="nickname", hint="Det navn, andre ser. Det behøver ikke være dit rigtige navn, og andre må gerne hedde det samme.") }}
+      <button type="submit" class="button secondary">Gem navn</button>
+    </form>
+  </section>
+
+  <section class="card">
     <h2>Abonnement</h2>
     {% if subscription and subscription.is_lifetime %}
       <p><strong>{{ tier_label }} for livstid</strong>{% if subscription.source == 'early_bird' %} – tak, fordi du er tidlig fugl{% endif %}.</p>

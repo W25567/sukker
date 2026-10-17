@@ -195,3 +195,19 @@ def test_footer_only_for_visitors_and_help_for_members(app, outbox, ctx, client)
     for path in ("/vilkaar", "/privatlivspolitik", "/cookies", "/ofte-stillede-spoergsmaal", "/tryghed"):
         assert f'href="{path}"' in help_page
     assert client.get("/hjaelp").status_code == 302  # kun for medlemmer
+
+
+# --- Konto ---------------------------------------------------------------------------------------------------
+
+
+def test_account_shows_email_and_can_change_display_name(app, outbox, ctx):
+    anna = make_user(app, outbox, "Anna")
+    page = anna.get("/konto/").get_data(as_text=True)
+    assert "Logget ind som <strong>anna@example.com</strong>" in page and 'value="Anna"' in page
+
+    response = anna.post("/konto/navn", data={"display_name": "  Anna   Sofie "})
+    assert response.status_code == 302 and user("Anna Sofie") is not None
+
+    response = anna.post("/konto/navn", data={"display_name": "!"})
+    assert response.status_code == 400 and "2-30 tegn" in response.get_data(as_text=True)
+    assert user("Anna Sofie") is not None

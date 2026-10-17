@@ -3,7 +3,7 @@ import json
 from flask import Blueprint, Response, flash, g, redirect, render_template, session, url_for
 
 from ..auth import services
-from ..auth.forms import ActionForm, ChangePasswordForm, DeleteAccountForm
+from ..auth.forms import ActionForm, ChangePasswordForm, DeleteAccountForm, DisplayNameForm
 from ..auth.passwords import verify_password
 from ..auth.sessions import active_sessions, end_current_session, login_required, revoke_sessions
 from ..extensions import db, limiter
@@ -17,10 +17,13 @@ bp = Blueprint("account", __name__, url_prefix="/konto")
 bp.add_app_template_filter(describe_device, "device")
 
 
-def _render_account(password_form=None, status=200):
+def _render_account(password_form=None, status=200, name_form=None):
+    if name_form is None:
+        name_form = DisplayNameForm(formdata=None, display_name=g.user.display_name)
     return (
         render_template(
             "account/account.html",
+            name_form=name_form,
             password_form=password_form or ChangePasswordForm(),
             action_form=ActionForm(),
             sessions=active_sessions(g.user.id),
@@ -36,6 +39,20 @@ def _render_account(password_form=None, status=200):
 @login_required
 def overview():
     return _render_account()
+
+
+@bp.route("/navn", methods=["POST"])
+@login_required
+@limiter.limit("10 per hour", methods=["POST"])
+def change_display_name():
+    form = DisplayNameForm()
+    if not form.validate_on_submit():
+        return _render_account(status=400, name_form=form)
+    if form.display_name.data != g.user.display_name:
+        g.user.display_name = form.display_name.data
+        db.session.commit()
+        flash("Dit viste navn er ændret.", "success")
+    return redirect(url_for("account.overview"))
 
 
 @bp.route("/password", methods=["POST"])

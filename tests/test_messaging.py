@@ -216,7 +216,7 @@ def test_deleted_account_shows_as_deleted_user(app, outbox, ctx):
     assert db.session.scalar(select(func.count(Message.id))) == 2
 
     html = bodil.get(url).get_data(as_text=True)
-    thread = html.split('<ol class="thread">')[1].split("</ol>")[0]
+    thread = html.split('<ol class="thread" id="thread"')[1].split("</ol>")[0]
     assert "Slettet bruger" in thread and "Hej fra Anna" in thread
     assert "Anna" not in thread.replace("Hej fra Anna", "")  # intet navn eller link til den slettede profil
     assert "har slettet sin profil" in html
@@ -240,3 +240,35 @@ def test_conversation_hidden_by_removed_match_stays_hidden_after_account_deletio
     anna.post("/konto/slet", data={"password": "et-langt-password", "confirm": "y"})
     assert bodil.get(url).status_code == 404
     assert db.session.scalar(select(Conversation.hidden_at)) is not None
+
+
+# --- Automatisk opdatering --------------------------------------------------------------------------------
+
+
+def test_open_conversation_receives_new_messages_without_reload(app, outbox, ctx):
+    anna, bodil = matched_pair(app, outbox)
+    url = open_conversation(anna, "Bodil")
+    page = anna.get(url).get_data(as_text=True)
+    version = re.search(r'data-version="([^"]+)"', page).group(1)
+    poll_url = re.search(r'data-poll-url="([^"]+)"', page).group(1)
+    assert 'src="/static/js/conversation.js' in page
+
+    unchanged = anna.get(f"{poll_url}?version={version}")
+    assert unchanged.status_code == 204 and unchanged.headers["Cache-Control"] == "no-store"
+
+    send(bodil, open_conversation(bodil, "Anna"), "Er du der?")
+    changed = anna.get(f"{poll_url}?version={version}")
+    data = changed.get_json()
+    assert changed.status_code == 200 and "Er du der?" in data["html"] and data["version"] != version
+    assert anna.get(f"{poll_url}?version={data['version']}").status_code == 204
+    assert "unread-count" not in anna.get("/udforsk").get_data(as_text=True)  # markeret som læst
+
+
+def test_live_updates_respect_access(app, outbox, ctx):
+    anna, bodil = matched_pair(app, outbox)
+    url = open_conversation(anna, "Bodil")
+    poll_url = url.rstrip("/") + "/nye"
+    carla = make_user(app, outbox, "Carla")
+    assert carla.get(poll_url).status_code == 404
+    bodil.post(f"/bruger/{h('Anna')}/bloker")
+    assert anna.get(poll_url).status_code == 404  # blokering slår igennem med det samme

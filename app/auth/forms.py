@@ -34,8 +34,8 @@ def _new_password_field(label="Password"):
     )
 
 
-class RegistrationForm(FlaskForm):
-    display_name = StringField(
+def _display_name_field():
+    return StringField(
         "Vist navn",
         filters=[normalize_display_name],
         validators=[
@@ -43,6 +43,16 @@ class RegistrationForm(FlaskForm):
             Regexp(DISPLAY_NAME_PATTERN, message="2-30 tegn: bogstaver, tal, mellemrum, punktum, bindestreg eller apostrof."),
         ],
     )
+
+
+class DisplayNameForm(FlaskForm):
+    """Ret det viste navn under Konto. Samme regler som ved oprettelsen."""
+
+    display_name = _display_name_field()
+
+
+class RegistrationForm(FlaskForm):
+    display_name = _display_name_field()
     email = EmailField(
         "E-mail",
         filters=[_lower],

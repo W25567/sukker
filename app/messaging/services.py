@@ -128,6 +128,15 @@ def visible_messages(user, conversation):
     return db.session.scalars(_visible_messages_query(user.id, member).order_by(Message.created_at, Message.id)).all()
 
 
+def thread_version(user, conversation):
+    """En kort nøgle, der ændrer sig, når brugerens synlige beskeder ændrer sig. Bruges til automatisk
+    opdatering af samtalen, så serveren kun sender tråden, når der faktisk er noget nyt."""
+    member = membership(conversation, user.id)
+    visible = _visible_messages_query(user.id, member).subquery()
+    count, last_id = db.session.execute(select(func.count(visible.c.id), func.max(visible.c.id))).one()
+    return f"{count}-{last_id or 0}"
+
+
 def timeline(user, conversation):
     """Beskeder og markeringer af fjernede matches i tidsorden."""
     member = membership(conversation, user.id)

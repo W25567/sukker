@@ -328,6 +328,10 @@ a.stat .stat-value { color: var(--accent); }
 .faq details p { margin-top: 0; }
 .early-bird-card { border-color: var(--accent); background: var(--info-bg); }
 .early-bird-card h2 { color: var(--accent); }
+.visually-hidden {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}
 .zodiac { margin: -0.5rem 0 0.75rem; color: var(--muted); }
 .early-bird-note { padding: 10px 12px; border-radius: 10px; border: 1px solid var(--accent); background: var(--info-bg); }
 .early-bird-banner {

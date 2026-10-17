@@ -13,29 +13,14 @@
     </h1>
   </div>
 
-  <ol class="thread">
-    {% for item in items %}
-      {% if item.kind == 'match_removed' %}
-        <li class="thread-marker">Match fjernet · {{ item.at | local_datetime }}</li>
-      {% else %}
-        <li class="bubble{% if item.mine %} mine{% endif %}">
-          {% if not item.mine and not item.message.sender_id %}<span class="sender">{{ deleted_user }}</span>{% endif %}
-          <p>{{ item.message.body }}</p>
-          <span class="bubble-meta">
-            {{ item.at | local_datetime }}
-            <form method="post" action="{{ url_for('messaging.delete_message', conversation_id=conversation.id, message_id=item.message.id) }}" class="inline">
-              {{ action_form.hidden_tag() }}
-              <button type="submit" class="link" title="Slet beskeden for dig">Slet</button>
-            </form>
-            {% if not item.mine %}<a href="{{ url_for('safety.report_message', message_id=item.message.id) }}">Anmeld</a>{% endif %}
-          </span>
-        </li>
-      {% endif %}
-    {% else %}
-      <li class="muted center">Ingen beskeder endnu.</li>
-    {% endfor %}
+  {# Nye beskeder hentes automatisk (static/js/conversation.js). Uden JavaScript virker siden som før. #}
+  <ol class="thread" id="thread"
+      data-poll-url="{{ url_for('messaging.updates', conversation_id=conversation.id) }}" data-version="{{ version }}">
+    {% include "messaging/_thread.html" %}
   </ol>
+  <p id="thread-status" class="visually-hidden" aria-live="polite"></p>
   <span id="bund"></span>
+  <script src="{{ url_for('static', filename='js/conversation.js') }}" defer></script>
 
   {% if access.can_write %}
     <form method="post" class="form composer" novalidate>
