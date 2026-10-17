@@ -76,6 +76,16 @@
     <p class="muted">Vil du skjule enkelte oplysninger, kan du gøre det, når du <a href="{{ url_for('profiles.edit') }}">redigerer profilen</a>.</p>
   </section>
 
+  <section class="card" id="udforsk">
+    <h2>Udforsk</h2>
+    <form method="post" action="{{ url_for('profiles.explore_preferences') }}" class="form">
+      {{ explore_form.hidden_tag() }}
+      <div class="field checkbox"><label>{{ explore_form.hide_liked() }} {{ explore_form.hide_liked.label.text }}</label></div>
+      <button type="submit" class="button secondary">Gem standardvalg</button>
+    </form>
+    <p class="muted">Dit standardvalg. Du kan altid slå det til og fra øverst i Udforsk. Et match vises altid.</p>
+  </section>
+
   <section class="card">
     <h2>Pause</h2>
     <p class="muted">På pause forsvinder profilen fra Udforsk, men dine matches og samtaler bevares.</p>

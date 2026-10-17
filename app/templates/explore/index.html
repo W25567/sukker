@@ -10,6 +10,7 @@
     <summary>Filtre{% if filters_active %} <span class="badge-inline">Aktive</span>{% endif %}</summary>
     {% if filters_allowed %}
       <form method="get" action="{{ url_for('explore.index') }}" class="form">
+        <input type="hidden" name="likede" value="{{ 'skjul' if hide_liked else 'vis' }}">
         <div class="field">{{ form.afstand.label }}{{ form.afstand() }}</div>
         <div class="row">
           <div class="field">{{ form.alder_fra.label }}{{ form.alder_fra(min=18, max=99) }}</div>
@@ -41,6 +42,15 @@
     {% endif %}
     <a href="{{ url_for('profiles.edit') }}">Ret på din profil</a>
   </p>
+
+  {# Gælder for alle, også Free. Standardvalget gemmes under Min profil → Udforsk. #}
+  <div class="chips-row explore-toggles">
+    <a class="chip{% if hide_liked %} active{% endif %}" href="{{ url_for('explore.index', **toggle_args) }}"
+       role="switch" aria-checked="{{ 'true' if hide_liked else 'false' }}">
+      {% if hide_liked %}✓ {% endif %}Skjul profiler, jeg har liket
+    </a>
+    <a class="small-link" href="{{ url_for('profiles.me') }}#udforsk">Standardvalg</a>
+  </div>
 
   {% if not has_kommune %}
     <p class="muted">Afstande vises, når kommunedata er indlæst.</p>
@@ -75,7 +85,8 @@
     {% endif %}
   {% else %}
     <div class="card">
-      <p>{{ 'Ingen profiler matcher dine filtre.' if filters_active else 'Der er ingen profiler at vise endnu.' }}</p>
+      <p>{{ 'Ingen profiler matcher dine filtre.' if filters_active or hide_liked else 'Der er ingen profiler at vise endnu.' }}</p>
+      {% if hide_liked %}<p class="muted">Profiler, du har liket, er skjult. <a href="{{ url_for('explore.index', **toggle_args) }}">Vis dem</a></p>{% endif %}
     </div>
   {% endif %}
 {% endblock %}

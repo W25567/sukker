@@ -37,6 +37,8 @@ class User(db.Model):
     # Hvornår brugeren har set velkomstsiden. NULL = vises ved næste besøg (app/pages/onboarding.py).
     welcomed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     password_changed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Hvornår brugeren sidst åbnede Likes. Nyere matches tælles som nye i menuen (app/notifications.py).
+    matches_seen_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
     # Roller er adskilte: moderator behandler sager, administrator styrer platformen (specifikation 9.3).
     role: Mapped[str] = mapped_column(String(20), nullable=False, server_default="user")

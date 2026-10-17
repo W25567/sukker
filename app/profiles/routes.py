@@ -14,7 +14,7 @@ from ..media import services as media
 from ..media.processing import ACCEPT, ImageRejected
 from ..subscriptions.services import early_bird_open, grant_early_bird, has_early_bird
 from .fields import completeness, visible_fields
-from .forms import ProfileForm, VisibilityForm
+from .forms import ExplorePreferenceForm, ProfileForm, VisibilityForm
 from .services import age_of, can_view_profile, find_user_by_handle, get_or_create_profile
 from .zodiac import visible_zodiac, zodiac_for
 
@@ -50,6 +50,8 @@ def me():
     images = media.list_images(g.user.id)
     visibility_form = VisibilityForm()
     visibility_form.load(profile)
+    explore_form = ExplorePreferenceForm()
+    explore_form.hide_liked.data = profile.hide_liked
     db.session.commit()
     return render_template(
         "profiles/me.html",
@@ -58,6 +60,7 @@ def me():
         completeness=completeness(profile, len(images)),
         upload_form=UploadForm(),
         visibility_form=visibility_form,
+        explore_form=explore_form,
         action_form=ActionForm(),
         accept=ACCEPT,
         zodiac=zodiac_for(g.user.birthdate),
@@ -91,6 +94,18 @@ def visibility():
         db.session.commit()
         flash("Dine synlighedsindstillinger er gemt.", "success")
     return redirect(url_for("profiles.me"))
+
+
+@bp.route("/profil/udforsk", methods=["POST"])
+@login_required
+def explore_preferences():
+    """Standardvalg for Udforsk. Kan slås til og fra for den enkelte visning direkte i Udforsk."""
+    form = ExplorePreferenceForm()
+    if form.validate_on_submit():
+        form.save(get_or_create_profile(g.user))
+        db.session.commit()
+        flash("Dit standardvalg for Udforsk er gemt.", "success")
+    return redirect(url_for("profiles.me") + "#udforsk")
 
 
 @bp.route("/profil/pause", methods=["POST"])

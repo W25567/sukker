@@ -88,6 +88,20 @@ def make_primary(image):
         other.position = position
 
 
+def avatar_ids(viewer, users):
+    """Profilbilledet (første offentlige billede) til små runde billeder i lister, som {bruger-id: public_id}.
+    Kun for profiler, som `viewer` må se, så listen aldrig linker til et billede, der giver 404."""
+    visible = [u for u in users if u is not None and can_view_profile(viewer, u)]
+    if not visible:
+        return {}
+    rows = db.session.execute(
+        select(ProfileImage.user_id, ProfileImage.public_id)
+        .where(ProfileImage.user_id.in_([u.id for u in visible]), ProfileImage.collection == "public")
+        .order_by(ProfileImage.user_id, ProfileImage.position.desc(), ProfileImage.id.desc())
+    ).all()
+    return {user_id: public_id for user_id, public_id in rows}  # den sidste pr. bruger vinder: position 0
+
+
 def can_view_image(viewer, image, owner):
     """Adgang kontrolleres ved hver forespørgsel (specifikation 4.3).
 

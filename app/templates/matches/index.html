@@ -1,17 +1,20 @@
 {% extends "base.html" %}
 {% from "_like.html" import like_button %}
+{% from "_avatar.html" import avatar %}
 {% block title %}Likes og matches – Sukker.nu{% endblock %}
 {% block content %}
   <h1>Likes</h1>
   <div class="panels">
-
   <section class="card">
     <h2>Dine matches</h2>
     {% if matches %}
       <ul class="person-list">
-        {% for other, age in matches %}
+        {% for other, age, is_new in matches %}
           <li>
-            <a href="{{ url_for('profiles.view', handle=other.handle, fra=url_for('matches.index')) }}">{{ other.display_name }}, {{ age }}</a>
+            <a class="person" href="{{ url_for('profiles.view', handle=other.handle, fra=url_for('matches.index')) }}">
+              {{ avatar(other, avatars.get(other.id)) }}
+              <span>{{ other.display_name }}, {{ age }}{% if is_new %} <span class="new-badge">Nyt</span>{% endif %}</span>
+            </a>
             <span class="row-actions">
               <a class="button small" href="{{ url_for('messaging.start', handle=other.handle) }}">Skriv</a>
               <a class="muted small-link" href="{{ url_for('matches.remove', handle=other.handle) }}">Fjern match</a>
@@ -31,7 +34,10 @@
         <ul class="person-list">
           {% for liker, age in likers %}
             <li>
-              <a href="{{ url_for('profiles.view', handle=liker.handle, fra=url_for('matches.index')) }}">{{ liker.display_name }}, {{ age }}</a>
+              <a class="person" href="{{ url_for('profiles.view', handle=liker.handle, fra=url_for('matches.index')) }}">
+                {{ avatar(liker, avatars.get(liker.id)) }}
+                <span>{{ liker.display_name }}, {{ age }}</span>
+              </a>
               {{ like_button(liker.handle, False, False, url_for('matches.index'), compact=True) }}
             </li>
           {% endfor %}

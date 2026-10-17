@@ -2,11 +2,24 @@ from flask import Blueprint, g, render_template, request
 
 from ..auth.sessions import login_required
 from ..core.features import has_feature
+from ..extensions import db
 from ..profiles import choices
+from ..profiles.models import Profile
 from .forms import FilterForm
 from .services import search, seeking_genders
 
 bp = Blueprint("explore", __name__)
+
+LIKED_PARAM = "likede"  # ?likede=skjul eller ?likede=vis. Uden parameter gælder brugerens præference.
+
+
+def hide_liked_choice(user):
+    """Om profiler, brugeren har liket uden match, skal skjules. Valget i Udforsk vinder over præferencen."""
+    value = request.args.get(LIKED_PARAM)
+    if value in ("skjul", "vis"):
+        return value == "skjul"
+    profile = db.session.get(Profile, user.id)
+    return bool(profile and profile.hide_liked)
 
 
 @bp.route("/udforsk")
@@ -15,13 +28,18 @@ def index():
     page = max(1, request.args.get("side", 1, type=int) or 1)
     form = FilterForm(request.args)
     # Al filtrering kræver Premium eller Premium+ (specifikation 6.3). Håndhæves her på serveren.
+    # At skjule profiler, man selv har liket, er ikke et Premium-filter: det gælder for alle.
     filters_allowed = has_feature(g.user, "search.filters")
     criteria = form.criteria() if filters_allowed else None
-    cards, has_more = search(g.user, criteria, page)
+    hide_liked = hide_liked_choice(g.user)
+    cards, has_more = search(g.user, criteria, page, hide_liked=hide_liked)
     seeking = choices.labels(choices.GENDERS_PLURAL, seeking_genders(g.user))
 
     next_args = request.args.to_dict(flat=False)
     next_args["side"] = [str(page + 1)]
+    toggle_args = request.args.to_dict(flat=False)
+    toggle_args.pop("side", None)
+    toggle_args[LIKED_PARAM] = ["vis" if hide_liked else "skjul"]
     return render_template(
         "explore/index.html",
         cards=cards,
@@ -31,6 +49,8 @@ def index():
         has_more=has_more,
         page=page,
         next_args=next_args,
+        toggle_args=toggle_args,
+        hide_liked=hide_liked,
         has_kommune=g.user.kommune_code is not None,
         seeking=seeking,
     )

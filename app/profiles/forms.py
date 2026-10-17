@@ -89,3 +89,10 @@ class VisibilityForm(FlaskForm):
     def save(self, profile):
         for name in ("hidden_from_search", "matches_only", "show_kommune", "show_activity"):
             setattr(profile, name, bool(getattr(self, name).data))
+
+
+class ExplorePreferenceForm(FlaskForm):
+    hide_liked = BooleanField("Skjul profiler, jeg har liket, indtil de liker tilbage")
+
+    def save(self, profile):
+        profile.hide_liked = bool(self.hide_liked.data)

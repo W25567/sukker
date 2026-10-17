@@ -7,6 +7,7 @@ from ..auth.forms import ActionForm
 from ..auth.sessions import login_required
 from ..extensions import db, limiter
 from ..matches.queries import has_active_match
+from ..media.services import avatar_ids
 from ..profiles.services import find_user_by_handle
 from . import admin_threads, services
 from .models import Conversation, Message
@@ -36,7 +37,10 @@ def inbox():
     archived = request.args.get("arkiv") == "1"
     admin_thread = None if archived else admin_threads.visible_to_user(g.user)
     admin_last = admin_threads.messages(g.user.id)[-1] if admin_thread else None
-    return render_template("messaging/inbox.html", items=services.inbox(g.user, archived=archived), archived=archived,
+    items = services.inbox(g.user, archived=archived)
+    # Fjernede matches vises med forbogstav, ikke billede: samtalen er lukket.
+    avatars = avatar_ids(g.user, [item.other for item in items if not item.removed])
+    return render_template("messaging/inbox.html", items=items, archived=archived, avatars=avatars,
                            admin_thread=admin_thread, admin_last=admin_last, action_form=ActionForm(),
                            admin_unread=admin_threads.unread_for_user(g.user) if admin_thread else 0)
 

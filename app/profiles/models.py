@@ -53,6 +53,10 @@ class Profile(db.Model):
     show_activity: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="true")
     paused_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
+    # Præferencer for Udforsk
+    # Skjul profiler, brugeren har liket, men som ikke har liket tilbage. Kan slås til og fra i Udforsk.
+    hide_liked: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
+
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
     )

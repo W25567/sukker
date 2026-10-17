@@ -11,6 +11,7 @@
   --success: #1f7a4d;
   --info-bg: #f3eef6;
   --radius: 14px;
+  --badge: #d92d20;  /* røde bobler med nye beskeder og matches */
   --app-width: 1100px;  /* indholdsbredden på desktop for indloggede og administrationen */
 }
 
@@ -351,6 +352,39 @@ a.stat .stat-value { color: var(--accent); }
 .help-list li { border-bottom: 1px solid var(--border); }
 .help-list li:last-child { border-bottom: 0; }
 .help-list a { display: flex; min-height: 48px; align-items: center; text-decoration: none; }
+/* Notifikationer, små profilbilleder og "skjul likede" */
+.nav-badge {
+  display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px; padding: 0 5px;
+  margin-left: 5px; border-radius: 999px; background: var(--badge); color: #fff; font-size: 0.72rem; font-weight: 700; line-height: 1;
+}
+.nav-badge[hidden] { display: none; }
+.avatar {
+  flex: none; width: 44px; height: 44px; border-radius: 50%; object-fit: cover; display: block; background: var(--border);
+}
+.avatar-letter { display: inline-flex; align-items: center; justify-content: center; background: var(--info-bg); color: var(--accent); font-weight: 700; }
+.avatar-admin { background: var(--accent); color: var(--accent-ink); }
+.removed-item .avatar { opacity: 0.6; }
+.inbox-item { display: flex; align-items: center; gap: 12px; }
+.inbox-text { display: grid; gap: 2px; min-width: 0; flex: 1; }
+.person { display: inline-flex; align-items: center; gap: 10px; min-width: 0; }
+.new-badge { margin-left: 4px; padding: 1px 7px; border-radius: 999px; background: var(--badge); color: #fff; font-size: 0.72rem; font-weight: 700; }
+.explore-toggles { align-items: center; margin: -4px 0 12px; }
+.explore-toggles .small-link { color: var(--muted); }
+.toasts {
+  position: fixed; right: 16px; bottom: calc(72px + env(safe-area-inset-bottom)); z-index: 20;
+  display: grid; gap: 8px; width: min(340px, calc(100vw - 32px));
+}
+.toast {
+  display: flex; align-items: center; gap: 8px; padding: 12px 10px 12px 14px; border-radius: var(--radius);
+  background: var(--surface); border: 1px solid var(--accent); box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18);
+  animation: toast-in 0.25s ease-out; transition: opacity 0.4s, transform 0.4s;
+}
+.toast a { flex: 1; color: var(--text); text-decoration: none; }
+.toast a strong { color: var(--accent); }
+.toast.leaving { opacity: 0; transform: translateY(8px); }
+.toast-close { flex: none; width: 32px; height: 32px; border: 0; border-radius: 50%; background: transparent; color: var(--muted); font-size: 1.3rem; cursor: pointer; }
+@keyframes toast-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .toast { animation: none; transition: none; } }
 .site-footer { padding: 24px 16px; border-top: 1px solid var(--border); text-align: center; color: var(--muted); font-size: 0.88rem; }
 .site-footer nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 16px; margin-bottom: 8px; }
 .site-footer a { color: var(--muted); }
@@ -391,4 +425,5 @@ body:has(.bottomnav) .site-footer { padding-bottom: 80px; }
   .profile .gallery { position: sticky; top: 16px; }
   .profile h1 { margin-top: 0; }
   .bubble { max-width: min(85%, 640px); }
+  .toasts { bottom: 24px; right: 24px; }
 }

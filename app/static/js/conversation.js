@@ -15,6 +15,8 @@
   var version = thread.getAttribute("data-version");
   var INTERVAL = 1000;
   var MAX_DELAY = 30000;
+  var IDLE_AFTER = 30000;  // har man ikke rørt siden i 30 sekunder, rulles der ned til en ny besked
+  var lastActivity = Date.now();
   var failures = 0;
   var timer = null;
   var stopped = false;
@@ -76,8 +78,9 @@
       return response.json();
     }).then(function (data) {
       if (data) {
-        var stick = latestInView();
         var newMessages = messageCount(data.version) > messageCount(version);
+        var idle = Date.now() - lastActivity > IDLE_AFTER;
+        var stick = latestInView() || (newMessages && idle);
         thread.innerHTML = data.html;
         version = data.version;
         failures = 0;
@@ -106,6 +109,11 @@
   if (!url || !window.fetch) {
     return;
   }
+
+  // Aktivitet er det, brugeren selv gør. "scroll" tælles ikke, fordi siden også ruller af sig selv.
+  ["wheel", "touchstart", "touchmove", "keydown", "pointerdown", "mousemove"].forEach(function (name) {
+    window.addEventListener(name, function () { lastActivity = Date.now(); }, { passive: true });
+  });
 
   document.addEventListener("visibilitychange", function () {
     if (!document.hidden) {

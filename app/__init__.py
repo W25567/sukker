@@ -97,8 +97,12 @@ def create_app(config_name=None):
     def inject_unread():
         from flask import g
 
+        from .notifications import new_match_count
+
         user = g.get("user")
-        return {"unread_messages": total_unread(user) if user is not None else 0}
+        if user is None:
+            return {"unread_messages": 0, "new_matches": 0}
+        return {"unread_messages": total_unread(user), "new_matches": new_match_count(user)}
 
     @app.url_defaults
     def static_version(endpoint, values):

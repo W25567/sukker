@@ -97,12 +97,20 @@
     {% set here = request.endpoint or '' %}
     <nav class="bottomnav" aria-label="Hovedmenu">
       <a href="{{ url_for('explore.index') }}"{% if here.startswith('explore.') %} aria-current="page"{% endif %}>Udforsk</a>
-      <a href="{{ url_for('matches.index') }}"{% if here.startswith('matches.') %} aria-current="page"{% endif %}>Likes</a>
+      {# Tallene i de røde bobler opdateres automatisk (static/js/notifications.js). #}
+      <a href="{{ url_for('matches.index') }}"{% if here.startswith('matches.') %} aria-current="page"{% endif %}>
+        Likes<span class="nav-badge" data-badge="matches" data-label="nye matches"{% if not new_matches %} hidden{% endif %}
+                   aria-label="{{ new_matches }} nye matches">{{ new_matches }}</span>
+      </a>
       <a href="{{ url_for('messaging.inbox') }}"{% if here.startswith('messaging.') %} aria-current="page"{% endif %}>
-        Beskeder{% if unread_messages %} <span class="unread-count" aria-label="{{ unread_messages }} ulæste">{{ unread_messages }}</span>{% endif %}
+        Beskeder<span class="nav-badge" data-badge="messages" data-label="ulæste"{% if not unread_messages %} hidden{% endif %}
+                      aria-label="{{ unread_messages }} ulæste">{{ unread_messages }}</span>
       </a>
       <a href="{{ url_for('profiles.me') }}"{% if here.startswith('profiles.') %} aria-current="page"{% endif %}>Min profil</a>
     </nav>
+    {# Midlertidige beskeder om nye beskeder og matches, nederst til højre. #}
+    <div class="toasts" id="toasts" aria-live="polite" data-url="{{ url_for('core.notifications') }}"></div>
+    <script src="{{ url_for('static', filename='js/notifications.js') }}" defer></script>
   {% endif %}
 </body>
 </html>

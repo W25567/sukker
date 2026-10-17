@@ -1,0 +1,8 @@
+{# Lille rundt profilbillede i lister. Uden billede vises forbogstavet. Billedet er pynt: navnet står ved siden af. #}
+{% macro avatar(user, image_id=None, letter=None) %}
+  {% if image_id %}
+    <img class="avatar" src="{{ url_for('media.image', public_id=image_id, variant='lille') }}" alt="" width="44" height="44" loading="lazy">
+  {% else %}
+    <span class="avatar avatar-letter" aria-hidden="true">{{ letter or (user.display_name[:1] | upper if user else '?') }}</span>
+  {% endif %}
+{% endmacro %}

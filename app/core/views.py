@@ -40,6 +40,19 @@ def home():
                            signup_months=get_setting("signup_premium_months"))
 
 
+@bp.route("/notifikationer")
+def notifications():
+    """Tal til menuen og nyeste besked/match til den midlertidige besked nederst på siden.
+    Spørges af static/js/notifications.js, mens fanen er synlig."""
+    if g.user is None:
+        return jsonify(error="login"), 401
+    from .. import notifications as notes
+
+    response = jsonify(notes.summary(g.user, url_for))
+    response.headers["Cache-Control"] = "no-store"
+    return response
+
+
 @bp.route("/health")
 def health():
     """Simpel proceskontrol (specifikation 15.5)."""

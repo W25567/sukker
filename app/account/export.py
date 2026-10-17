@@ -64,6 +64,7 @@ def export_user_data(user):
             "kun_for_matches": profile.matches_only,
             "vis_kommune": profile.show_kommune,
             "vis_aktivitet": profile.show_activity,
+            "skjul_likede_i_udforsk": profile.hide_liked,
         } if profile else None,
         "billeder": [
             {"id": image.public_id, "samling": image.collection, "bredde": image.width, "hoejde": image.height,

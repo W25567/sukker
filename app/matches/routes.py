@@ -3,6 +3,8 @@ from flask import Blueprint, abort, flash, g, redirect, render_template, request
 from ..auth.forms import ActionForm
 from ..auth.sessions import login_required, safe_next_url
 from ..extensions import db, limiter
+from ..media.services import avatar_ids
+from ..notifications import mark_matches_seen
 from ..profiles.services import age_of, can_view_profile, find_user_by_handle
 from ..core.features import has_feature
 from . import services
@@ -56,10 +58,17 @@ def index():
     """Matches og likes til brugeren (specifikation 6.1 og 7)."""
     can_see_likers = has_feature(g.user, "likes.view_received")
     likes = services.received_likes(g.user)
+    seen_before = g.user.matches_seen_at
+    matches = services.active_matches(g.user)
+    likers = [liker for _, liker in likes] if can_see_likers else []
+    mark_matches_seen(g.user)  # tallet ved Likes i menuen nulstilles, når listen er set
+    db.session.commit()
     return render_template(
         "matches/index.html",
-        matches=[(other, age_of(other)) for _, other in services.active_matches(g.user)],
-        likers=[(liker, age_of(liker)) for _, liker in likes] if can_see_likers else [],
+        matches=[(other, age_of(other), seen_before is None or match.matched_at > seen_before)
+                 for match, other in matches],
+        likers=[(liker, age_of(liker)) for liker in likers],
+        avatars=avatar_ids(g.user, [other for _, other in matches] + likers),
         like_count=len(likes),
         can_see_likers=can_see_likers,
         action_form=ActionForm(),

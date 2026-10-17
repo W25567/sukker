@@ -51,8 +51,9 @@ def seeking_genders(viewer):
     return list(profile.seeking_genders) if profile and profile.seeking_genders else []
 
 
-def search(viewer, criteria=None, page=1):
-    """Returnerer (kort, flere_sider). `criteria` er None for brugere uden adgang til filtre."""
+def search(viewer, criteria=None, page=1, hide_liked=False):
+    """Returnerer (kort, flere_sider). `criteria` er None for brugere uden adgang til filtre.
+    `hide_liked` skjuler profiler, brugeren har liket, men som ikke har liket tilbage (et match vises stadig)."""
     bucket = bucket_expression(KommuneDistance.km)
     primary_image = (
         select(ProfileImage.public_id)
@@ -96,6 +97,9 @@ def search(viewer, criteria=None, page=1):
     seeking = seeking_genders(viewer)
     if seeking:
         query = query.where(Profile.gender.in_(seeking), _not_hidden("gender"))
+
+    if hide_liked:
+        query = query.where(or_(~liked, matched))
 
     if criteria:
         if criteria["max_km"] is not None:
