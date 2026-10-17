@@ -12,6 +12,7 @@ from ..location.services import kommuner_for_postcode
 from ..core.timeutil import DANISH_TZ, now_utc
 from ..extensions import db
 from ..moderation.services import set_account_status
+from ..pages.legal import TERMS_VERSION
 from ..profiles.services import get_or_create_profile
 from ..subscriptions.models import Subscription
 from ..subscriptions.services import grant_period
@@ -135,7 +136,8 @@ def create_test_accounts(admin=None, domain="example.com"):
             kommuner = kommuner_for_postcode("8000")
             user = User(username=username, email=email, birthdate=datetime(1990, 1, 1).date(), postcode="8000",
                         kommune_code=kommuner[0].code if kommuner else None,
-                        password_hash="", terms_accepted_at=now_utc(), email_verified_at=now_utc(), is_test=True)
+                        password_hash="", terms_accepted_at=now_utc(), terms_version=TERMS_VERSION,
+                        email_verified_at=now_utc(), is_test=True)
             db.session.add(user)
             db.session.flush()
             get_or_create_profile(user)

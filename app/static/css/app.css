@@ -269,7 +269,50 @@ body:has(.bottomnav) .page { padding-bottom: 88px; }
 @media (min-width: 768px) { .stats { grid-template-columns: repeat(4, 1fr); } }
 .button.danger-fill { background: var(--error); color: #fff; }
 
+/* Offentlige sider (M8) */
+.page.public { max-width: 720px; }
+.lead { font-size: 1.1rem; }
+.hero .lead { max-width: 34rem; margin: 0 auto 20px; }
+.public-section { padding: 24px 0; border-top: 1px solid var(--border); }
+.public-section.cta { text-align: center; }
+.steps { list-style: none; counter-reset: step; margin: 0 0 12px; padding: 0; display: grid; gap: 12px; }
+.steps li {
+  counter-increment: step; display: grid; grid-template-columns: 40px 1fr; column-gap: 12px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px;
+}
+.steps li::before {
+  content: counter(step); grid-row: span 2; width: 40px; height: 40px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; background: var(--accent); color: var(--accent-ink); font-weight: 700;
+}
+.steps span { color: var(--muted); }
+.points { padding-left: 20px; }
+.points li { margin-bottom: 8px; }
+.prose h2 { margin-top: 1.75rem; }
+.prose li { margin-bottom: 6px; }
+.prose dt { font-weight: 600; margin-top: 10px; }
+.prose dd { margin: 2px 0 0; }
+.legal h2 { font-size: 1.05rem; }
+.draft-note { padding: 10px 14px; border-radius: 10px; border: 1px dashed var(--accent); background: var(--info-bg); font-size: 0.92rem; }
+.table-scroll { overflow-x: auto; margin: 16px 0; }
+.prose table { width: 100%; border-collapse: collapse; background: var(--surface); font-size: 0.95rem; }
+.prose caption { text-align: left; font-weight: 600; padding-bottom: 8px; }
+.prose th, .prose td { padding: 10px 8px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
+.compare td { text-align: center; }
+.compare .yes { color: var(--success); font-weight: 700; }
+.compare .no { color: var(--muted); }
+.compare .small { font-size: 0.8rem; color: var(--muted); }
+.faq details { border-bottom: 1px solid var(--border); padding: 4px 0; }
+.faq summary { cursor: pointer; list-style-position: inside; padding: 10px 0; }
+.faq summary h2 { display: inline; font-size: 1.02rem; margin: 0; }
+.faq details p { margin-top: 0; }
+.site-footer { padding: 24px 16px; border-top: 1px solid var(--border); text-align: center; color: var(--muted); font-size: 0.88rem; }
+.site-footer nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 16px; margin-bottom: 8px; }
+.site-footer a { color: var(--muted); }
+body:has(.bottomnav) .site-footer { padding-bottom: 80px; }
+
 @media (min-width: 768px) {
+  .site-footer { order: 4; }
+  body:has(.bottomnav) .site-footer { padding-bottom: 24px; }
   .page { padding-top: 32px; }
   .actions { grid-template-columns: 1fr 1fr; }
   .image-grid { grid-template-columns: repeat(3, 1fr); }

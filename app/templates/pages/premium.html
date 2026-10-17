@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block page_class %}public{% endblock %}
+{% macro mark(value) %}{% if value %}<span class="yes" aria-label="Ja">✓</span>{% else %}<span class="no" aria-label="Nej">–</span>{% endif %}{% endmacro %}
+{% block content %}
+  <article class="prose">
+    <h1>Free, Premium og Premium+</h1>
+    <p class="lead">Sukker.nu har tre niveauer. Det er gratis at være med, og {% if signup_months %}alle nye profiler får {{ signup_months }} måneders Premium, når e-mailen er bekræftet{% else %}du kan altid oprette en profil, like og matche gratis{% endif %}.</p>
+
+    <div class="table-scroll">
+      <table class="compare">
+        <caption>Det får du på hvert niveau</caption>
+        <thead>
+          <tr><th scope="col">Funktion</th><th scope="col">Free</th><th scope="col">Premium</th><th scope="col">Premium+</th></tr>
+        </thead>
+        <tbody>
+          <tr><th scope="row">Oprette profil, se profiler og like</th><td>{{ mark(true) }}</td><td>{{ mark(true) }}</td><td>{{ mark(true) }}</td></tr>
+          <tr><th scope="row">Få matches</th>
+            <td>{% if match_limit %}Op til {{ match_limit }} ad gangen{% else %}{{ mark(true) }}{% endif %}</td><td>{{ mark(true) }}</td><td>{{ mark(true) }}</td></tr>
+          <tr><th scope="row">Sortere efter afstand</th><td>{{ mark(true) }}</td><td>{{ mark(true) }}</td><td>{{ mark(true) }}</td></tr>
+          {% for feature, label, marks in rows %}
+            <tr><th scope="row">{{ label }}</th>
+              {% for value in marks %}
+                {# Skriveretten gælder for begge i et match, når én af dem har den (specifikation 8.2). #}
+                <td>{% if feature == 'messages.reply' and not value and (marks[1] or marks[2]) %}<span class="small">Når matchet har Premium</span>{% else %}{{ mark(value) }}{% endif %}</td>
+              {% endfor %}
+            </tr>
+          {% endfor %}
+          <tr><th scope="row">Skjule, blokere og anmelde</th><td>{{ mark(true) }}</td><td>{{ mark(true) }}</td><td>{{ mark(true) }}</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>Når to Free-brugere matcher</h2>
+    <p>I et match kan I skrive sammen, når mindst én af jer har Premium eller Premium+. Har ingen af jer det, kan I stadig se hinanden som match og læse tidligere beskeder.</p>
+
+    <h2>Premium+</h2>
+    <p>Premium+ indeholder alt fra Premium. Senere kommer flere muligheder, blandt andet at skrive en enkelt besked til nogen, du ikke har et match med. Modtageren kan altid sige nej tak til den slags henvendelser, og Premium+ kan aldrig gå uden om en blokering eller dine privatlivsindstillinger.</p>
+
+    <h2>Hvad koster det?</h2>
+    <p>Lige nu koster Sukker.nu ingenting. Der er endnu ikke indført betaling, og priserne er ikke fastlagt. Kommer der betaling, får du besked i god tid, og intet bliver trukket automatisk, uden at du selv har valgt det.</p>
+
+    <h2>Altid gratis</h2>
+    <p>Sikkerhed og privatliv er aldrig en betalingsfordel. Alle kan skjule, blokere og anmelde, styre deres synlighed, hente deres data og slette deres profil.</p>
+
+    <p><a class="button" href="{{ url_for('auth.register') }}">Opret gratis profil</a></p>
+  </article>
+{% endblock %}

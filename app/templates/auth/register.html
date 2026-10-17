@@ -13,7 +13,7 @@
     {{ field(form.birthdate, autocomplete="bday", hint="Bruges til at vise din alder. Datoen vises ikke.") }}
     {{ field(form.postcode, autocomplete="postal-code", hint="Bruges til omtrentlig afstand. Postnummeret vises aldrig.") }}
     {% if form.kommune.choices %}{{ field(form.kommune) }}{% endif %}
-    {{ checkbox(form.accept_terms) }}
+    {% call checkbox(form.accept_terms) %}Jeg er fyldt 18 år og accepterer <a href="{{ url_for('pages.terms') }}" target="_blank" rel="noopener">brugervilkårene</a> og <a href="{{ url_for('pages.privacy') }}" target="_blank" rel="noopener">privatlivspolitikken</a>{% endcall %}
     <button type="submit" class="button wide">Opret profil</button>
   </form>
   <p class="muted center">Har du allerede en profil? <a href="{{ url_for('auth.login') }}">Log ind</a></p>

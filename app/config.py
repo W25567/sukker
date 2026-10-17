@@ -55,6 +55,16 @@ class BaseConfig:
     # Bag Nginx i produktion
     PROXY_FIX = False
 
+    # Offentlige sider og juridiske tekster (specifikation 12.5 og 13.1)
+    CONTACT_EMAIL = _env("SUKKER_CONTACT_EMAIL", "kontakt@sukker.nu")
+    COMPANY_NAME = _env("SUKKER_COMPANY_NAME")
+    COMPANY_CVR = _env("SUKKER_COMPANY_CVR")
+    COMPANY_ADDRESS = _env("SUKKER_COMPANY_ADDRESS")
+    # Viser en markering på de juridiske sider, indtil teksterne er gennemgået juridisk (specifikation 13.1).
+    LEGAL_REVIEWED = _env("SUKKER_LEGAL_REVIEWED", "0") == "1"
+    # Staging: alt sendes med noindex, og robots.txt udelukker hele siden (specifikation 14.7).
+    NOINDEX_ALL = _env("SUKKER_NOINDEX_ALL", "0") == "1"
+
 
 class DevelopmentConfig(BaseConfig):
     DEBUG = True

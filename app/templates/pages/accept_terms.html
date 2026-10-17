@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% from "_forms.html" import checkbox %}
+{% block title %}Nye vilkår – Sukker.nu{% endblock %}
+{% block content %}
+  <h1>Vi har opdateret vilkårene</h1>
+  <p>Brugervilkårene og privatlivspolitikken er opdateret og gælder fra {{ effective.strftime('%d-%m-%Y') }}. Læs dem, og acceptér dem for at fortsætte.</p>
+  <ul>
+    <li><a href="{{ url_for('pages.terms') }}" target="_blank" rel="noopener">Brugervilkår</a></li>
+    <li><a href="{{ url_for('pages.privacy') }}" target="_blank" rel="noopener">Privatlivspolitik</a></li>
+  </ul>
+  <form method="post" novalidate class="form">
+    {{ form.hidden_tag() }}
+    {{ checkbox(form.accept_terms) }}
+    <button type="submit" class="button wide">Fortsæt</button>
+  </form>
+  <p class="muted">Vil du ikke acceptere vilkårene, kan du <a href="{{ url_for('account.delete') }}">slette din profil</a>.</p>
+{% endblock %}

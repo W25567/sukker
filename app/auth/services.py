@@ -4,6 +4,7 @@ from sqlalchemy import func, select
 from ..core.mail import send_mail
 from ..core.timeutil import now_utc
 from ..extensions import db
+from ..pages.legal import TERMS_VERSION
 from ..profiles.services import get_or_create_profile
 from ..subscriptions.services import grant_signup_bonus
 from . import tokens
@@ -51,6 +52,7 @@ def register_user(form, kommune_code=None):
         postcode=form.postcode.data,
         kommune_code=kommune_code,
         terms_accepted_at=now_utc(),
+        terms_version=TERMS_VERSION,
     )
     db.session.add(user)
     db.session.flush()

@@ -27,7 +27,11 @@ def init_app(app):
         if app.config.get("SESSION_COOKIE_SECURE"):
             headers.setdefault("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
 
-        view = app.view_functions.get(request.endpoint) if request.endpoint else None
-        if not getattr(view, "public_page", False):
+        if app.config.get("NOINDEX_ALL") or not is_public_endpoint(app, request.endpoint):
             headers.setdefault("X-Robots-Tag", "noindex, nofollow")
         return response
+
+
+def is_public_endpoint(app, endpoint):
+    view = app.view_functions.get(endpoint) if endpoint else None
+    return bool(getattr(view, "public_page", False))

@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block page_class %}public{% endblock %}
+{% block content %}
+  <article class="prose">
+    <h1>Om Sukker.nu</h1>
+    <p class="lead">Sukker.nu er en dansk datingside for voksne. Målet er at gøre det nemt at møde nye mennesker – uden lange spørgeskemaer, og uden at du skal dele mere, end du har lyst til.</p>
+
+    <h2>Det tror vi på</h2>
+    <ul>
+      <li><strong>Enkelhed.</strong> Du kommer i gang på få minutter og udfylder resten, når du vil.</li>
+      <li><strong>Diskretion.</strong> Du styrer selv, hvem der ser hvad, og standardindstillingerne beskytter dit privatliv.</li>
+      <li><strong>Tryghed.</strong> Blokering, anmeldelse og moderation er en fast del af siden og altid gratis.</li>
+      <li><strong>Ærlighed.</strong> Vi bruger aldrig falske profiler eller opdigtede tal for at få siden til at se travlere ud.</li>
+    </ul>
+    <p>Sukker.nu er kun for personer på 18 år eller derover og er til frivillige relationer mellem voksne. Siden må ikke bruges til at formidle eller købe seksuelle ydelser.</p>
+
+    <h2>Kontakt</h2>
+    <p>Skriv til <a href="mailto:{{ contact_email }}">{{ contact_email }}</a>. Vil du anmelde en profil eller en besked, så brug Anmeld på siden – så kommer sagen hurtigst frem til en moderator.</p>
+    {% if company.name %}
+      <p>
+        {{ company.name }}{% if company.cvr %}<br>CVR-nr. {{ company.cvr }}{% endif %}
+        {% if company.address %}<br>{{ company.address }}{% endif %}
+      </p>
+    {% endif %}
+  </article>
+{% endblock %}

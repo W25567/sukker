@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block page_class %}public{% endblock %}
+{% block content %}
+  <article class="prose">
+    <h1>Ofte stillede spørgsmål</h1>
+    <div class="faq">
+      {% for question, answer in items %}
+        <details{% if loop.first %} open{% endif %}>
+          <summary><h2>{{ question }}</h2></summary>
+          <p>{{ answer }}</p>
+        </details>
+      {% endfor %}
+    </div>
+    <p>Fandt du ikke svaret? <a href="{{ url_for('pages.about') }}">Kontakt os</a>.</p>
+  </article>
+{% endblock %}

@@ -255,7 +255,7 @@ def test_build_and_load_geo(tmp_path, ctx):
     build.write_csv(tmp_path, *result)
     db.session.add(User(
         username="Gammel", email="gammel@example.com", password_hash="x", birthdate=today_local().replace(year=1980),
-        postcode="1111", terms_accepted_at=now_utc(),
+        postcode="1111", terms_accepted_at=now_utc(), terms_version="1",
     ))
     db.session.commit()
 

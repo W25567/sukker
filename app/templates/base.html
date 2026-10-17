@@ -3,8 +3,32 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}Sukker.nu{% endblock %}</title>
+  <title>{% block title %}{{ seo.title if seo else 'Sukker.nu' }}{% endblock %}</title>
+  {% if seo %}
+    {# Kun offentlige sider har seo. Delingsbilledet er altid generisk, aldrig et brugerbillede (specifikation 12.5). #}
+    <meta name="description" content="{{ seo.description }}">
+    <link rel="canonical" href="{{ seo.canonical }}">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Sukker.nu">
+    <meta property="og:locale" content="da_DK">
+    <meta property="og:title" content="{{ seo.title }}">
+    <meta property="og:description" content="{{ seo.description }}">
+    <meta property="og:url" content="{{ seo.canonical }}">
+    <meta property="og:image" content="{{ seo.image }}">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Sukker.nu – dating for voksne">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ seo.title }}">
+    <meta name="twitter:description" content="{{ seo.description }}">
+    <meta name="twitter:image" content="{{ seo.image }}">
+  {% endif %}
+  {% if structured %}<script type="application/ld+json">{{ structured | tojson }}</script>{% endif %}
   {% block meta %}{% endblock %}
+  <link rel="icon" href="{{ url_for('pages.favicon') }}" sizes="32x32">
+  <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/icon-180.png') }}">
+  <meta name="theme-color" content="#a8325a">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
 </head>
 <body>
@@ -43,7 +67,7 @@
     </div>
   {% endif %}
 
-  <main class="page">
+  <main class="page {% block page_class %}{% endblock %}">
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% for category, message in messages %}
         <div class="flash flash-{{ category }}" role="status">{{ message }}</div>
@@ -51,6 +75,13 @@
     {% endwith %}
     {% block content %}{% endblock %}
   </main>
+
+  <footer class="site-footer">
+    <nav aria-label="Om Sukker.nu">
+      {% for page in footer_pages %}<a href="{{ url_for(page.endpoint) }}">{{ page.nav_label }}</a>{% endfor %}
+    </nav>
+    <p class="footer-note">© {{ current_year }} Sukker.nu · Kun for personer på 18 år eller derover</p>
+  </footer>
 
   {% if current_user %}
     {# Fast bundnavigation på mobil, topnavigation på større skærme (specifikation 6.1). #}

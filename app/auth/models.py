@@ -18,6 +18,8 @@ class User(db.Model):
     # Afstande beregnes ud fra kommunen, ikke postnummeret (specifikation 5). NULL indtil kommunedata er indlæst.
     kommune_code: Mapped[str | None] = mapped_column(ForeignKey("kommuner.code"))
     terms_accepted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    # Den version af vilkår og privatlivspolitik, brugeren senest har accepteret (app/pages/legal.py).
+    terms_version: Mapped[str] = mapped_column(String(20), nullable=False)
     email_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     password_changed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())

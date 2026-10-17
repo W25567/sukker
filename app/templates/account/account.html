@@ -54,6 +54,15 @@
   </section>
 
   <section class="card">
+    <h2>Hent mine data</h2>
+    <p class="muted">Download en kopi af de oplysninger, vi har om dig: konto, profil, billeder, likes, matches, sendte beskeder og logins. <a href="{{ url_for('pages.privacy') }}">Læs privatlivspolitikken</a>.</p>
+    <form method="post" action="{{ url_for('account.export_data') }}">
+      {{ action_form.hidden_tag() }}
+      <button type="submit" class="button secondary">Hent mine data (JSON)</button>
+    </form>
+  </section>
+
+  <section class="card">
     <h2>Slet profil</h2>
     <p class="muted">Sletter din profil, dine billeder, likes og matches. Det kan ikke fortrydes.</p>
     <a class="button secondary danger" href="{{ url_for('account.delete') }}">Slet min profil</a>

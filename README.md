@@ -15,7 +15,8 @@ Mobilorienteret datingside bygget med Flask og PostgreSQL. Specifikationen ligge
 | M5 Beskeder | Samtaler mellem matches, låsning af Free/Free, pause, skjult historik ved fjernet match, slet for mig, arkiv, slet konto og "Slettet bruger" | Færdig |
 | M6 Tryghed og moderation | Skjul, blokér, anmeld med kopi, moderationssager, afgørelser, begrænsning og suspendering, klagevej, moderatoradgang med uændrelig revisionslog | Færdig |
 | M7 Rettigheder og administration | Central rettighedsmodel (niveau → funktioner, global slukning, individuelle tildelinger med udløb), admin-indstillinger, brugere, abonnementer, roller og status, dashboard uden testkonti, testkonti pr. niveau, uændrelig administrationslog | Færdig |
-| M8–M9 | Offentlige sider og SEO, drift | Ikke startet |
+| M8 Offentlige sider og SEO | Forside, Sådan virker det, Tryghed, Premium, FAQ, Om og kontakt, vilkår, privatlivspolitik og cookiepolitik. Metadata, canonical, Open Graph, JSON-LD, sitemap.xml og robots.txt. Vilkårsversioner med ny accept, hent egne data | Færdig (teksterne er udkast til juridisk gennemgang) |
+| M9 | Deploy, staging, backup, sletning efter 12 måneder, monitorering | Ikke startet |
 
 ## Kom i gang lokalt (Windows)
 
@@ -80,3 +81,21 @@ Det meste klares i administrationspanelet under `/admin/`. Den første administr
 Moderator og administrator er adskilte roller. Moderatorer behandler sager under `/moderation/`.
 Administratorer ser moderatorernes revisionslog under `/moderation/log` og administrationsloggen under `/admin/log`.
 Testkonti kan kun se andre testkonti og tæller ikke med i målingerne. Passwordene vises kun, når kontiene oprettes.
+
+## Offentlige sider og SEO
+
+De offentlige sider står i `app/pages/content.py` (titel, beskrivelse og senest ændret). Registret styrer
+metadata, `sitemap.xml` og sidefoden. Alt andet sendes med `X-Robots-Tag: noindex, nofollow`, og `robots.txt`
+udleder selv stierne bag login fra URL-reglerne. En ny offentlig side kræver `@public_page` på view'et og en
+linje i registret.
+
+- **Vilkår og privatlivspolitik** er udkast. De vises med en markering, indtil `SUKKER_LEGAL_REVIEWED=1`.
+  Virksomhedsoplysninger og kontaktmail sættes i `.env` (se `.env.example`).
+- **Ændres vilkårene væsentligt**, hæves `TERMS_VERSION` i `app/pages/legal.py`. Alle skal så acceptere igen ved
+  næste besøg. Konti, der fandtes før M8, skal acceptere de første vilkår.
+- **Ikoner og delingsbillede** laves med `python scripts\make_brand_images.py`. De er generiske og indeholder
+  aldrig brugerbilleder.
+- **Staging**: `SUKKER_NOINDEX_ALL=1` giver noindex på alt og `Disallow: /` i robots.txt.
+
+Til M9 (Nginx og drift): 301 fra http og www til `https://sukker.nu`, gzip/brotli, lange cacheheadere på
+`/static/`, adgangskode på staging, Google Search Console og evt. cookiefri besøgsstatistik.

@@ -38,13 +38,17 @@ def create_app(config_name=None):
     from .safety.routes import bp as safety_bp
     from .media.routes import bp as media_bp
     from .profiles.routes import bp as profiles_bp
+    from .pages import legal
+    from .pages.routes import bp as pages_bp
 
     security.init_app(app)
     sessions.init_app(app)
+    legal.init_app(app)  # efter sessions, så g.user er sat
     errors.init_app(app)
     register_cli(app)
 
     app.register_blueprint(core_bp)
+    app.register_blueprint(pages_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(account_bp)
     app.register_blueprint(profiles_bp)
@@ -71,5 +75,11 @@ def create_app(config_name=None):
 
         user = g.get("user")
         return {"unread_messages": total_unread(user) if user is not None else 0}
+
+    from .pages.content import PUBLIC_PAGES
+
+    @app.context_processor
+    def inject_footer():
+        return {"footer_pages": PUBLIC_PAGES[1:], "current_year": datetime.now(DANISH_TZ).year}
 
     return app

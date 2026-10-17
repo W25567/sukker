@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block page_class %}public{% endblock %}
+{% block content %}
+  <article class="prose">
+    <h1>Tryghed og sikkerhed</h1>
+    <p class="lead">Dating kræver tillid. Derfor er Sukker.nu bygget, så du selv bestemmer, hvem der ser hvad – og så du hurtigt kan sige fra.</p>
+
+    <h2>Kun medlemmer kan se profiler</h2>
+    <p>Profiler og billeder kan kun ses af brugere, der er logget ind. Besøgende uden login ser ingenting, og profiler vises aldrig i Google eller andre søgemaskiner. Billeder leveres kun gennem en adgangskontrol og har ingen offentlige adresser.</p>
+
+    <h2>Du bestemmer synligheden</h2>
+    <ul>
+      <li>Skjul de felter på din profil, du ikke vil vise.</li>
+      <li>Sæt profilen på pause, når du har brug for en pause.</li>
+      <li>Vær kun synlig for dine matches, eller hold dig ude af søgningen.</li>
+      <li>Vælg selv, om din kommune og din seneste aktivitet vises.</li>
+    </ul>
+
+    <h2>Ingen adresse, kun omtrentlig afstand</h2>
+    <p>Dit postnummer bruges kun til at finde din kommune og vises aldrig. Andre ser en omtrentlig afstand beregnet fra kommune til kommune, fx "I nærheden" eller "ca. 40 km" – aldrig præcise kilometertal.</p>
+
+    <h2>Skjul, blokér og anmeld</h2>
+    <dl>
+      <dt>Skjul</dt>
+      <dd>Fjerner en profil fra det, du ser. Den anden får intet at vide, og eksisterende samtaler fortsætter.</dd>
+      <dt>Blokér</dt>
+      <dd>Ingen af jer kan kontakte den anden. Et eventuelt match ophører, og samtalen skjules. Den anden får intet at vide.</dd>
+      <dt>Anmeld</dt>
+      <dd>Anmeld en profil, en samtale eller en enkelt besked. Anmeldelsen behandles af en moderator, og den anmeldte får ikke at vide, hvem der har anmeldt.</dd>
+    </dl>
+    <p>Sikkerhedsfunktioner er altid gratis og kan aldrig købes fra – heller ikke med Premium+.</p>
+
+    <h2>Moderation</h2>
+    <p>Moderatorer behandler anmeldelser og kan begrænse eller lukke konti, der overtræder <a href="{{ url_for('pages.terms') }}">brugervilkårene</a>. For at afdække misbrug, svindel og phishing kan en moderator få adgang til de oplysninger, der er gemt om en konto, herunder beskeder og billeder. Det sker kun med en begrundelse, og al adgang logges. Er du uenig i en afgørelse, kan du klage og få sagen vurderet igen.</p>
+
+    <h2>Gode råd</h2>
+    <ul>
+      <li>Del aldrig passwords, koder eller bankoplysninger – heller ikke med en, du har skrevet med længe.</li>
+      <li>Send aldrig penge til en, du kun kender fra nettet.</li>
+      <li>Mød første gang et offentligt sted, og fortæl en ven, hvor du er.</li>
+      <li>Anmeld profiler, der virker falske, eller som beder om penge eller links til andre sider.</li>
+    </ul>
+
+    <h2>Dine data</h2>
+    <p>Du kan hente en kopi af dine data og slette din profil, når du vil. Skjulte og slettede data slettes endeligt senest {{ retention_months }} måneder efter. <a href="{{ url_for('pages.privacy') }}">Læs privatlivspolitikken</a>.</p>
+  </article>
+{% endblock %}

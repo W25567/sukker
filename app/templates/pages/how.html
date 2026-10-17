@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block page_class %}public{% endblock %}
+{% block content %}
+  <article class="prose">
+    <h1>Sådan virker Sukker.nu</h1>
+    <p class="lead">Sukker.nu er bygget til at være enkel: ingen lange spørgeskemaer, ingen tunge formularer. Du kommer i gang på få minutter og udfylder resten, når du har lyst.</p>
+
+    <h2>1. Opret en profil</h2>
+    <p>Du skal kun bruge et brugernavn, din fødselsdato, dit postnummer, en e-mailadresse og et password. Dit brugernavn behøver ikke være dit rigtige navn. Fødselsdatoen bruges til at vise din alder, og postnummeret bruges til at finde din kommune – ingen af dem vises for andre.</p>
+    <p>Når du har bekræftet din e-mail, er profilen klar.{% if signup_months %} Samtidig får du {{ signup_months }} måneders Premium gratis.{% endif %}</p>
+
+    <h2>2. Gør profilen til din egen</h2>
+    <p>Tilføj billeder og en kort præsentation, og fortæl, hvad du søger. Alt er frivilligt, og du kan skjule de felter, du ikke vil vise. Du kan også sætte profilen på pause eller kun være synlig for dine matches.</p>
+
+    <h2>3. Udforsk profiler i nærheden</h2>
+    <p>Under Udforsk ser du andre profiler sorteret efter omtrentlig afstand. Afstanden beregnes fra kommune til kommune og vises som "I nærheden" eller fx "ca. 40 km". Med Premium kan du filtrere på alder, afstand, køn og relationstype.</p>
+
+    <h2>4. Like og få et match</h2>
+    <p>Synes du om en profil, så giv den et like. Liker den anden dig også, har I et match. Et match kan altid fjernes igen, og så skjules jeres samtale for jer begge.</p>
+
+    <h2>5. Skriv sammen</h2>
+    <p>Når I har et match, kan I skrive sammen, så længe mindst én af jer har Premium eller Premium+. Alle kan altid læse de beskeder, de modtager. Beskederne er private mellem jer.</p>
+
+    <h2>Hvis noget føles forkert</h2>
+    <p>Du kan altid skjule en profil, blokere en person eller anmelde en profil, en samtale eller en enkelt besked. <a href="{{ url_for('pages.safety') }}">Læs mere om tryghed og sikkerhed</a>.</p>
+
+    <p><a class="button" href="{{ url_for('auth.register') }}">Opret gratis profil</a></p>
+  </article>
+{% endblock %}

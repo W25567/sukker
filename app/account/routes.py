@@ -1,4 +1,6 @@
-from flask import Blueprint, flash, g, redirect, render_template, session, url_for
+import json
+
+from flask import Blueprint, Response, flash, g, redirect, render_template, session, url_for
 
 from ..auth import services
 from ..auth.forms import ActionForm, ChangePasswordForm, DeleteAccountForm
@@ -6,7 +8,9 @@ from ..auth.passwords import verify_password
 from ..auth.sessions import active_sessions, end_current_session, login_required, revoke_sessions
 from ..extensions import db, limiter
 from ..subscriptions.services import TIER_LABELS, active_subscription, effective_tier
+from ..core.timeutil import today_local
 from .devices import describe_device
+from .export import export_user_data
 from .services import delete_account
 
 bp = Blueprint("account", __name__, url_prefix="/konto")
@@ -76,6 +80,19 @@ def delete():
             flash("Din profil er slettet. Tak fordi du brugte Sukker.nu.", "info")
             return redirect(url_for("core.home"))
     return render_template("account/delete.html", form=form), 400 if form.errors else 200
+
+
+@bp.route("/mine-data", methods=["POST"])
+@login_required
+@limiter.limit("5 per hour")
+def export_data():
+    """Hent en kopi af egne data som JSON (specifikation 13.1)."""
+    if not ActionForm().validate_on_submit():
+        return redirect(url_for("account.overview"))
+    body = json.dumps(export_user_data(g.user), ensure_ascii=False, indent=2)
+    filename = f"sukker-data-{g.user.username}-{today_local().isoformat()}.json"
+    return Response(body, mimetype="application/json",
+                    headers={"Content-Disposition": f'attachment; filename="{filename}"', "Cache-Control": "no-store"})
 
 
 @bp.route("/log-ud-overalt", methods=["POST"])

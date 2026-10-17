@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block page_class %}public{% endblock %}
+{% block content %}
+  <article class="prose legal">
+    <h1>Privatlivspolitik</h1>
+    <p class="muted">Gældende fra {{ effective.strftime('%d-%m-%Y') }}</p>
+    {% include "pages/_legal_note.html" %}
+
+    <h2>1. Dataansvarlig</h2>
+    <p>
+      {% if company.name %}{{ company.name }}{% if company.cvr %}, CVR-nr. {{ company.cvr }}{% endif %}{% if company.address %}, {{ company.address }}{% endif %}{% else %}Sukker.nu{% endif %}
+      er dataansvarlig for behandlingen af dine oplysninger. Kontakt: <a href="mailto:{{ contact_email }}">{{ contact_email }}</a>.
+    </p>
+
+    <h2>2. Hvilke oplysninger vi behandler</h2>
+    <dl>
+      <dt>Kontooplysninger</dt>
+      <dd>Brugernavn, e-mailadresse, password (gemt krypteret, så ingen kan læse det), fødselsdato, postnummer og den kommune, postnummeret hører til, samt hvornår du har accepteret vilkårene.</dd>
+      <dt>Profiloplysninger</dt>
+      <dd>Det, du selv vælger at skrive på din profil, fx køn, hvad du søger, relationstype og præsentation, samt dine synlighedsindstillinger. Nogle profiloplysninger kan sige noget om dit seksualliv eller din seksuelle orientering. Dem giver du kun, hvis du selv vil.</dd>
+      <dt>Billeder</dt>
+      <dd>De billeder, du uploader. Vi fjerner metadata som placering og kameraoplysninger, før billederne gemmes.</dd>
+      <dt>Aktivitet</dt>
+      <dd>Likes, matches, beskeder, blokeringer, skjulte profiler og anmeldelser.</dd>
+      <dt>Abonnement</dt>
+      <dd>Dit niveau og dine perioder med Premium eller Premium+.</dd>
+      <dt>Tekniske oplysninger</dt>
+      <dd>Dine logins med IP-adresse, browser og enhed samt tidspunkt for seneste aktivitet.</dd>
+      <dt>Moderation</dt>
+      <dd>Anmeldelser, kopier af anmeldt indhold, afgørelser og klager.</dd>
+    </dl>
+
+    <h2>3. Hvorfor og med hvilket grundlag</h2>
+    <ul>
+      <li><strong>For at levere tjenesten</strong> – din konto, profil, afstand, likes, matches og beskeder. Grundlaget er vores aftale med dig (databeskyttelsesforordningens artikel 6, stk. 1, litra b).</li>
+      <li><strong>Følsomme profiloplysninger</strong>, fx om seksuel orientering, behandler vi kun, fordi du selv vælger at give dem, og grundlaget er dit udtrykkelige samtykke (artikel 9, stk. 2, litra a). Du kan til enhver tid fjerne dem fra din profil.</li>
+      <li><strong>For at beskytte brugerne</strong> mod misbrug, svindel, phishing og spam, behandle anmeldelser og sikre siden. Grundlaget er vores og brugernes legitime interesse i en tryg tjeneste (artikel 6, stk. 1, litra f) og de pligter, vi har efter lovgivningen (artikel 6, stk. 1, litra c).</li>
+      <li><strong>Nødvendige e-mails</strong>, fx bekræftelse af e-mail og nulstilling af password, som en del af aftalen med dig.</li>
+      <li><strong>Statistik</strong> laves kun som samlede optællinger, fx antal nye profiler. Vi bruger ikke sporing eller profilering til markedsføring.</li>
+    </ul>
+
+    <h2>4. Moderatorers adgang</h2>
+    <p>For at afdække misbrug, svindel og phishing kan en moderator få adgang til alle de oplysninger, der er gemt om en konto, herunder beskeder og billeder. Moderatoren skal angive en begrundelse, adgangen er tidsbegrænset, og al adgang registreres i en log, som ikke kan ændres. Når en moderator ser en samtale, bliver beskeder ikke markeret som læst, og ingen får besked.</p>
+
+    <h2>5. Hvem kan se dine oplysninger</h2>
+    <ul>
+      <li><strong>Andre brugere</strong>, der er logget ind, kan se din profil efter dine egne synlighedsindstillinger. De ser aldrig din e-mail, din fødselsdato eller dit postnummer – kun din alder og en omtrentlig afstand. Besøgende uden login og søgemaskiner kan ikke se profiler eller billeder.</li>
+      <li><strong>Leverandører</strong>, der hjælper os med drift, fx hosting og afsendelse af e-mails, behandler oplysninger på vores vegne efter en databehandleraftale. Behandler en leverandør oplysninger uden for EU/EØS, sker det kun med et gyldigt overførselsgrundlag, fx EU-Kommissionens standardkontraktbestemmelser.</li>
+      <li><strong>Myndigheder</strong>, fx politiet, når vi har pligt til det, eller når det er nødvendigt for at anmelde et strafbart forhold.</li>
+    </ul>
+    <p>Vi sælger aldrig dine oplysninger og deler dem ikke med annoncører.</p>
+
+    <h2>6. Hvor længe vi gemmer oplysningerne</h2>
+    <ul>
+      <li>Dine oplysninger gemmes, så længe du har en profil.</li>
+      <li>Sletter du din profil, slettes profil, billeder, likes og matches. Beskeder, du har sendt, bliver stående hos modtageren med afsenderen vist som "Slettet bruger".</li>
+      <li>Oplysninger, der er skjult eller slettet, fx samtaler fra fjernede matches og beskeder eller billeder, du har slettet, slettes endeligt senest {{ retention_months }} måneder efter.</li>
+      <li>Materiale fra anmeldelser slettes senest {{ retention_months }} måneder efter, at sagen er afsluttet. I alvorlige sager, fx om svindel, trusler eller mistanke om mindreårige, kan det gemmes længere, så længe sagen kræver det. Behovet vurderes igen mindst hvert år.</li>
+      <li>Sikkerhedskopier slettes efter 7 dage. Slettede oplysninger kan derfor findes i en sikkerhedskopi i op til 7 dage.</li>
+    </ul>
+
+    <h2>7. Dine rettigheder</h2>
+    <p>Du har ret til at få indsigt i dine oplysninger, få urigtige oplysninger rettet, få dine oplysninger slettet, få behandlingen begrænset, gøre indsigelse og få dine oplysninger udleveret i et almindeligt format (dataportabilitet). Har du givet samtykke, kan du til enhver tid trække det tilbage.</p>
+    <ul>
+      <li>Hent en kopi af dine oplysninger under Konto → Hent mine data.</li>
+      <li>Ret din profil under Min profil.</li>
+      <li>Slet din profil under Konto → Slet profil.</li>
+      <li>Skriv til <a href="mailto:{{ contact_email }}">{{ contact_email }}</a> for alt andet. Vi svarer inden for en måned.</li>
+    </ul>
+    <p>Du kan klage til Datatilsynet, Carl Jacobsens Vej 35, 2500 Valby, <a href="https://www.datatilsynet.dk" rel="noopener">datatilsynet.dk</a>.</p>
+
+    <h2>8. Sikkerhed</h2>
+    <p>Passwords gemmes med en stærk, envejs kryptering. Al trafik er krypteret, billeder vises kun gennem en adgangskontrol og har ingen offentlige adresser, og adgang til administration og moderation er begrænset og logges.</p>
+
+    <h2>9. Cookies</h2>
+    <p>Vi bruger kun én nødvendig cookie. <a href="{{ url_for('pages.cookies') }}">Læs cookiepolitikken</a>.</p>
+
+    <h2>10. Ændringer</h2>
+    <p>Ændrer vi politikken væsentligt, får du besked, før ændringen træder i kraft.</p>
+  </article>
+{% endblock %}

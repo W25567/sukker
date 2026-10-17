@@ -9,9 +9,10 @@
   </div>
 {% endmacro %}
 
+{# Med {% call %} kan etiketten indeholde links, fx til vilkårene. #}
 {% macro checkbox(f) %}
   <div class="field checkbox{% if f.errors %} has-error{% endif %}">
-    <label>{{ f() }} {{ f.label.text }}</label>
+    <label>{{ f() }} {% if caller %}{{ caller() }}{% else %}{{ f.label.text }}{% endif %}</label>
     {% for error in f.errors %}<small class="error">{{ error }}</small>{% endfor %}
   </div>
 {% endmacro %}

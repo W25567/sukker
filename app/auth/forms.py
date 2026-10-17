@@ -54,8 +54,9 @@ class RegistrationForm(FlaskForm):
     )
     # Vises kun, når postnummeret dækker flere kommuner (specifikation 5). Valgene sættes i view'et.
     kommune = SelectField("Kommune", choices=[], validate_choice=False)
+    # Teksten med links står i skabelonen (auth/register.html).
     accept_terms = BooleanField(
-        "Jeg accepterer brugervilkårene og privatlivspolitikken",
+        "Jeg er fyldt 18 år og accepterer brugervilkårene og privatlivspolitikken",
         validators=[DataRequired("Du skal acceptere vilkårene for at oprette en profil.")],
     )
 

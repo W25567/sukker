@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block page_class %}public{% endblock %}
+{% block content %}
+  <article class="prose legal">
+    <h1>Cookiepolitik</h1>
+    <p class="muted">Gældende fra {{ effective.strftime('%d-%m-%Y') }}</p>
+    {% include "pages/_legal_note.html" %}
+
+    <p class="lead">Sukker.nu bruger kun én cookie, og den er nødvendig for, at siden virker. Vi bruger ingen cookies til statistik, sporing eller markedsføring, og der er ingen cookies fra tredjeparter.</p>
+
+    <div class="table-scroll">
+      <table>
+        <caption>Cookies på Sukker.nu</caption>
+        <thead><tr><th scope="col">Navn</th><th scope="col">Formål</th><th scope="col">Varighed</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><code>session</code></td>
+            <td>Holder dig logget ind og beskytter formularer mod forfalskede indsendelser. Sættes først, når du logger ind eller udfylder en formular.</td>
+            <td>Indtil du logger ud, dog højst 30 dage uden besøg</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>Fordi cookien er nødvendig for at levere den tjeneste, du har bedt om, kræver den ikke samtykke, og du ser derfor ingen cookiebanner. Du kan slette cookien i din browser, men så bliver du logget ud.</p>
+    <p>Begynder vi at bruge andre cookies, opdaterer vi denne side og beder om dit samtykke, hvis loven kræver det.</p>
+    <p>Læs også <a href="{{ url_for('pages.privacy') }}">privatlivspolitikken</a>.</p>
+  </article>
+{% endblock %}
