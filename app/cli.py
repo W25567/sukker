@@ -30,7 +30,20 @@ def grant_premium(email, months, tier, note):
     )
 
 
-GEO_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "geo")
+@sukker_cli.command("set-role")
+@click.argument("email")
+@click.argument("role", type=click.Choice(["user", "moderator", "admin"]))
+def set_role(email, role):
+    """Giver en bruger en rolle. Moderator og administrator er adskilte roller (specifikation 9.3)."""
+    user = find_user_by_email(email)
+    if user is None:
+        raise click.ClickException(f"Ingen bruger med e-mailen {email}.")
+    user.role = role
+    db.session.commit()
+    click.echo(f"{user.username} har nu rollen {role}.")
+
+
+GEO_DIR =os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "geo")
 
 
 @sukker_cli.command("build-geo")

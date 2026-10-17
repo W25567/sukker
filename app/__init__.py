@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 
 from flask import Flask
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -32,6 +33,8 @@ def create_app(config_name=None):
     from .explore.routes import bp as explore_bp
     from .matches.routes import bp as matches_bp
     from .messaging.routes import bp as messaging_bp
+    from .moderation.routes import bp as moderation_bp
+    from .safety.routes import bp as safety_bp
     from .media.routes import bp as media_bp
     from .profiles.routes import bp as profiles_bp
 
@@ -48,12 +51,16 @@ def create_app(config_name=None):
     app.register_blueprint(explore_bp)
     app.register_blueprint(matches_bp)
     app.register_blueprint(messaging_bp)
+    app.register_blueprint(safety_bp)
+    app.register_blueprint(moderation_bp)
 
     from .core.timeutil import DANISH_TZ
     from .messaging.services import total_unread
 
     @app.template_filter("local_datetime")
     def local_datetime(moment):
+        if isinstance(moment, str):  # ISO-tidspunkter fra gemte kopier i moderationssager
+            moment = datetime.fromisoformat(moment)
         return moment.astimezone(DANISH_TZ).strftime("%d-%m-%Y %H:%M") if moment else ""
 
     @app.context_processor

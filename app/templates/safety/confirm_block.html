@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Blokér – Sukker.nu{% endblock %}
+{% block content %}
+  <h1>Blokér {{ target.username }}?</h1>
+  <div class="card">
+    <ul>
+      <li>I kan ikke længere se hinandens profiler eller kontakte hinanden.</li>
+      <li>Et eventuelt match ophører, og jeres samtale forsvinder fra indbakken.</li>
+      <li>I bliver ikke foreslået til hinanden igen.</li>
+      <li>{{ target.username }} får ikke besked om blokeringen.</li>
+    </ul>
+    <p class="muted">Du kan ophæve blokeringen under Konto. Et ophørt match kommer ikke igen af sig selv.</p>
+  </div>
+  <form method="post" class="actions">
+    {{ form.hidden_tag() }}
+    <button type="submit" class="button danger-fill">Blokér</button>
+    <a class="button secondary" href="{{ url_for('profiles.view', username=target.username) }}">Fortryd</a>
+  </form>
+{% endblock %}

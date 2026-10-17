@@ -54,5 +54,16 @@
     {% else %}
       <p class="muted">{{ 'Du har ikke udfyldt noget endnu.' if preview else 'Profilen er ikke udfyldt endnu.' }}</p>
     {% endfor %}
+
+    {% if not preview %}
+      <div class="safety-actions">
+        <form method="post" action="{{ url_for('safety.hide', username=user.username) }}" class="inline">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="link">Skjul</button>
+        </form>
+        <a href="{{ url_for('safety.block', username=user.username) }}">Blokér</a>
+        <a href="{{ url_for('safety.report_profile', username=user.username) }}">Anmeld</a>
+      </div>
+    {% endif %}
   </article>
 {% endblock %}

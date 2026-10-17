@@ -89,6 +89,25 @@ def test_verifying_email_grants_three_months_premium(client, outbox, ctx):
     assert bonus.expires_at == add_months(bonus.starts_at, 3)
 
 
+def test_verification_link_leads_to_login_with_email_filled_in(client, outbox, ctx):
+    register(client)
+    response = client.get(link_from(outbox[0], "/bekraeft-email/"))
+    assert response.headers["Location"] == "/log-ind"
+
+    page = client.get("/log-ind").get_data(as_text=True)
+    assert "Din e-mail er bekræftet" in page
+    assert 'value="anna@example.com"' in page
+    assert login(client).status_code == 302  # kan logge ind med det samme
+    assert 'value="anna@example.com"' not in client.get("/log-ind").get_data(as_text=True)
+
+
+def test_verification_link_when_logged_in_goes_to_explore(client, outbox, ctx):
+    register(client)
+    login(client)
+    response = client.get(link_from(outbox[0], "/bekraeft-email/"))
+    assert response.headers["Location"] == "/udforsk"
+
+
 def test_verification_link_works_only_once(client, outbox, ctx):
     register(client)
     link = link_from(outbox[0], "/bekraeft-email/")

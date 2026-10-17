@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Revisionslog – Sukker.nu{% endblock %}
+{% block content %}
+  <h1>Revisionslog</h1>
+  <p class="muted">Moderatorers adgang til brugerdata. Loggen kan ikke ændres eller slettes.</p>
+  <table class="mod-table">
+    <thead><tr><th>Tid</th><th>Moderator</th><th>Bruger</th><th>Sag</th><th>Begrundelse</th></tr></thead>
+    <tbody>
+      {% for e in entries %}
+        <tr><td>{{ e.at | local_datetime }}</td><td>{{ e.moderator_username }}</td><td>{{ e.target_username }}</td>
+          <td>{{ '#' ~ e.case_id if e.case_id else '–' }}</td><td>{{ e.reason }}</td></tr>
+      {% else %}
+        <tr><td colspan="5" class="muted">Ingen registreringer.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

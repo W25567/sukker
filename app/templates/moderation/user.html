@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}{{ data.user.username }} – Moderation{% endblock %}
+{% block content %}
+  {% include "moderation/_nav.html" %}
+  {% set u = data.user %}
+  {% set names = data.names %}
+  <h1>{{ u.username }}</h1>
+  <p class="muted">Adgangen er registreret i revisionsloggen. Visningen ændrer intet for brugeren.</p>
+
+  <section class="card">
+    <h2>Konto</h2>
+    <dl class="facts">
+      <div><dt>E-mail</dt><dd>{{ u.email }}{% if not u.is_verified %} (ubekræftet){% endif %}</dd></div>
+      <div><dt>Alder og fødselsdato</dt><dd>{{ data.age }} år · {{ u.birthdate.strftime('%d-%m-%Y') }}</dd></div>
+      <div><dt>Postnummer og kommune</dt><dd>{{ u.postcode }} · {{ data.kommune or 'ukendt' }}</dd></div>
+      <div><dt>Oprettet</dt><dd>{{ u.created_at | local_datetime }}</dd></div>
+      <div><dt>Status og rolle</dt><dd>{{ u.status }} · {{ u.role }}</dd></div>
+    </dl>
+  </section>
+
+  <section class="card">
+    <h2>Profil</h2>
+    {% if data.profile %}
+      <p class="muted">Pause: {{ 'ja' if data.profile.is_paused else 'nej' }} · Skjult fra søgning: {{ 'ja' if data.profile.hidden_from_search else 'nej' }} · Kun matches: {{ 'ja' if data.profile.matches_only else 'nej' }}</p>
+      <dl class="facts">
+        {% for label, value, hidden in data.fields if value %}
+          <div><dt>{{ label }}{% if hidden %} (skjult for andre){% endif %}</dt><dd>{{ value }}</dd></div>
+        {% endfor %}
+      </dl>
+    {% endif %}
+  </section>
+
+  <section class="card">
+    <h2>Billeder</h2>
+    {% for collection, images in data.images.items() %}
+      <h3>{{ 'Offentlige' if collection == 'public' else 'Privat arkiv' }} ({{ images | length }})</h3>
+      <div class="image-grid">
+        {% for image in images %}
+          <img src="{{ url_for('moderation.user_image', user_id=u.id, public_id=image.public_id, variant='lille') }}" alt="Billede">
+        {% endfor %}
+      </div>
+    {% endfor %}
+  </section>
+
+  <section class="card">
+    <h2>Samtaler ({{ data.conversations | length }})</h2>
+    {% for c in data.conversations %}
+      <details class="mod-conversation">
+        <summary>Med {{ names.get(c.other_id, 'Slettet bruger') }} · {{ c.messages | length }} beskeder{% if c.conversation.hidden_at %} · skjult (fjernet match){% endif %}</summary>
+        {% for m in c.messages %}
+          <p><strong>{{ names.get(m.sender_id, 'Slettet bruger') }}</strong> · {{ m.created_at | local_datetime }}{% if m.id in c.deleted %} · <em>slettet af en deltager</em>{% endif %}<br>
+            <span class="evidence-text">{{ m.body }}</span></p>
+        {% endfor %}
+      </details>
+    {% endfor %}
+  </section>
+
+  <section class="card">
+    <h2>Likes, matches og blokeringer</h2>
+    <p>Likes givet: {{ data.likes_given | length }} · Likes modtaget: {{ data.likes_received | length }}</p>
+    <p>Matches:
+      {% for m in data.matches %}{{ names.get(m.other_id(u.id), '?') }}{% if not m.is_active %} (fjernet){% endif %}{% if not loop.last %}, {% endif %}{% else %}ingen{% endfor %}</p>
+    <p>Blokeringer:
+      {% for b in data.blocks %}{{ names.get(b.blocker_id) }} → {{ names.get(b.blocked_id) }}{% if not loop.last %}, {% endif %}{% else %}ingen{% endfor %}</p>
+  </section>
+
+  <section class="card">
+    <h2>Sager</h2>
+    {% for case in data.cases %}
+      <p><a href="{{ url_for('moderation.case', case_id=case.id) }}">#{{ case.id }}</a> · {{ reasons.get(case.category, case.category) }} · {{ statuses[case.status] }}
+        · {{ 'om brugeren' if case.subject_user_id == u.id else 'anmeldt af brugeren' }}</p>
+    {% else %}<p class="muted">Ingen sager.</p>{% endfor %}
+  </section>
+
+  <section class="card">
+    <h2>Abonnement</h2>
+    {% for s in data.subscriptions %}
+      <p>{{ s.tier }} · {{ s.source }} · {{ s.starts_at | local_datetime }} til {{ s.expires_at | local_datetime }}</p>
+    {% else %}<p class="muted">Ingen perioder.</p>{% endfor %}
+  </section>
+
+  <section class="card">
+    <h2>Teknisk</h2>
+    {% for s in data.sessions %}
+      <p>{{ s.ip_address or '?' }} · {{ s.user_agent or '?' }}<br>
+        <span class="muted">oprettet {{ s.created_at | local_datetime }} · sidst aktiv {{ s.last_seen_at | local_datetime }}{% if s.revoked_at %} · afsluttet{% endif %}</span></p>
+    {% else %}<p class="muted">Ingen sessioner.</p>{% endfor %}
+  </section>
+{% endblock %}

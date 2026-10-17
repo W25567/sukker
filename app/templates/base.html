@@ -12,6 +12,8 @@
     <a class="brand" href="{{ url_for('core.home') }}">Sukker<span>.nu</span></a>
     <nav class="topnav">
       {% if current_user %}
+        {% if current_user.is_moderator %}<a href="{{ url_for('moderation.queue') }}">Moderation</a>{% endif %}
+        {% if current_user.role == 'admin' %}<a href="{{ url_for('moderation.log') }}">Revisionslog</a>{% endif %}
         <a href="{{ url_for('account.overview') }}">Konto</a>
         <form method="post" action="{{ url_for('auth.logout') }}" class="inline">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -23,6 +25,13 @@
       {% endif %}
     </nav>
   </header>
+
+  {% if current_user and current_user.status == 'restricted' %}
+    <div class="notice">
+      <span>Din konto er midlertidigt begrænset, mens en sag behandles. Du kan ikke ses af andre, like eller skrive.</span>
+      <a href="{{ url_for('moderation.appeal') }}">Klag over afgørelsen</a>
+    </div>
+  {% endif %}
 
   {% if current_user and not current_user.is_verified %}
     <div class="notice">

@@ -239,6 +239,21 @@ body:has(.bottomnav) .page { padding-bottom: 88px; }
 .composer textarea { min-height: 90px; }
 .conversation-actions { margin-top: 24px; }
 .button.danger { color: var(--error); border-color: var(--error); }
+.safety-actions { display: flex; gap: 18px; justify-content: center; margin: 20px 0; font-size: 0.88rem; }
+.safety-actions a, .safety-actions .link { color: var(--muted); }
+.radio-list { display: grid; gap: 8px; }
+.radio-list label { display: flex; gap: 10px; align-items: center; font-weight: 400; }
+.bubble-meta a { color: var(--muted); }
+
+/* Moderation (M6) */
+.mod-nav { display: flex; gap: 16px; margin-bottom: 8px; font-size: 0.92rem; }
+.mod-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; margin-bottom: 16px; }
+.mod-table th, .mod-table td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.mod-table tr.high td { background: var(--info-bg); }
+.history { margin: 0; padding-left: 18px; display: grid; gap: 8px; }
+.evidence-text { white-space: pre-line; overflow-wrap: anywhere; }
+.mod-conversation { margin-bottom: 10px; }
+.mod-conversation summary { cursor: pointer; font-weight: 600; }
 .button.danger-fill { background: var(--error); color: #fff; }
 
 @media (min-width: 768px) {

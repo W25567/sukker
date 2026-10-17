@@ -18,6 +18,7 @@ from ..matches.models import MatchEvent
 from ..matches.queries import find_match, has_active_match, pair
 from ..matches.services import active_matches
 from ..profiles.models import Profile
+from ..safety.queries import is_blocked_between
 from ..subscriptions.services import effective_tier
 from .models import Conversation, ConversationMember, Message, MessageDeletion
 
@@ -76,6 +77,10 @@ def write_block_reason(sender, other):
     """Hvorfor `sender` ikke kan skrive til `other` lige nu, eller None hvis det er tilladt."""
     if not sender.is_verified:
         return "Bekræft din e-mail for at skrive beskeder."
+    if not sender.is_active_account:
+        return "Din konto er midlertidigt begrænset, mens en sag behandles. Du kan stadig læse dine beskeder."
+    if not other.is_active_account:
+        return "Du kan ikke skrive til denne person lige nu."
     profile = db.session.get(Profile, sender.id)
     if profile is not None and profile.is_paused:
         return "Din profil er på pause. Aktivér den for at skrive beskeder."
@@ -94,7 +99,7 @@ def access(user, conversation):
     other = db.session.get(User, other_id) if other_id else None
     if other is None:
         return Access(can_write=False, lock_reason=f"{DELETED_USER} har slettet sin profil.", other=None)
-    if not has_active_match(user.id, other.id):
+    if is_blocked_between(user.id, other.id) or not has_active_match(user.id, other.id):
         return None
     reason = write_block_reason(user, other)
     return Access(can_write=reason is None, lock_reason=reason, other=other)

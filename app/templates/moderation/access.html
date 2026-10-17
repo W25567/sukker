@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% from "_forms.html" import field %}
+{% block title %}Adgang til brugerdata – Moderation{% endblock %}
+{% block content %}
+  {% include "moderation/_nav.html" %}
+  <h1>{{ target.username }}</h1>
+  <div class="card notice-card">
+    <p>Du får adgang til alle gemte data om brugeren, også beskeder og private billeder. Adgangen registreres i revisionsloggen
+      med din begrundelse og gælder i to timer. Brugeren får ingen besked.</p>
+  </div>
+  <form method="post" action="{{ url_for('moderation.request_access', user_id=target.id) }}" class="form" novalidate>
+    {{ form.hidden_tag() }}
+    {{ field(form.case_id) }}
+    {{ field(form.reason) }}
+    <button type="submit" class="button">Åbn brugerdata</button>
+  </form>
+
+  <section class="card">
+    <h2>Opret sag på egen mistanke</h2>
+    <form method="post" action="{{ url_for('moderation.new_case', user_id=target.id) }}" class="form" novalidate>
+      {{ new_case_form.hidden_tag() }}
+      {{ field(new_case_form.reason) }}
+      <button type="submit" class="button secondary">Opret sag</button>
+    </form>
+  </section>
+{% endblock %}

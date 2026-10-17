@@ -1,4 +1,4 @@
-from flask import Blueprint, flash, g, redirect, render_template, request, url_for
+from flask import Blueprint, flash, g, redirect, render_template, request, session, url_for
 from flask_limiter.util import get_remote_address
 from sqlalchemy.exc import IntegrityError
 
@@ -11,6 +11,7 @@ from .sessions import end_current_session, login_required, safe_next_url, start_
 bp = Blueprint("auth", __name__)
 
 LOGIN_FAILED = "Forkert e-mail eller password."
+PREFILL_EMAIL_KEY = "login_email"
 
 
 def _email_key():
@@ -72,10 +73,14 @@ def login():
         user = services.authenticate(form.email.data, form.password.data)
         if user is None:
             flash(LOGIN_FAILED, "error")
+        elif user.status == "suspended":
+            return render_template("auth/suspended.html"), 403
         else:
             start_session(user)
             db.session.commit()
             return redirect(safe_next_url(request.args.get("next")) or url_for("core.home"))
+    if not form.is_submitted() and session.get(PREFILL_EMAIL_KEY):
+        form.email.data = session.pop(PREFILL_EMAIL_KEY)
     return render_template("auth/login.html", form=form)
 
 
@@ -95,8 +100,14 @@ def verify_email(token):
     db.session.commit()
     if user is None:
         return render_template("auth/link_invalid.html", purpose=tokens.VERIFY_EMAIL), 400
-    flash("Din e-mail er bekræftet. Velkommen til Sukker.nu.", "success")
-    return redirect(url_for("core.home"))
+    if g.user is not None:
+        flash("Din e-mail er bekræftet. Velkommen til Sukker.nu.", "success")
+        return redirect(url_for("explore.index"))
+    # Linket logger ikke ind af sig selv, så et videresendt link ikke giver adgang til kontoen.
+    # Brugeren sendes i stedet til login med e-mailen udfyldt.
+    session[PREFILL_EMAIL_KEY] = user.email
+    flash("Din e-mail er bekræftet. Log ind for at komme i gang.", "success")
+    return redirect(url_for("auth.login"))
 
 
 @bp.route("/bekraeft-email/send-igen", methods=["POST"])

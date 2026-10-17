@@ -72,8 +72,13 @@ def _load_current_user():
     if now - user_session.last_seen_at > LAST_SEEN_INTERVAL:
         user_session.last_seen_at = now
         db.session.commit()
+    user = db.session.get(User, user_session.user_id)
+    if user.status == "suspended":
+        # En suspenderet konto mister adgangen med det samme, også på enheder, der allerede er logget ind.
+        session.clear()
+        return
     g.user_session = user_session
-    g.user = db.session.get(User, user_session.user_id)
+    g.user = user
 
 
 def login_required(view):

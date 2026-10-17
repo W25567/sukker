@@ -2,6 +2,7 @@ from ..auth.models import User
 from ..core.timeutil import age_on, today_local
 from ..extensions import db
 from ..matches.queries import has_active_match
+from ..safety.queries import is_blocked_between
 from .models import Profile
 
 
@@ -21,14 +22,17 @@ def age_of(user):
 def can_view_profile(viewer, owner):
     """Afgør på serveren, om `viewer` må se `owner`s profil og offentlige billeder (specifikation 3.2 og 4.1).
 
-    Kun indloggede brugere kan se profiler. Ejeren ser altid sin egen profil. En profil på pause eller
-    med "kun for matches" kan kun ses af personer, ejeren har et aktivt match med. Blokeringer (M6)
-    kobles på her, når de findes.
+    Kun indloggede brugere kan se profiler. Ejeren ser altid sin egen profil. Blokering virker i begge
+    retninger, og begrænsede eller suspenderede konti vises ikke for andre. En profil på pause eller med
+    "kun for matches" kan kun ses af personer, ejeren har et aktivt match med. Moderatorer ser profiler
+    gennem moderationsværktøjet, ikke her.
     """
     if viewer is None:
         return False
     if viewer.id == owner.id:
         return True
+    if owner.status != "active" or is_blocked_between(viewer.id, owner.id):
+        return False
     profile = db.session.get(Profile, owner.id)
     if profile is not None and (profile.is_paused or profile.matches_only):
         return has_active_match(viewer.id, owner.id)

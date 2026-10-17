@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Moderation – Sukker.nu{% endblock %}
+{% block content %}
+  {% include "moderation/_nav.html" %}
+  <h1>{{ 'Lukkede sager' if closed else 'Sager' }}</h1>
+  {% if cases %}
+    <table class="mod-table">
+      <thead><tr><th>Sag</th><th>Kategori</th><th>Bruger</th><th>Status</th><th>Oprettet</th></tr></thead>
+      <tbody>
+        {% for case in cases %}
+          <tr{% if case.priority == 'high' %} class="high"{% endif %}>
+            <td><a href="{{ url_for('moderation.case', case_id=case.id) }}">#{{ case.id }}</a>{% if case.priority == 'high' %} <span class="lock-badge">Høj</span>{% endif %}</td>
+            <td>{{ reasons.get(case.category, case.category) }}</td>
+            <td>{{ users.get(case.subject_user_id, '–') }}</td>
+            <td>{{ statuses[case.status] }}</td>
+            <td>{{ case.created_at | local_datetime }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <div class="card"><p>Ingen sager.</p></div>
+  {% endif %}
+{% endblock %}

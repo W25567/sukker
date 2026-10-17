@@ -27,6 +27,7 @@
               {{ action_form.hidden_tag() }}
               <button type="submit" class="link" title="Slet beskeden for dig">Slet</button>
             </form>
+            {% if not item.mine %}<a href="{{ url_for('safety.report_message', message_id=item.message.id) }}">Anmeld</a>{% endif %}
           </span>
         </li>
       {% endif %}
@@ -57,4 +58,8 @@
     </form>
   </div>
   <p class="muted">Sletter du beskeder, forsvinder de kun for dig. Den anden person beholder sin historik.</p>
+  <div class="safety-actions">
+    <a href="{{ url_for('safety.report_conversation', conversation_id=conversation.id) }}">Anmeld samtalen</a>
+    {% if access.other %}<a href="{{ url_for('safety.block', username=access.other.username) }}">Blokér {{ access.other.username }}</a>{% endif %}
+  </div>
 {% endblock %}

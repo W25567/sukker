@@ -1,6 +1,6 @@
 from datetime import date, datetime
 
-from sqlalchemy import BigInteger, Date, DateTime, ForeignKey, Identity, Index, String, func
+from sqlalchemy import BigInteger, CheckConstraint, Date, DateTime, ForeignKey, Identity, Index, String, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from ..extensions import db
@@ -21,10 +21,28 @@ class User(db.Model):
     email_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     password_changed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    # Roller er adskilte: moderator behandler sager, administrator styrer platformen (specifikation 9.3).
+    role: Mapped[str] = mapped_column(String(20), nullable=False, server_default="user")
+    # active, restricted (kan hverken ses, like eller skrive) eller suspended (kan ikke logge ind).
+    status: Mapped[str] = mapped_column(String(20), nullable=False, server_default="active")
+    status_changed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    __table_args__ = (
+        CheckConstraint("role IN ('user', 'moderator', 'admin')", name="role"),
+        CheckConstraint("status IN ('active', 'restricted', 'suspended')", name="status"),
+    )
 
     @property
     def is_verified(self):
         return self.email_verified_at is not None
+
+    @property
+    def is_moderator(self):
+        return self.role == "moderator"
+
+    @property
+    def is_active_account(self):
+        return self.status == "active"
 
 
 # Brugernavn og e-mail er unikke uanset store og små bogstaver.

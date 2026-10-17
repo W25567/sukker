@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Tak for din anmeldelse – Sukker.nu{% endblock %}
+{% block content %}
+  <h1>Tak for din anmeldelse</h1>
+  <div class="card">
+    <p>En moderator gennemgår sagen. Vi har gemt en kopi af det, du anmeldte, så det ikke går tabt.</p>
+    <p>En anmeldelse fører ikke automatisk til en sanktion. Vi vurderer hver sag ud fra vores regler.</p>
+    {% if blocked %}<p>Personen er blokeret, så I ikke længere kan se eller kontakte hinanden.</p>{% endif %}
+  </div>
+  <a class="button wide" href="{{ url_for('explore.index') }}">Tilbage til Udforsk</a>
+{% endblock %}

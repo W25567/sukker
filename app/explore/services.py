@@ -13,6 +13,7 @@ from ..matches.models import Like, Match
 from ..media.models import ProfileImage
 from ..profiles.models import Profile
 from ..profiles.services import age_of
+from ..safety.queries import blocked_either_way, hidden_by
 
 PAGE_SIZE = 24
 RECENTLY_ACTIVE = timedelta(days=3)
@@ -73,6 +74,9 @@ def search(viewer, criteria=None, page=1):
                                           KommuneDistance.to_code == User.kommune_code))
         .where(
             User.id != viewer.id,
+            User.status == "active",
+            ~blocked_either_way(viewer.id, User.id),
+            ~hidden_by(viewer.id, User.id),
             User.email_verified_at.isnot(None),
             Profile.paused_at.is_(None),
             Profile.hidden_from_search.is_(False),

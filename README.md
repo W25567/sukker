@@ -13,7 +13,8 @@ Mobilorienteret datingside bygget med Flask og PostgreSQL. Specifikationen ligge
 | M3 Udforsk | Kommune ud fra postnummer, omtrentlig afstand, sortering efter nærhed, Premium-filtre, bundnavigation | Færdig, med DAGI-data i `data/geo/` |
 | M4 Likes og matches | Likes, matches, hvem har liket dig (Premium), fjern match, match igen, match-loft | Færdig |
 | M5 Beskeder | Samtaler mellem matches, låsning af Free/Free, pause, skjult historik ved fjernet match, slet for mig, arkiv, slet konto og "Slettet bruger" | Færdig |
-| M6–M9 | Tryghed og moderation, administration, offentlige sider, drift | Ikke startet |
+| M6 Tryghed og moderation | Skjul, blokér, anmeld med kopi, moderationssager, afgørelser, begrænsning og suspendering, klagevej, moderatoradgang med uændrelig revisionslog | Færdig |
+| M7–M9 | Administration, offentlige sider, drift | Ikke startet |
 
 ## Kom i gang lokalt (Windows)
 
@@ -27,7 +28,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\setup_local_db.ps1   # spørg
 # Kender du ikke postgres-passwordet, så kør i stedet som administrator:
 #   scripts\reset_postgres_local.ps1  (sætter et nyt postgres-password og gendanner pg_hba.conf bagefter)
 .\.venv\Scripts\flask.exe db upgrade
-.\.venv\Scripts\flask.exe run
+.\.venv\Scripts\python.exe -m flask run
 ```
 
 Mails sendes ikke lokalt. De gemmes i `instance/outbox/`, hvor du finder bekræftelses- og nulstillingslinks.
@@ -71,4 +72,8 @@ Indtil administrationspanelet findes (M7):
 
 ```powershell
 .\.venv\Scripts\flask.exe sukker grant-premium anna@example.test --months 3 --note "Testbruger"
+.\.venv\Scripts\flask.exe sukker set-role anna@example.test moderator   # user, moderator eller admin
 ```
+
+Moderator og administrator er adskilte roller. Moderatorer behandler sager under `/moderation/`.
+Administratorer ser revisionsloggen under `/moderation/log`.

@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% from "_forms.html" import field %}
+{% block title %}Sag #{{ case.id }} – Moderation{% endblock %}
+{% block content %}
+  {% include "moderation/_nav.html" %}
+  <h1>Sag #{{ case.id }}{% if case.priority == 'high' %} <span class="lock-badge">Høj prioritet</span>{% endif %}</h1>
+
+  <section class="card">
+    <dl class="facts">
+      <div><dt>Kategori</dt><dd>{{ reasons.get(case.category, case.category) }}</dd></div>
+      <div><dt>Status</dt><dd>{{ statuses[case.status] }}{% if case.decision %} · {{ decisions[case.decision] }}{% endif %}</dd></div>
+      <div><dt>Kilde</dt><dd>{{ case.source }}</dd></div>
+      <div><dt>Bruger</dt><dd>
+        {% if subject %}<a href="{{ url_for('moderation.user', user_id=subject.id) }}">{{ subject.username }}</a> · konto: {{ subject.status }}{% else %}–{% endif %}
+      </dd></div>
+      <div><dt>Anmeldt af</dt><dd>{{ reporter.username if reporter else '–' }}</dd></div>
+      <div><dt>Oprettet</dt><dd>{{ case.created_at | local_datetime }}</dd></div>
+      {% if case.description %}<div><dt>Beskrivelse</dt><dd>{{ case.description }}</dd></div>{% endif %}
+    </dl>
+  </section>
+
+  {% if case.evidence %}
+    <section class="card">
+      <h2>Kopi af det anmeldte</h2>
+      {% set ev = case.evidence %}
+      <p class="muted">Gemt {{ ev.captured_at | local_datetime }}</p>
+      {% if ev.type == 'message' %}
+        <p><strong>{{ ev.sender_username or 'Slettet bruger' }}</strong> · {{ ev.sent_at | local_datetime }}</p>
+        <p class="evidence-text">{{ ev.body }}</p>
+      {% elif ev.type == 'conversation' %}
+        {% for m in ev.messages %}
+          <p><strong>{{ m.sender }}</strong> · {{ m.sent_at | local_datetime }}<br><span class="evidence-text">{{ m.body }}</span></p>
+        {% endfor %}
+      {% elif ev.type == 'profile' %}
+        <p><strong>{{ ev.username }}</strong>, {{ ev.age }}</p>
+        <dl class="facts">{% for label, value in ev.fields.items() %}<div><dt>{{ label }}</dt><dd>{{ value }}</dd></div>{% endfor %}</dl>
+        <div class="image-grid evidence-images">
+          {% for public_id in ev.get('copied_images', []) %}
+            <img src="{{ url_for('moderation.evidence_image', case_id=case.id, public_id=public_id) }}" alt="Anmeldt billede">
+          {% endfor %}
+        </div>
+      {% endif %}
+    </section>
+  {% endif %}
+
+  <section class="card">
+    <h2>Handlinger</h2>
+    {% if case.status != 'closed' %}
+      {% if case.assigned_to_id != current_user.id %}
+        <form method="post">{{ action_form.hidden_tag() }}<input type="hidden" name="action" value="assign">
+          <button type="submit" class="button secondary">Tag sagen</button></form>
+      {% endif %}
+      <form method="post" class="form" novalidate>
+        {{ decision_form.hidden_tag() }}<input type="hidden" name="action" value="decide">
+        {{ field(decision_form.decision) }}
+        {{ field(decision_form.note) }}
+        <button type="submit" class="button">Afgør og luk sagen</button>
+      </form>
+    {% else %}
+      <form method="post">{{ action_form.hidden_tag() }}<input type="hidden" name="action" value="reopen">
+        <button type="submit" class="button secondary">Genåbn sagen</button></form>
+    {% endif %}
+    <form method="post" class="form" novalidate>
+      {{ note_form.hidden_tag() }}<input type="hidden" name="action" value="note">
+      {{ field(note_form.text) }}
+      <button type="submit" class="button secondary">Tilføj note</button>
+    </form>
+  </section>
+
+  <section class="card">
+    <h2>Historik</h2>
+    <ol class="history">
+      {% for event, username in events %}
+        <li><span class="muted">{{ event.at | local_datetime }} · {{ username or 'system' }}</span><br>{{ event.text or event.kind }}</li>
+      {% endfor %}
+    </ol>
+  </section>
+{% endblock %}

@@ -11,6 +11,7 @@ from ..extensions import db
 from ..messaging.models import Conversation
 from ..profiles.models import Profile
 from ..profiles.services import can_view_profile
+from ..safety.queries import blocked_either_way
 from ..subscriptions.services import effective_tier
 from .models import Like, Match, MatchEvent
 from .queries import active_match_count, find_match, pair
@@ -49,6 +50,8 @@ def like(liker, target):
         raise LikeRefused("Du kan ikke like dig selv.")
     if not liker.is_verified:
         raise LikeRefused("Bekræft din e-mail, før du kan give likes.")
+    if not liker.is_active_account:
+        raise LikeRefused("Din konto er midlertidigt begrænset, mens en sag behandles.")
     profile = db.session.get(Profile, liker.id)
     if profile is not None and profile.is_paused:
         raise LikeRefused("Din profil er på pause. Aktivér den for at give likes.")
@@ -143,6 +146,6 @@ def received_likes(user):
     return db.session.execute(
         select(Like, User)
         .join(User, User.id == Like.liker_id)
-        .where(Like.likee_id == user.id, ~returned)
+        .where(Like.likee_id == user.id, ~returned, User.status == "active", ~blocked_either_way(user.id, User.id))
         .order_by(Like.created_at.desc())
     ).all()

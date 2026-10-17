@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Kontoen er suspenderet – Sukker.nu{% endblock %}
+{% block content %}
+  <h1>Kontoen er suspenderet</h1>
+  <div class="card">
+    <p>Din konto er suspenderet efter en afgørelse i en moderationssag, og du kan ikke logge ind.</p>
+    <p>Mener du, at afgørelsen er forkert, kan du klage. Så vurderer en anden moderator sagen igen.</p>
+  </div>
+  <a class="button wide" href="{{ url_for('moderation.appeal') }}">Klag over afgørelsen</a>
+{% endblock %}
