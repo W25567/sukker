@@ -1,4 +1,5 @@
 """Offentlige sider, sitemap.xml og robots.txt (specifikation 12.5)."""
+import os
 from xml.sax.saxutils import escape
 
 from flask import Blueprint, Response, current_app, flash, g, redirect, render_template, request, send_from_directory, url_for
@@ -180,4 +181,4 @@ def robots():
 @bp.route("/favicon.ico")
 @public_page  # søgemaskiner skal kunne hente ikonet til søgeresultaterne
 def favicon():
-    return send_from_directory(current_app.static_folder, "favicon.ico", max_age=7 * 24 * 3600)
+    return send_from_directory(os.path.join(current_app.static_folder, "images"), "favicon.ico", max_age=7 * 24 * 3600)

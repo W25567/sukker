@@ -60,7 +60,7 @@ def test_public_page_is_indexable_with_metadata(client, path):
     assert len(re.findall(r"<h1[ >]", html)) == 1
     assert meta(html, "description")
     assert f'<link rel="canonical" href="http://localhost{path}">' in html
-    assert meta(html, "og:image") == "http://localhost/static/img/og.jpg"
+    assert meta(html, "og:image") == "http://localhost/static/images/og.jpg"
     assert "/billede/" not in html  # aldrig brugerbilleder
 
 
@@ -175,6 +175,20 @@ def test_staging_is_never_indexed(app, client):
 def test_favicon(client):
     response = client.get("/favicon.ico")
     assert response.status_code == 200 and response.data[:4] == b"\x00\x00\x01\x00"
+
+
+def test_icons_logos_and_manifest_exist(client):
+    html = client.get("/").get_data(as_text=True)
+    paths = set(re.findall(r'(?:href|src|srcset)="(/static/[^"]+)"', html))
+    paths.add(meta(html, "og:image").removeprefix("http://localhost"))
+    assert {"/static/images/site.webmanifest", "/static/images/full-logo-280.webp"} <= paths
+    for path in paths:
+        assert client.get(path).status_code == 200, path
+
+    manifest = json.loads(client.get("/static/images/site.webmanifest").get_data(as_text=True))
+    assert manifest["name"] == "Sukker.nu"
+    for icon in manifest["icons"]:
+        assert client.get(icon["src"]).status_code == 200, icon["src"]
 
 
 # --- Vilkårsversioner --------------------------------------------------------------------------------------

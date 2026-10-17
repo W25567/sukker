@@ -20,7 +20,7 @@ def home():
         "@context": "https://schema.org",
         "@graph": [
             {"@type": "Organization", "@id": base + "#organization", "name": "Sukker.nu", "url": base,
-             "logo": absolute_url("static", filename="img/icon-512.png"),
+             "logo": absolute_url("static", filename="images/web-app-manifest-512x512.png"),
              "email": current_app.config["CONTACT_EMAIL"]},
             {"@type": "WebSite", "@id": base + "#website", "name": "Sukker.nu", "url": base, "inLanguage": "da-DK",
              "publisher": {"@id": base + "#organization"}},

@@ -93,8 +93,10 @@ linje i registret.
   Virksomhedsoplysninger og kontaktmail sættes i `.env` (se `.env.example`).
 - **Ændres vilkårene væsentligt**, hæves `TERMS_VERSION` i `app/pages/legal.py`. Alle skal så acceptere igen ved
   næste besøg. Konti, der fandtes før M8, skal acceptere de første vilkår.
-- **Ikoner og delingsbillede** laves med `python scripts\make_brand_images.py`. De er generiske og indeholder
-  aldrig brugerbilleder.
+- **Logo og ikoner** ligger alle i `app/static/images`. Favicons, app-ikoner og `site.webmanifest` kommer fra
+  RealFaviconGenerator, og originalerne af logoet ligger i `images/full/`. De afledte filer (`logo-64.webp`,
+  `full-logo-280.webp`, en mørk variant og delingsbilledet `og.jpg`) laves med
+  `python scripts\make_brand_images.py`. Brugerbilleder indgår aldrig.
 - **Staging**: `SUKKER_NOINDEX_ALL=1` giver noindex på alt og `Disallow: /` i robots.txt.
 
 Til M9 (Nginx og drift): 301 fra http og www til `https://sukker.nu`, gzip/brotli, lange cacheheadere på

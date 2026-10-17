@@ -2,6 +2,11 @@
 {% block page_class %}public{% endblock %}
 {% block content %}
   <section class="hero">
+    {# Logoet er synligt med det samme, så det indlæses ikke lazy (Core Web Vitals). #}
+    <picture>
+      <source srcset="{{ url_for('static', filename='images/full-logo-280-dark.webp') }}" media="(prefers-color-scheme: dark)">
+      <img class="hero-logo" src="{{ url_for('static', filename='images/full-logo-280.webp') }}" width="280" height="140" alt="Sukker.nu" fetchpriority="high">
+    </picture>
     <h1>Mød nye mennesker – diskret og enkelt</h1>
     <p class="lead">Sukker.nu er en moderne datingside for voksne. Opret en profil på få minutter, og bestem selv, hvor meget du deler.</p>
     <a class="button" href="{{ url_for('auth.register') }}">Opret gratis profil</a>

@@ -25,15 +25,21 @@
   {% endif %}
   {% if structured %}<script type="application/ld+json">{{ structured | tojson }}</script>{% endif %}
   {% block meta %}{% endblock %}
-  <link rel="icon" href="{{ url_for('pages.favicon') }}" sizes="32x32">
-  <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/icon-180.png') }}">
+  {# Ikonerne i static/images kommer fra RealFaviconGenerator. #}
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/favicon-96x96.png') }}" sizes="96x96">
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='images/favicon.svg') }}">
+  <link rel="shortcut icon" href="{{ url_for('pages.favicon') }}">
+  <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='images/apple-touch-icon.png') }}">
+  <meta name="apple-mobile-web-app-title" content="Sukker.nu">
+  <link rel="manifest" href="{{ url_for('static', filename='images/site.webmanifest') }}">
   <meta name="theme-color" content="#a8325a">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
 </head>
 <body>
   <header class="topbar">
-    <a class="brand" href="{{ url_for('core.home') }}">Sukker<span>.nu</span></a>
+    <a class="brand" href="{{ url_for('core.home') }}">
+      <img src="{{ url_for('static', filename='images/logo-64.webp') }}" width="38" height="32" alt=""><span class="brand-name">Sukker<span>.nu</span></span>
+    </a>
     <nav class="topnav">
       {% if current_user %}
         {% if current_user.is_moderator %}<a href="{{ url_for('moderation.queue') }}">Moderation</a>{% endif %}

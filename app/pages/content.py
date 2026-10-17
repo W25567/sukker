@@ -92,7 +92,7 @@ def seo_for(endpoint):
         "title": page.title,
         "description": page.description,
         "canonical": absolute_url(endpoint),
-        "image": absolute_url("static", filename="img/og.jpg"),
+        "image": absolute_url("static", filename="images/og.jpg"),
     }
 
 

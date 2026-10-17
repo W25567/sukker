@@ -1,21 +1,26 @@
-"""Laver favicon, app-ikoner og det generiske delingsbillede (Open Graph) til app/static.
+"""Laver de afledte logofiler og det generiske delingsbillede (Open Graph) i app/static/images.
 
-Køres kun, når udseendet ændres:  .venv\\Scripts\\python.exe scripts\\make_brand_images.py
+Kilden er logoerne i app/static/images/full/. Favicons og app-ikoner kommer fra RealFaviconGenerator
+og ligger direkte i app/static/images. Kør scriptet igen, når logoet ændres:
+
+    .venv\\Scripts\\python.exe scripts\\make_brand_images.py
+
 Billederne er generiske og indeholder aldrig brugerbilleder (specifikation 12.5).
 """
 import os
 
 from PIL import Image, ImageDraw, ImageFont
 
-STATIC = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "app", "static")
-ACCENT = (168, 50, 90)
-DARK = (43, 34, 48)
-LIGHT = (250, 247, 245)
+IMAGES = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "app", "static", "images")
+SOURCE_LOGO = os.path.join(IMAGES, "full", "logo.png")  # hjertet alene
+SOURCE_FULL = os.path.join(IMAGES, "full", "full-logo.png")  # hjerte og navn
 
-FONT_CANDIDATES = [
-    r"C:\Windows\Fonts\segoeuib.ttf",
-    "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
-]
+BACKGROUND = (250, 247, 245)  # --bg i app.css
+TEXT = (43, 34, 48)  # --text
+MUTED = (111, 100, 117)  # --muted
+DARK_TEXT = (241, 236, 243)  # --text i mørk tilstand
+
+FONT_CANDIDATES = [r"C:\Windows\Fonts\segoeui.ttf", "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"]
 
 
 def font(size):
@@ -25,40 +30,43 @@ def font(size):
     return ImageFont.load_default(size=size)
 
 
-def icon(size):
-    """Et "S" i en rund, farvet flade."""
-    scale = 4  # tegnes større og skaleres ned for bløde kanter
-    big = size * scale
-    image = Image.new("RGBA", (big, big), (0, 0, 0, 0))
-    draw = ImageDraw.Draw(image)
-    draw.rounded_rectangle((0, 0, big - 1, big - 1), radius=big // 4, fill=ACCENT)
-    draw.text((big / 2, big / 2 + big * 0.02), "S", font=font(int(big * 0.68)), fill=LIGHT, anchor="mm")
-    return image.resize((size, size), Image.LANCZOS)
+def resized(image, height):
+    width = round(image.width * height / image.height)
+    return image.resize((width, height), Image.LANCZOS)
 
 
-def og_image():
+def for_dark_mode(image):
+    """Gør den mørkebrune skrift lys, så logoet kan ses på mørk baggrund. Hjertets farver bevares."""
+    pixels = image.load()
+    for y in range(image.height):
+        for x in range(image.width):
+            r, g, b, a = pixels[x, y]
+            if a and max(r, g, b) < 90 and max(r, g, b) - min(r, g, b) < 45:
+                pixels[x, y] = (*DARK_TEXT, a)
+    return image
+
+
+def og_image(full_logo):
     width, height = 1200, 630
-    image = Image.new("RGB", (width, height), DARK)
+    image = Image.new("RGB", (width, height), BACKGROUND)
+    logo = resized(full_logo, 400)
+    image.paste(logo, ((width - logo.width) // 2, 50), logo)
     draw = ImageDraw.Draw(image)
-    for x in range(width):  # vandret overgang fra accent til mørk
-        t = x / (width - 1)
-        color = tuple(round(a + (b - a) * t) for a, b in zip(ACCENT, DARK))
-        draw.line([(x, 0), (x, height)], fill=color)
-    draw.text((100, 250), "Sukker", font=font(132), fill=LIGHT, anchor="ls")
-    sukker_width = draw.textlength("Sukker", font=font(132))
-    draw.text((100 + sukker_width, 250), ".nu", font=font(132), fill=(240, 160, 190), anchor="ls")
-    draw.text((104, 340), "Moderne og diskret dating for voksne", font=font(48), fill=LIGHT, anchor="ls")
-    draw.text((104, 420), "Opret en gratis profil på få minutter", font=font(36), fill=(225, 210, 220), anchor="ls")
+    draw.text((width / 2, 520), "Moderne og diskret dating for voksne", font=font(44), fill=TEXT, anchor="mm")
+    draw.text((width / 2, 575), "Opret en gratis profil på få minutter", font=font(30), fill=MUTED, anchor="mm")
     return image
 
 
 def main():
-    os.makedirs(os.path.join(STATIC, "img"), exist_ok=True)
-    icon(180).save(os.path.join(STATIC, "img", "icon-180.png"))
-    icon(512).save(os.path.join(STATIC, "img", "icon-512.png"))
-    icon(64).save(os.path.join(STATIC, "favicon.ico"), sizes=[(16, 16), (32, 32), (48, 48)])
-    og_image().save(os.path.join(STATIC, "img", "og.jpg"), quality=86, optimize=True, progressive=True)
-    print("Skrev favicon.ico, img/icon-180.png, img/icon-512.png og img/og.jpg i", STATIC)
+    heart = Image.open(SOURCE_LOGO).convert("RGBA")
+    full = Image.open(SOURCE_FULL).convert("RGBA")
+    # Topbjælken viser hjertet i 32 px højde, forsiden hele logoet i 140 px højde. Dobbelt opløsning til skarpe skærme.
+    resized(heart, 64).save(os.path.join(IMAGES, "logo-64.webp"), quality=90, method=6)
+    hero = resized(full, 280)
+    hero.save(os.path.join(IMAGES, "full-logo-280.webp"), quality=88, method=6)
+    for_dark_mode(hero.copy()).save(os.path.join(IMAGES, "full-logo-280-dark.webp"), quality=88, method=6)
+    og_image(full).save(os.path.join(IMAGES, "og.jpg"), quality=86, optimize=True, progressive=True)
+    print("Skrev logo-64.webp, full-logo-280.webp, full-logo-280-dark.webp og og.jpg i", IMAGES)
 
 
 if __name__ == "__main__":
