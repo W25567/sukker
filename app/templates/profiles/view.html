@@ -28,6 +28,7 @@
     {% endif %}
 
     <h1>{{ user.display_name }}, {{ age }}</h1>
+    {% if zodiac %}<p class="zodiac"><span aria-hidden="true">{{ zodiac.symbol }}</span> {{ zodiac.name }}</p>{% endif %}
     {% if distance or kommune %}
       <p class="muted">{{ distance or '' }}{% if distance and kommune %} · {% endif %}{{ kommune or '' }}</p>
     {% endif %}

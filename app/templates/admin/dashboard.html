@@ -1,47 +1,56 @@
 {% extends "base.html" %}
 {% block title %}Administration – Sukker.nu{% endblock %}
+{% block page_class %}admin-wide{% endblock %}
+{% macro stat(label, value, href=None) %}
+  {% if href %}
+    <a class="stat" href="{{ href }}"><span class="stat-label">{{ label }}</span><span class="stat-value">{{ value }}</span></a>
+  {% else %}
+    <div class="stat"><span class="stat-label">{{ label }}</span><span class="stat-value">{{ value }}</span></div>
+  {% endif %}
+{% endmacro %}
 {% block content %}
   {% include "admin/_nav.html" %}
   <h1>Overblik</h1>
-  <p class="muted">Aggregerede tal uden testkonti. Ingen beskedindhold eller placering.</p>
+  <p class="muted">Tal uden testkonti. Klik på et tal for at se brugerne bag det.</p>
 
   <section class="card">
     <h2>Brugere</h2>
-    <dl class="stats">
-      <div><dt>Profiler</dt><dd>{{ m.users.total }}</dd></div>
-      <div><dt>Bekræftede</dt><dd>{{ m.users.verified }}</dd></div>
-      <div><dt>Nye, 7 dage</dt><dd>{{ m.users.new_7 }}</dd></div>
-      <div><dt>Nye, 30 dage</dt><dd>{{ m.users.new_30 }}</dd></div>
-      <div><dt>Aktive, 7 dage</dt><dd>{{ m.users.active_7 }}</dd></div>
-      <div><dt>På pause</dt><dd>{{ m.users.paused }}</dd></div>
-      <div><dt>Premium</dt><dd>{{ m.paying.premium }}</dd></div>
-      <div><dt>Premium+</dt><dd>{{ m.paying.premium_plus }}</dd></div>
-      <div><dt>Tidlige fugle (livstid)</dt><dd>{{ m.paying.early_birds }}</dd></div>
-    </dl>
+    <div class="stats">
+      {{ stat('Profiler', m.users.total, url_for('admin.users')) }}
+      {{ stat('Bekræftede', m.users.verified, url_for('admin.users', filter='bekraeftede')) }}
+      {{ stat('Nye, 7 dage', m.users.new_7, url_for('admin.users', filter='nye7')) }}
+      {{ stat('Nye, 30 dage', m.users.new_30, url_for('admin.users', filter='nye30')) }}
+      {{ stat('Aktive, 7 dage', m.users.active_7, url_for('admin.users', filter='aktive7', sort='aktivitet')) }}
+      {{ stat('På pause', m.users.paused, url_for('admin.users', filter='pause')) }}
+      {{ stat('Premium', m.paying.premium, url_for('admin.users', filter='premium')) }}
+      {{ stat('Premium+', m.paying.premium_plus, url_for('admin.users', filter='premium_plus')) }}
+      {{ stat('Tidlige fugle (livstid)', m.paying.early_birds, url_for('admin.users', filter='tidlige_fugle')) }}
+    </div>
   </section>
 
   <section class="card">
     <h2>Aktivitet</h2>
-    <dl class="stats">
-      <div><dt>Likes, 7 dage</dt><dd>{{ m.activity.likes_7 }}</dd></div>
-      <div><dt>Nye matches, 7 dage</dt><dd>{{ m.activity.matches_7 }}</dd></div>
-      <div><dt>Aktive matches</dt><dd>{{ m.activity.active_matches }}</dd></div>
-      <div><dt>Beskeder, 7 dage</dt><dd>{{ m.activity.messages_7 }}</dd></div>
-      <div><dt>Nye samtaler, 30 dage</dt><dd>{{ m.activity.conversations_started_30 }}</dd></div>
-      <div><dt>Svarprocent</dt><dd>{{ m.activity.reply_rate ~ ' %' if m.activity.reply_rate is not none else '–' }}</dd></div>
-      <div><dt>Låste Free/Free-matches</dt><dd>{{ m.activity.locked_free_free }}</dd></div>
-      <div><dt>Henvendelser uden match</dt><dd>fase 2</dd></div>
-    </dl>
+    <div class="stats">
+      {{ stat('Likes, 7 dage', m.activity.likes_7, url_for('admin.users', sort='likes')) }}
+      {{ stat('Nye matches, 7 dage', m.activity.matches_7) }}
+      {{ stat('Aktive matches', m.activity.active_matches) }}
+      {{ stat('Beskeder, 7 dage', m.activity.messages_7, url_for('admin.users', sort='beskeder')) }}
+      {{ stat('Nye samtaler, 30 dage', m.activity.conversations_started_30) }}
+      {{ stat('Svarprocent', m.activity.reply_rate ~ ' %' if m.activity.reply_rate is not none else '–') }}
+      {{ stat('Låste Free/Free-matches', m.activity.locked_free_free) }}
+    </div>
   </section>
 
   <section class="card">
-    <h2>Tryghed</h2>
-    <dl class="stats">
-      <div><dt>Anmeldelser, 30 dage</dt><dd>{{ m.safety.reports_30 }}</dd></div>
-      <div><dt>Åbne sager</dt><dd>{{ m.safety.open_cases }}</dd></div>
-      <div><dt>Heraf høj prioritet</dt><dd>{{ m.safety.high_open }}</dd></div>
-      <div><dt>Begrænsede / suspenderede</dt><dd>{{ m.users.restricted }} / {{ m.users.suspended }}</dd></div>
-    </dl>
+    <h2>Tryghed og regler</h2>
+    <div class="stats">
+      {{ stat('Anmeldelser, 30 dage', m.safety.reports_30, url_for('admin.users', filter='anmeldt', sort='anmeldelser')) }}
+      {{ stat('Åbne sager', m.safety.open_cases, url_for('admin.users', filter='aabne_sager', sort='anmeldelser')) }}
+      {{ stat('Heraf høj prioritet', m.safety.high_open, url_for('admin.users', filter='aabne_sager', sort='anmeldelser')) }}
+      {{ stat('Begrænsede', m.users.restricted, url_for('admin.users', filter='begraenset')) }}
+      {{ stat('Suspenderede', m.users.suspended, url_for('admin.users', filter='suspenderet')) }}
+    </div>
+    <p><a href="{{ url_for('admin.oversight') }}">Gå til tilsyn: hvem skiller sig ud?</a></p>
   </section>
 
   <section class="card">

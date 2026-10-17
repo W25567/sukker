@@ -16,9 +16,18 @@
     <div class="progress-bar" data-percent="{{ ((completeness + 5) // 10) * 10 }}"></div>
   </div>
   <p class="muted">Profilen er {{ completeness }} % udfyldt. <a href="{{ url_for('profiles.edit') }}">Udfyld mere</a></p>
+  <p class="muted">Dit stjernetegn: <span aria-hidden="true">{{ zodiac.symbol }}</span> {{ zodiac.name }} ·
+    {{ 'skjult for andre' if zodiac_hidden else 'vises på din profil' }}. <a href="{{ url_for('profiles.edit') }}#stjernetegn">Ret</a></p>
 
   <section class="card">
     <h2>Billeder</h2>
+    {% if is_early_bird and not images %}
+      <p class="early-bird-note"><strong>Din Premium for livstid er sat på pause.</strong> Den gælder, så længe du har mindst ét billede på profilen. Upload et billede for at bruge den igen.</p>
+    {% elif not is_early_bird and early_bird_open and not images and current_user.is_verified %}
+      <p class="early-bird-note"><strong>Upload et billede, og få Premium for livstid.</strong> Du er med fra starten, så du er tidlig fugl – det eneste, der mangler, er et billede.</p>
+    {% elif is_early_bird and images | length == 1 %}
+      <p class="muted">Du er tidlig fugl. Premium for livstid gælder, så længe du har mindst ét billede.</p>
+    {% endif %}
     {% if images %}
       <ul class="image-grid">
         {% for image in images %}

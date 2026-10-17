@@ -257,10 +257,29 @@ body:has(.bottomnav) .page { padding-bottom: 88px; }
 .mod-conversation summary { cursor: pointer; font-weight: 600; }
 
 /* Administration (M7) */
-.stats { margin: 0; display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
-.stats div { padding: 10px; border-radius: 10px; background: var(--info-bg); }
-.stats dt { font-size: 0.8rem; color: var(--muted); }
-.stats dd { margin: 0; font-size: 1.3rem; font-weight: 700; }
+.stats { margin: 0 0 12px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.stat { display: flex; flex-direction: column; padding: 10px; border-radius: 10px; background: var(--info-bg); color: var(--text); text-decoration: none; border: 1px solid transparent; }
+a.stat:hover, a.stat:focus-visible { border-color: var(--accent); }
+a.stat .stat-value { color: var(--accent); }
+.stat.warn { border-color: var(--error); }
+.stat-label { font-size: 0.8rem; color: var(--muted); }
+.stat-value { font-size: 1.3rem; font-weight: 700; }
+.page.admin-wide { max-width: 1100px; }
+.section-nav { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 0 0 16px; font-size: 0.92rem; }
+.admin-filter { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; margin-bottom: 8px; }
+.admin-filter .field { margin: 0; }
+.admin-filter input, .admin-filter select { min-height: 38px; padding: 4px 8px; font: inherit; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: 8px; }
+.chips-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.chips-row .chip { text-decoration: none; color: var(--text); }
+.chips-row .chip.active { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.tags { display: inline-flex; flex-wrap: wrap; gap: 4px; margin-left: 4px; }
+.tag { font-size: 0.75rem; padding: 1px 6px; border-radius: 999px; border: 1px solid var(--border); color: var(--muted); }
+.tag.warn { border-color: var(--error); color: var(--error); }
+.admin-users td.num, .admin-users th.num { text-align: right; white-space: nowrap; }
+.admin-users td.warn { color: var(--error); font-weight: 700; }
+.admin-users th.hl { color: var(--accent); }
+.pager { display: flex; gap: 16px; }
+.small-link { font-size: 0.9rem; }
 .inline-form { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 10px 0; }
 .inline-form select, .inline-form input {
   min-height: 36px; padding: 4px 8px; font: inherit; color: var(--text); background: var(--surface);
@@ -309,6 +328,8 @@ body:has(.bottomnav) .page { padding-bottom: 88px; }
 .faq details p { margin-top: 0; }
 .early-bird-card { border-color: var(--accent); background: var(--info-bg); }
 .early-bird-card h2 { color: var(--accent); }
+.zodiac { margin: -0.5rem 0 0.75rem; color: var(--muted); }
+.early-bird-note { padding: 10px 12px; border-radius: 10px; border: 1px solid var(--accent); background: var(--info-bg); }
 .early-bird-banner {
   display: block; margin: 0 auto 20px; max-width: 34rem; padding: 14px 16px; border-radius: var(--radius);
   border: 1px solid var(--accent); background: var(--info-bg); text-align: center; text-decoration: none; color: var(--text);

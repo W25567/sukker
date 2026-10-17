@@ -12,9 +12,11 @@ from ..matches.queries import has_active_match
 from ..matches.services import has_liked
 from ..media import services as media
 from ..media.processing import ACCEPT, ImageRejected
+from ..subscriptions.services import early_bird_open, grant_early_bird, has_early_bird
 from .fields import completeness, visible_fields
 from .forms import ProfileForm, VisibilityForm
 from .services import age_of, can_view_profile, find_user_by_handle, get_or_create_profile
+from .zodiac import visible_zodiac, zodiac_for
 
 bp = Blueprint("profiles", __name__)
 
@@ -31,6 +33,7 @@ def _render_profile_view(user, *, preview):
         age=age_of(user),
         images=media.list_images(user.id),
         groups=visible_fields(profile, as_owner=False),
+        zodiac=visible_zodiac(user, profile),
         preview=preview,
         distance=None if preview else distance_label(km_between(g.user.kommune_code, user.kommune_code)),
         kommune=kommune_name(user.kommune_code) if profile.show_kommune else None,
@@ -57,6 +60,10 @@ def me():
         visibility_form=visibility_form,
         action_form=ActionForm(),
         accept=ACCEPT,
+        zodiac=zodiac_for(g.user.birthdate),
+        zodiac_hidden="zodiac" in (profile.hidden_fields or []),
+        is_early_bird=has_early_bird(g.user),
+        early_bird_open=early_bird_open(),
     )
 
 
@@ -72,7 +79,7 @@ def edit():
         return redirect(url_for("profiles.me"))
     if not form.is_submitted():
         form.load(profile)
-    return render_template("profiles/edit.html", form=form), 400 if form.errors else 200
+    return render_template("profiles/edit.html", form=form, zodiac=zodiac_for(g.user.birthdate)), 400 if form.errors else 200
 
 
 @bp.route("/profil/synlighed", methods=["POST"])
@@ -129,12 +136,16 @@ def upload():
         return redirect(url_for("profiles.me"))
     try:
         media.upload_image(g.user, form.image.data.read())
+        early_bird = grant_early_bird(g.user)  # tidlige fugle får Premium for livstid ved første billede
         db.session.commit()
     except ImageRejected as rejection:
         db.session.rollback()
         flash(str(rejection), "error")
     else:
-        flash("Billedet er uploadet.", "success")
+        if early_bird is not None:
+            flash("Billedet er uploadet. Tak, fordi du er tidlig fugl – du har nu Premium for livstid!", "success")
+        else:
+            flash("Billedet er uploadet.", "success")
     return redirect(url_for("profiles.me"))
 
 

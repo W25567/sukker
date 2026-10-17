@@ -26,6 +26,11 @@
 
     <section class="card">
       <h2>Grundlæggende</h2>
+      <div class="field" id="stjernetegn">
+        <span class="field-label">Stjernetegn</span>
+        <p><span aria-hidden="true">{{ zodiac.symbol }}</span> {{ zodiac.name }} <span class="muted">· ud fra din fødselsdato</span></p>
+      </div>
+      {{ hide_toggle('zodiac') }}
       {{ field(form.presentation) }}{{ hide_toggle('presentation') }}
       {{ field(form.gender) }}{{ hide_toggle('gender') }}
       {{ checkboxes(form.seeking_genders) }}{{ hide_toggle('seeking_genders') }}

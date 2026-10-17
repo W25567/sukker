@@ -20,9 +20,13 @@ def _active_query(user_id, at):
 
 
 def active_subscription(user_id, at=None):
-    """Den aktive periode med højeste niveau, eller None for Free."""
+    """Den aktive periode med højeste niveau, eller None for Free.
+
+    Premium for livstid til tidlige fugle gælder kun, mens brugeren har mindst ét offentligt billede."""
     at = at or now_utc()
     rows = db.session.scalars(_active_query(user_id, at)).all()
+    if any(row.source == "early_bird" for row in rows) and not has_public_image(user_id):
+        rows = [row for row in rows if row.source != "early_bird"]
     if not rows:
         return None
     return max(rows, key=lambda s: (TIER_RANK[s.tier], s.expires_at))
@@ -81,6 +85,14 @@ def early_bird_open():
     return limit is None or early_bird_count() < limit
 
 
+def has_public_image(user_id):
+    from ..media.models import ProfileImage
+
+    return db.session.scalar(
+        select(ProfileImage.id).where(ProfileImage.user_id == user_id, ProfileImage.collection == "public").limit(1)
+    ) is not None
+
+
 def has_early_bird(user):
     return db.session.scalar(
         select(Subscription.id).where(Subscription.user_id == user.id, Subscription.source == "early_bird").limit(1)
@@ -88,8 +100,10 @@ def has_early_bird(user):
 
 
 def grant_early_bird(user):
-    """Premium for livstid til en bekræftet bruger, mens kampagnen er åben. Gives højst én gang."""
-    if user.is_test or not user.is_verified or has_early_bird(user) or not early_bird_open():
+    """Premium for livstid til en bekræftet bruger med mindst ét billede, mens kampagnen er åben.
+    Gives højst én gang. Kaldes ved bekræftelse, ved upload af billede og på velkomstsiden."""
+    if (user.is_test or not user.is_verified or has_early_bird(user) or not has_public_image(user.id)
+            or not early_bird_open()):
         return None
     subscription = Subscription(user_id=user.id, tier="premium", source="early_bird", starts_at=now_utc(),
                                 expires_at=LIFETIME_END, note="Tidlig fugl")

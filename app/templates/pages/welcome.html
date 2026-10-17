@@ -10,10 +10,11 @@
         <h2>Du er tidlig fugl{% if newly_granted %} 🎉{% endif %}</h2>
         <p>Som tak, fordi du er med fra starten, har du <strong>Premium for livstid</strong>. Du kan skrive med alle dine matches, se hvem der har liket dig og filtrere i Udforsk – uden at betale, nu og fremover.</p>
       </div>
-    {% elif not current_user.is_verified and early_bird_open %}
+    {% elif early_bird_open %}
       <div class="card early-bird-card">
         <h2>Bliv tidlig fugl</h2>
-        <p>Bekræft din e-mail, så får du <strong>Premium for livstid</strong>, fordi du er med fra starten. Linket står i den mail, vi har sendt dig.</p>
+        <p>Du er med fra starten, så du kan få <strong>Premium for livstid</strong>.
+          {% if not current_user.is_verified %}Bekræft din e-mail via linket i den mail, vi har sendt dig, og upload et billede til din profil.{% else %}Det eneste, der mangler, er et billede på din profil.{% endif %}</p>
       </div>
     {% elif subscription %}
       <div class="card">
@@ -29,9 +30,10 @@
       <li><strong>Fortæl andre om Sukker.nu</strong><span>Jo flere vi er, jo større er chancen for at møde nogen i nærheden.</span></li>
     </ol>
 
-    <form method="post" class="form">
+    <form method="post" class="form actions">
       {{ form.hidden_tag() }}
-      <button type="submit" class="button wide">Udfyld min profil</button>
+      <button type="submit" name="goto" value="profil" class="button">Udfyld min profil</button>
+      <button type="submit" name="goto" value="senere" class="button secondary">Senere</button>
     </form>
   </section>
 {% endblock %}

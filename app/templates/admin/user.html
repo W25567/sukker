@@ -1,22 +1,42 @@
 {% extends "base.html" %}
 {% block title %}{{ target.display_name }} – Administration{% endblock %}
+{% block page_class %}admin-wide{% endblock %}
 {% macro csrf() %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endmacro %}
 {% block content %}
   {% include "admin/_nav.html" %}
-  <h1>{{ target.display_name }}{% if target.is_test %} <span class="lock-badge">Testkonto</span>{% endif %}</h1>
+  {% set names = data.names %}
+  <h1>{{ target.display_name }}, {{ data.age }}{% if target.is_test %} <span class="lock-badge">Testkonto</span>{% endif %}</h1>
+  <p class="muted">Du ser alle oplysninger om brugeren. Visningen er registreret i administrationsloggen og ændrer intet for brugeren.</p>
 
-  <section class="card">
-    <h2>Konto</h2>
+  <nav class="section-nav" aria-label="Afsnit">
+    <a href="#overblik">Overblik</a><a href="#profil">Profil</a><a href="#billeder">Billeder</a><a href="#aktivitet">Aktivitet</a>
+    <a href="#samtaler">Samtaler</a><a href="#sager">Sager</a><a href="#abonnement">Abonnement</a><a href="#logins">Logins</a><a href="#log">Log</a>
+  </nav>
+
+  <section class="card" id="overblik">
+    <h2>Overblik</h2>
+    <div class="stats">
+      <div class="stat{% if signals.reports %} warn{% endif %}"><span class="stat-label">Anmeldt</span><span class="stat-value">{{ signals.reports }}</span></div>
+      <div class="stat{% if signals.blocked_by %} warn{% endif %}"><span class="stat-label">Blokeret af</span><span class="stat-value">{{ signals.blocked_by }}</span></div>
+      <div class="stat"><span class="stat-label">Skjult af</span><span class="stat-value">{{ signals.hidden_by }}</span></div>
+      <div class="stat"><span class="stat-label">Likes, 7 dage</span><span class="stat-value">{{ signals.likes_7 }}</span></div>
+      <div class="stat"><span class="stat-label">Beskeder, 7 dage</span><span class="stat-value">{{ signals.messages_7 }}</span></div>
+      <div class="stat{% if not signals.images %} warn{% endif %}"><span class="stat-label">Offentlige billeder</span><span class="stat-value">{{ signals.images }}</span></div>
+    </div>
     <dl class="facts">
       <div><dt>E-mail</dt><dd>{{ target.email }}{% if not target.is_verified %} (ubekræftet){% endif %}</dd></div>
+      <div><dt>Fødselsdato</dt><dd>{{ target.birthdate.strftime('%d-%m-%Y') }} · {{ data.age }} år · {{ zodiac.symbol }} {{ zodiac.name }}</dd></div>
+      <div><dt>Postnummer og kommune</dt><dd>{{ target.postcode }} · {{ data.kommune or 'ukendt' }}</dd></div>
       <div><dt>Oprettet</dt><dd>{{ target.created_at | local_datetime }}</dd></div>
-      <div><dt>Status</dt><dd>{{ target.status }}</dd></div>
-      <div><dt>Rolle</dt><dd>{{ target.role }}</dd></div>
+      <div><dt>Senest aktiv</dt><dd>{{ signals.last_seen | local_datetime if signals.last_seen else '–' }}</dd></div>
+      <div><dt>Profil-URL</dt><dd><code>/bruger/{{ target.handle }}</code></dd></div>
+      <div><dt>Status og rolle</dt><dd>{{ target.status }} · {{ target.role }}</dd></div>
+      <div><dt>Vilkår</dt><dd>version {{ target.terms_version }} · accepteret {{ target.terms_accepted_at | local_datetime }}</dd></div>
     </dl>
     <form method="post" class="inline-form">
       {{ csrf() }}<input type="hidden" name="action" value="status">
       <select name="status" aria-label="Status">
-        {% for s in ['active', 'restricted', 'suspended'] %}<option value="{{ s }}"{% if s == target.status %} selected{% endif %}>{{ s }}</option>{% endfor %}
+        {% for s, label in [('active', 'Aktiv'), ('restricted', 'Begrænset'), ('suspended', 'Suspenderet')] %}<option value="{{ s }}"{% if s == target.status %} selected{% endif %}>{{ label }}</option>{% endfor %}
       </select>
       <input name="note" type="text" placeholder="Begrundelse" aria-label="Begrundelse">
       <button type="submit" class="button small">Skift status</button>
@@ -24,13 +44,81 @@
     <form method="post" class="inline-form">
       {{ csrf() }}<input type="hidden" name="action" value="role">
       <select name="role" aria-label="Rolle">
-        {% for r in ['user', 'moderator', 'admin'] %}<option value="{{ r }}"{% if r == target.role %} selected{% endif %}>{{ r }}</option>{% endfor %}
+        {% for r, label in [('user', 'Bruger'), ('moderator', 'Moderator'), ('admin', 'Administrator')] %}<option value="{{ r }}"{% if r == target.role %} selected{% endif %}>{{ label }}</option>{% endfor %}
       </select>
       <button type="submit" class="button small">Skift rolle</button>
     </form>
   </section>
 
-  <section class="card">
+  <section class="card" id="profil">
+    <h2>Profil</h2>
+    {% if data.profile %}
+      <p class="muted">Pause: {{ 'ja' if data.profile.is_paused else 'nej' }} · Skjult fra søgning: {{ 'ja' if data.profile.hidden_from_search else 'nej' }}
+        · Kun matches: {{ 'ja' if data.profile.matches_only else 'nej' }} · Viser kommune: {{ 'ja' if data.profile.show_kommune else 'nej' }}
+        · Stjernetegn {{ 'skjult' if 'zodiac' in data.profile.hidden_fields else 'vist' }}</p>
+      <dl class="facts">
+        {% for label, value, hidden in data.fields %}
+          <div><dt>{{ label }}{% if hidden %} <span class="tag">skjult for andre</span>{% endif %}</dt><dd>{{ value or '–' }}</dd></div>
+        {% endfor %}
+      </dl>
+    {% else %}<p class="muted">Ingen profil.</p>{% endif %}
+  </section>
+
+  <section class="card" id="billeder">
+    <h2>Billeder</h2>
+    {% for collection, images in data.images.items() %}
+      <h3>{{ 'Offentlige' if collection == 'public' else 'Privat arkiv' }} ({{ images | length }})</h3>
+      <div class="image-grid">
+        {% for image in images %}
+          <a href="{{ url_for('admin.user_image', user_id=target.id, public_id=image.public_id, variant='stor') }}" target="_blank" rel="noopener">
+            <img src="{{ url_for('admin.user_image', user_id=target.id, public_id=image.public_id, variant='lille') }}" alt="Billede {{ loop.index }}" loading="lazy">
+          </a>
+        {% else %}<p class="muted">Ingen.</p>{% endfor %}
+      </div>
+    {% endfor %}
+  </section>
+
+  <section class="card" id="aktivitet">
+    <h2>Aktivitet</h2>
+    <p><strong>Likes givet ({{ data.likes_given | length }}):</strong>
+      {% for l in data.likes_given %}<a href="{{ url_for('admin.user', user_id=l.likee_id) }}">{{ names.get(l.likee_id, '?') }}</a>{% if not loop.last %}, {% endif %}{% else %}ingen{% endfor %}</p>
+    <p><strong>Likes modtaget ({{ data.likes_received | length }}):</strong>
+      {% for l in data.likes_received %}<a href="{{ url_for('admin.user', user_id=l.liker_id) }}">{{ names.get(l.liker_id, '?') }}</a>{% if not loop.last %}, {% endif %}{% else %}ingen{% endfor %}</p>
+    <p><strong>Matches:</strong>
+      {% for m in data.matches %}<a href="{{ url_for('admin.user', user_id=m.other_id(target.id)) }}">{{ names.get(m.other_id(target.id), '?') }}</a>{% if not m.is_active %} (fjernet){% endif %}{% if not loop.last %}, {% endif %}{% else %}ingen{% endfor %}</p>
+    <p><strong>Blokeringer:</strong>
+      {% for b in data.blocks %}
+        {% if b.blocker_id == target.id %}blokerede <a href="{{ url_for('admin.user', user_id=b.blocked_id) }}">{{ names.get(b.blocked_id) }}</a>{% else %}blokeret af <a href="{{ url_for('admin.user', user_id=b.blocker_id) }}">{{ names.get(b.blocker_id) }}</a>{% endif %}{% if not loop.last %}, {% endif %}
+      {% else %}ingen{% endfor %}</p>
+  </section>
+
+  <section class="card" id="samtaler">
+    <h2>Samtaler ({{ data.conversations | length }})</h2>
+    {% for c in data.conversations %}
+      <details class="mod-conversation">
+        <summary>Med {{ names.get(c.other_id, 'Slettet bruger') }} · {{ c.messages | length }} beskeder{% if c.conversation.hidden_at %} · skjult (fjernet match){% endif %}</summary>
+        {% for m in c.messages %}
+          <p><strong>{{ names.get(m.sender_id, 'Slettet bruger') }}</strong> · {{ m.created_at | local_datetime }}{% if m.id in c.deleted %} · <em>slettet af en deltager</em>{% endif %}<br>
+            <span class="evidence-text">{{ m.body }}</span></p>
+        {% endfor %}
+      </details>
+    {% else %}<p class="muted">Ingen samtaler.</p>{% endfor %}
+  </section>
+
+  <section class="card" id="sager">
+    <h2>Sager ({{ data.cases | length }})</h2>
+    {% for case in data.cases %}
+      <details class="mod-conversation">
+        <summary>#{{ case.id }} · {{ reasons.get(case.category, case.category) }} · {{ statuses[case.status] }}
+          · {{ 'om brugeren' if case.subject_user_id == target.id else 'anmeldt af brugeren' }} · {{ case.created_at | local_datetime }}</summary>
+        {% if case.description %}<p><strong>Beskrivelse:</strong> {{ case.description }}</p>{% endif %}
+        {% if case.decision %}<p><strong>Afgørelse:</strong> {{ decisions.get(case.decision, case.decision) }}{% if case.decision_note %} – {{ case.decision_note }}{% endif %}</p>{% endif %}
+        {% if case.evidence_purged_at %}<p class="muted">Beviser slettet {{ case.evidence_purged_at | local_datetime }}.</p>{% endif %}
+      </details>
+    {% else %}<p class="muted">Ingen sager.</p>{% endfor %}
+  </section>
+
+  <section class="card" id="abonnement">
     <h2>Abonnement: {{ tier_label }}{% if subscription %} til {{ subscription.expires_at | local_datetime }}{% endif %}</h2>
     <form method="post" class="inline-form">
       {{ csrf() }}<input type="hidden" name="action" value="period">
@@ -48,27 +136,29 @@
       <input name="note" type="text" placeholder="Note" aria-label="Note">
       <button type="submit" class="button small">Skift niveau fra nu</button>
     </form>
-    <table class="mod-table">
-      <thead><tr><th>Niveau</th><th>Kilde</th><th>Fra</th><th>Til</th><th>Note</th></tr></thead>
-      <tbody>
-        {% for p in periods %}
-          <tr><td>{{ tier_labels[p.tier] }}</td><td>{{ p.source }}</td><td>{{ p.starts_at | local_datetime }}</td>
-            <td>{{ p.expires_at | local_datetime }}</td><td>{{ p.note or '' }}</td></tr>
-        {% else %}<tr><td colspan="5" class="muted">Ingen perioder.</td></tr>{% endfor %}
-      </tbody>
-    </table>
-  </section>
+    <div class="table-scroll">
+      <table class="mod-table">
+        <thead><tr><th>Niveau</th><th>Kilde</th><th>Fra</th><th>Til</th><th>Note</th></tr></thead>
+        <tbody>
+          {% for p in periods %}
+            <tr><td>{{ tier_labels[p.tier] }}</td><td>{{ p.source }}</td><td>{{ p.starts_at | local_datetime }}</td>
+              <td>{{ p.expires_at | local_datetime }}</td><td>{{ p.note or '' }}</td></tr>
+          {% else %}<tr><td colspan="5" class="muted">Ingen perioder.</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
 
-  <section class="card">
-    <h2>Rettigheder lige nu</h2>
-    <table class="mod-table">
-      <thead><tr><th>Funktion</th><th>Har den</th><th>Hvorfor</th></tr></thead>
-      <tbody>
-        {% for key, label, has, why in feature_rows %}
-          <tr><td>{{ label }}<br><code>{{ key }}</code></td><td>{{ 'Ja' if has else 'Nej' }}</td><td>{{ why }}</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
+    <h3>Rettigheder lige nu</h3>
+    <div class="table-scroll">
+      <table class="mod-table">
+        <thead><tr><th>Funktion</th><th>Har den</th><th>Hvorfor</th></tr></thead>
+        <tbody>
+          {% for key, label, has, why in feature_rows %}
+            <tr><td>{{ label }}<br><code>{{ key }}</code></td><td>{{ 'Ja' if has else 'Nej' }}</td><td>{{ why }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
     <h3>Individuelle regler</h3>
     <form method="post" class="inline-form">
       {{ csrf() }}<input type="hidden" name="action" value="grant">
@@ -89,6 +179,23 @@
             <button type="submit" class="link">Fjern</button></form>
         </li>
       {% else %}<li class="muted">Ingen individuelle regler.</li>{% endfor %}
+    </ul>
+  </section>
+
+  <section class="card" id="logins">
+    <h2>Logins og enheder</h2>
+    {% for s in data.sessions %}
+      <p>{{ s.ip_address or '?' }} · {{ s.user_agent | device }}<br>
+        <span class="muted">oprettet {{ s.created_at | local_datetime }} · sidst aktiv {{ s.last_seen_at | local_datetime }}{% if s.revoked_at %} · afsluttet{% endif %}</span></p>
+    {% else %}<p class="muted">Ingen logins.</p>{% endfor %}
+  </section>
+
+  <section class="card" id="log">
+    <h2>Administrationslog for brugeren</h2>
+    <ul class="person-list">
+      {% for e in user_log %}
+        <li><span>{{ e.at | local_datetime }} · {{ e.admin_username }} · {{ audit_labels.get(e.action, e.action) }}{% if e.details %} <code>{{ e.details | tojson }}</code>{% endif %}</span></li>
+      {% else %}<li class="muted">Intet registreret.</li>{% endfor %}
     </ul>
   </section>
 {% endblock %}

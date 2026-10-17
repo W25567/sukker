@@ -127,13 +127,14 @@ def help():
 @login_required
 def welcome():
     """Vises én gang (app/pages/onboarding.py). Giver Premium for livstid til tidlige fugle."""
-    next_url = safe_next_url(request.args.get("next")) or url_for("profiles.edit")
+    next_url = safe_next_url(request.args.get("next")) or url_for("explore.index")
     form = FlaskForm()
     if request.method == "POST":
         if form.validate_on_submit():
             g.user.welcomed_at = now_utc()
             db.session.commit()
-        return redirect(next_url)
+        # "Udfyld min profil" går altid til profilen (med billeder). "Senere" fortsætter, hvor brugeren var på vej hen.
+        return redirect(url_for("profiles.me") if request.form.get("goto") == "profil" else next_url)
     early_bird = grant_early_bird(g.user)
     db.session.commit()
     return render_template(

@@ -1,10 +1,15 @@
 from datetime import datetime, time
 
-from flask import Blueprint, abort, current_app, flash, g, redirect, render_template, request, url_for
+from flask import Blueprint, abort, current_app, flash, g, redirect, render_template, request, send_file, url_for
 from flask_wtf import FlaskForm
-from sqlalchemy import or_, select
+from sqlalchemy import select
 
 from ..auth.models import User
+from ..media import storage
+from ..media.models import ProfileImage
+from ..moderation import userdata
+from ..moderation.models import DECISIONS, REASON_LABELS, STATUSES
+from ..profiles.zodiac import zodiac_for
 from ..auth.roles import admin_required
 from ..core import features
 from ..core.settings import SETTING_META, get_setting
@@ -12,7 +17,7 @@ from ..core.timeutil import DANISH_TZ
 from ..extensions import db
 from ..subscriptions.services import TIER_LABELS, active_subscription, effective_tier
 from ..subscriptions.models import Subscription
-from . import metrics, services
+from . import browse, metrics, services
 from .models import UserFeatureGrant
 
 bp = Blueprint("admin", __name__, url_prefix="/admin")
@@ -27,14 +32,27 @@ def dashboard():
 @bp.route("/brugere")
 @admin_required
 def users():
+    """Brugerliste med filtre og sortering. Alle tal på overblikket linker hertil."""
+    filter_key = request.args.get("filter", "alle")
+    sort = request.args.get("sort", "nyeste")
     query = (request.args.get("q") or "").strip()
-    results = []
-    if query:
-        results = db.session.scalars(
-            select(User).where(or_(User.display_name.ilike(f"%{query}%"), User.email == query.lower()))
-            .order_by(User.display_name).limit(50)
-        ).all()
-    return render_template("admin/users.html", query=query, results=results, tests=services.test_accounts())
+    page = max(1, request.args.get("side", 1, type=int) or 1)
+    rows, total, has_more = browse.user_list(filter_key, query, sort, page)
+    labels = browse.filter_labels()
+    return render_template(
+        "admin/users.html", rows=rows, total=total, has_more=has_more, page=page, query=query,
+        filter_key=filter_key if filter_key in labels else "alle", sort=sort if sort in browse.SORTS else "nyeste",
+        filters=labels, sorts=browse.SORTS,
+    )
+
+
+@bp.route("/tilsyn")
+@admin_required
+def oversight():
+    """Hvem skiller sig ud? Signaler, der kan pege på brud på reglerne."""
+    sections, new_without_image, new_without_image_total = browse.oversight()
+    return render_template("admin/oversight.html", sections=sections, new_without_image=new_without_image,
+                           new_without_image_total=new_without_image_total)
 
 
 def _parse_date(raw):
@@ -92,10 +110,19 @@ def user(user_id):
             flash(str(error) if isinstance(error, services.AdminError) else "Ugyldig værdi.", "error")
         return redirect(url_for("admin.user", user_id=target.id))
 
+    # Administratorer ser alle oplysninger om brugeren. Hver visning registreres i administrationsloggen.
+    services.audit(g.user, "view_user", target)
+    db.session.commit()
     subscription = active_subscription(target.id)
     return render_template(
         "admin/user.html",
         target=target,
+        data=userdata.collect(target),
+        signals=browse.user_signals(target),
+        zodiac=zodiac_for(target.birthdate),
+        user_log=services.audit_log_for(target),
+        audit_labels=services.AUDIT_LABELS,
+        reasons=REASON_LABELS, statuses=dict(STATUSES), decisions=dict(DECISIONS),
         tier_label=TIER_LABELS[effective_tier(target.id)],
         subscription=subscription,
         periods=db.session.scalars(select(Subscription).where(Subscription.user_id == target.id).order_by(Subscription.starts_at.desc())).all(),
@@ -105,6 +132,18 @@ def user(user_id):
         tier_labels=TIER_LABELS,
         form=FlaskForm(),
     )
+
+
+@bp.route("/bruger/<int:user_id>/billede/<public_id>/<variant>.webp")
+@admin_required
+def user_image(user_id, public_id, variant):
+    """Alle brugerens billeder, også private, til brugersiden. Visningen af siden er logget."""
+    image = db.session.scalar(select(ProfileImage).where(ProfileImage.public_id == public_id, ProfileImage.user_id == user_id))
+    if image is None or variant not in storage.VARIANTS:
+        abort(404)
+    response = send_file(storage.file_path(image, variant), mimetype="image/webp")
+    response.headers["Cache-Control"] = "private, no-store"
+    return response
 
 
 @bp.route("/indstillinger", methods=["GET", "POST"])
@@ -140,4 +179,6 @@ def settings():
 @bp.route("/log")
 @admin_required
 def log():
-    return render_template("admin/log.html", entries=services.audit_log())
+    action = request.args.get("handling") or None
+    return render_template("admin/log.html", entries=services.audit_log(action=action), action=action,
+                           labels=services.AUDIT_LABELS)

@@ -1,28 +1,41 @@
 """Tests for tidlige fugle, velkomstforløbet, sidefoden og hjælpesiden."""
+import io
 import json
 import re
 
 import pytest
+from PIL import Image
 from sqlalchemy import select
 
 from app.admin.services import create_test_accounts
 from app.auth.models import User
 from app.core.settings import set_setting
+from app.core.timeutil import now_utc
 from app.extensions import db
+from app.media.models import ProfileImage
 from app.subscriptions.models import Subscription
 from app.subscriptions.services import early_bird_count, effective_tier
 
 from .conftest import link_from, login, register
 
 
-def make_user(app, outbox, name, *, verify=True):
+def make_user(app, outbox, name, *, verify=True, photo=False):
     client = app.test_client()
     email = f"{name.lower()}@example.com"
     register(client, display_name=name, email=email)
     if verify:
         client.get(link_from(outbox[-1], "/bekraeft-email/"))
     login(client, email=email)
+    if photo:
+        upload_photo(client)
     return client
+
+
+def upload_photo(client):
+    buffer = io.BytesIO()
+    Image.new("RGB", (300, 300), "teal").save(buffer, "JPEG")
+    return client.post("/profil/billeder", data={"image": (io.BytesIO(buffer.getvalue()), "a.jpg")},
+                       content_type="multipart/form-data")
 
 
 def user(name):
@@ -38,6 +51,13 @@ def setting(key, value):
     db.session.commit()
 
 
+def expire_signup_bonus(name):
+    for period in db.session.scalars(select(Subscription).where(Subscription.user_id == user(name).id,
+                                                                 Subscription.source == "signup_bonus")):
+        period.starts_at, period.expires_at = now_utc().replace(year=2020), now_utc()
+    db.session.commit()
+
+
 @pytest.fixture
 def welcome_on(app):
     app.config["SHOW_WELCOME"] = True
@@ -48,23 +68,42 @@ def welcome_on(app):
 # --- Tidlige fugle ----------------------------------------------------------------------------------------
 
 
-def test_verified_early_bird_gets_lifetime_premium(app, outbox, ctx):
-    make_user(app, outbox, "Anna")
-    assert sources("Anna") == ["early_bird"]  # i stedet for den almindelige periode
-    subscription = db.session.scalar(select(Subscription).where(Subscription.user_id == user("Anna").id))
+def test_early_bird_needs_a_photo(app, outbox, ctx):
+    anna = make_user(app, outbox, "Anna")
+    assert sources("Anna") == ["signup_bonus"]  # bekræftet, men uden billede: den almindelige periode
+    upload_photo(anna)
+    with anna.session_transaction() as session:
+        flashes = " ".join(message for _, message in session.get("_flashes", []))
+    assert "Premium for livstid" in flashes
+    assert sources("Anna") == ["early_bird", "signup_bonus"]
+    subscription = db.session.scalar(select(Subscription).where(Subscription.user_id == user("Anna").id,
+                                                                 Subscription.source == "early_bird"))
     assert subscription.is_lifetime and effective_tier(user("Anna").id) == "premium"
 
 
+def test_lifetime_pauses_without_photos(app, outbox, ctx):
+    anna = make_user(app, outbox, "Anna", photo=True)
+    expire_signup_bonus("Anna")
+    assert effective_tier(user("Anna").id) == "premium"  # livstid
+    image = db.session.scalar(select(ProfileImage).where(ProfileImage.user_id == user("Anna").id))
+    anna.post(f"/profil/billeder/{image.public_id}/slet")
+    assert effective_tier(user("Anna").id) == "free"
+    assert "sat på pause" in anna.get("/profil").get_data(as_text=True)
+    upload_photo(anna)
+    assert effective_tier(user("Anna").id) == "premium"
+    assert sources("Anna").count("early_bird") == 1  # gives kun én gang
+
+
 def test_unverified_users_are_not_early_birds_yet(app, outbox, ctx):
-    make_user(app, outbox, "Anna", verify=False)
+    make_user(app, outbox, "Anna", verify=False, photo=True)
     assert sources("Anna") == []
 
 
 def test_limit_closes_the_campaign(app, outbox, ctx, client):
     setting("early_bird_limit", 1)
-    make_user(app, outbox, "Anna")
-    make_user(app, outbox, "Bodil")
-    assert sources("Anna") == ["early_bird"] and sources("Bodil") == ["signup_bonus"]
+    make_user(app, outbox, "Anna", photo=True)
+    make_user(app, outbox, "Bodil", photo=True)
+    assert "early_bird" in sources("Anna") and "early_bird" not in sources("Bodil")
     assert client.get("/tidlige-fugle").status_code == 410
     assert "/tidlige-fugle" not in client.get("/sitemap.xml").get_data(as_text=True)
     assert "Premium for livstid" not in client.get("/").get_data(as_text=True)
@@ -77,8 +116,13 @@ def test_test_accounts_never_count_as_early_birds(app, ctx):
 
 
 def test_account_page_shows_lifetime(app, outbox, ctx):
-    anna = make_user(app, outbox, "Anna")
+    anna = make_user(app, outbox, "Anna", photo=True)
     assert "Premium for livstid" in anna.get("/konto/").get_data(as_text=True)
+
+
+def test_profile_nudges_early_birds_to_upload(app, outbox, ctx):
+    anna = make_user(app, outbox, "Anna")
+    assert "Upload et billede, og få Premium for livstid" in anna.get("/profil").get_data(as_text=True)
 
 
 # --- Offentligt og SEO ----------------------------------------------------------------------------------
@@ -87,6 +131,7 @@ def test_account_page_shows_lifetime(app, outbox, ctx):
 def test_campaign_is_public_and_indexable(client):
     page = client.get("/tidlige-fugle")
     assert page.status_code == 200 and "X-Robots-Tag" not in page.headers
+    assert "Upload mindst ét billede" in page.get_data(as_text=True)
     assert "http://localhost/tidlige-fugle" in client.get("/sitemap.xml").get_data(as_text=True)
     home = client.get("/").get_data(as_text=True)
     assert 'href="/tidlige-fugle"' in home
@@ -94,6 +139,7 @@ def test_campaign_is_public_and_indexable(client):
     faq = json.loads(re.search(r'<script type="application/ld\+json">(.*?)</script>',
                                client.get("/ofte-stillede-spoergsmaal").get_data(as_text=True), re.S).group(1))
     assert faq["mainEntity"][0]["name"] == "Hvad er en tidlig fugl?"
+    assert "billede" in faq["mainEntity"][0]["acceptedAnswer"]["text"]
     assert "tidlig fugl" in client.get("/opret").get_data(as_text=True)
 
 
@@ -112,23 +158,28 @@ def test_welcome_is_shown_once(app, outbox, ctx, welcome_on):
     response = anna.get("/udforsk")
     assert response.status_code == 302 and "/velkommen?next=/udforsk" in response.headers["Location"]
     page = anna.get("/velkommen?next=/udforsk").get_data(as_text=True)
-    assert "ikke så mange profiler" in page and "Premium for livstid" in page
+    assert "ikke så mange profiler" in page and "mangler, er et billede" in page
     assert not re.search(r"\d+ (profiler|brugere|medlemmer)", page)  # aldrig tal (specifikation 12.5)
 
-    response = anna.post("/velkommen?next=/udforsk")
-    assert response.headers["Location"].endswith("/udforsk")
+    response = anna.post("/velkommen?next=/konto/", data={"goto": "profil"})
+    assert response.headers["Location"].endswith("/profil")  # altid profilen, uanset hvor man var på vej hen
     assert user("Anna").welcomed_at is not None
     assert anna.get("/udforsk").status_code == 200
 
 
-def test_existing_members_become_early_birds_on_welcome(app, outbox, ctx, welcome_on):
-    setting("early_bird_enabled", False)
+def test_welcome_later_continues_where_you_were_going(app, outbox, ctx, welcome_on):
     anna = make_user(app, outbox, "Anna")
+    response = anna.post("/velkommen?next=/konto/", data={"goto": "senere"})
+    assert response.headers["Location"].endswith("/konto/")
+
+
+def test_existing_members_with_photo_become_early_birds_on_welcome(app, outbox, ctx, welcome_on):
+    setting("early_bird_enabled", False)
+    anna = make_user(app, outbox, "Anna", photo=True)
     assert sources("Anna") == ["signup_bonus"]
     setting("early_bird_enabled", True)
-    anna.get("/velkommen")
+    assert "Premium for livstid" in anna.get("/velkommen").get_data(as_text=True)
     assert sources("Anna") == ["early_bird", "signup_bonus"]
-    assert effective_tier(user("Anna").id) == "premium"
 
 
 # --- Sidefod og hjælp ------------------------------------------------------------------------------------

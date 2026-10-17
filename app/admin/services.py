@@ -114,8 +114,27 @@ def update_features(admin, mapping, disabled):
         set_setting("disabled_features", sorted(disabled))
 
 
-def audit_log(limit=500):
-    return db.session.scalars(select(AdminAuditLog).order_by(AdminAuditLog.at.desc()).limit(limit)).all()
+def audit_log(limit=500, action=None):
+    query = select(AdminAuditLog).order_by(AdminAuditLog.at.desc()).limit(limit)
+    if action:
+        query = query.where(AdminAuditLog.action == action)
+    return db.session.scalars(query).all()
+
+
+def audit_log_for(target, limit=100):
+    """Administrationsloggen for én bruger: ændringer og hvem der har set brugerens data."""
+    return db.session.scalars(
+        select(AdminAuditLog).where(AdminAuditLog.target_user_id == target.id)
+        .order_by(AdminAuditLog.at.desc()).limit(limit)
+    ).all()
+
+
+AUDIT_LABELS = {
+    "view_user": "Så brugerens data", "status": "Skiftede status", "role": "Skiftede rolle",
+    "grant_period": "Gav Premium-tid", "set_tier": "Skiftede niveau", "feature_grant": "Individuel regel",
+    "feature_grant_removed": "Fjernede regel", "setting": "Ændrede indstilling", "tier_features": "Ændrede rettigheder",
+    "disabled_features": "Slog funktioner fra", "test_account": "Testkonto",
+}
 
 
 # --- Testkonti -------------------------------------------------------------------------------------------------

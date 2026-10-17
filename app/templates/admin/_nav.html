@@ -1,7 +1,9 @@
 <nav class="mod-nav">
-  <a href="{{ url_for('admin.dashboard') }}">Overblik</a>
-  <a href="{{ url_for('admin.users') }}">Brugere</a>
-  <a href="{{ url_for('admin.settings') }}">Indstillinger</a>
-  <a href="{{ url_for('admin.log') }}">Administrationslog</a>
+  {% set here = request.endpoint or '' %}
+  <a href="{{ url_for('admin.dashboard') }}"{% if here == 'admin.dashboard' %} aria-current="page"{% endif %}>Overblik</a>
+  <a href="{{ url_for('admin.users') }}"{% if here in ('admin.users', 'admin.user') %} aria-current="page"{% endif %}>Brugere</a>
+  <a href="{{ url_for('admin.oversight') }}"{% if here == 'admin.oversight' %} aria-current="page"{% endif %}>Tilsyn</a>
+  <a href="{{ url_for('admin.settings') }}"{% if here == 'admin.settings' %} aria-current="page"{% endif %}>Indstillinger</a>
+  <a href="{{ url_for('admin.log') }}"{% if here == 'admin.log' %} aria-current="page"{% endif %}>Log</a>
   <a href="{{ url_for('moderation.log') }}">Moderatoradgang</a>
 </nav>

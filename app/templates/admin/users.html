@@ -1,33 +1,40 @@
 {% extends "base.html" %}
+{% from "admin/_user_table.html" import user_table %}
 {% block title %}Brugere – Administration{% endblock %}
+{% block page_class %}admin-wide{% endblock %}
 {% block content %}
   {% include "admin/_nav.html" %}
-  <h1>Brugere</h1>
-  <form method="get" class="form">
-    <div class="field"><label for="q">Navn eller e-mail</label><input id="q" name="q" type="text" value="{{ query }}"></div>
-    <button type="submit" class="button">Søg</button>
-  </form>
-  {% if query %}
-    <ul class="person-list">
-      {% for u in results %}
-        <li><a href="{{ url_for('admin.user', user_id=u.id) }}">{{ u.display_name }}</a>
-          <span class="muted">{{ u.role }} · {{ u.status }}{% if u.is_test %} · testkonto{% endif %}</span></li>
-      {% else %}
-        <li class="muted">Ingen brugere fundet.</li>
-      {% endfor %}
-    </ul>
-  {% endif %}
+  <h1>Brugere <span class="muted">· {{ filters[filter_key] }} ({{ total }})</span></h1>
 
-  <section class="card">
-    <h2>Testkonti</h2>
-    <p class="muted">Testkonti kan kun se og kontakte andre testkonti og tæller ikke med i målinger.
-      Opret eller nulstil dem med <code>flask sukker create-test-accounts</code>.</p>
-    <ul class="person-list">
-      {% for u in tests %}
-        <li><a href="{{ url_for('admin.user', user_id=u.id) }}">{{ u.display_name }}</a> <span class="muted">{{ u.email }}</span></li>
-      {% else %}
-        <li class="muted">Ingen testkonti endnu.</li>
-      {% endfor %}
-    </ul>
-  </section>
+  <form method="get" class="admin-filter">
+    <div class="field"><label for="q">Søg</label><input id="q" name="q" type="search" value="{{ query }}" placeholder="Navn, e-mail eller handle"></div>
+    <div class="field"><label for="filter">Vis</label>
+      <select id="filter" name="filter">
+        {% for key, label in filters.items() %}<option value="{{ key }}"{% if key == filter_key %} selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="field"><label for="sort">Sortér</label>
+      <select id="sort" name="sort">
+        {% for key, label in sorts.items() %}<option value="{{ key }}"{% if key == sort %} selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select>
+    </div>
+    <button type="submit" class="button small">Vis</button>
+  </form>
+
+  <p class="chips-row">
+    {% for key in ['alle', 'nye7', 'ubekraeftede', 'uden_billede', 'anmeldt', 'aabne_sager', 'blokeret', 'begraenset', 'suspenderet', 'tidlige_fugle', 'test'] %}
+      <a class="chip{% if key == filter_key %} active{% endif %}" href="{{ url_for('admin.users', filter=key, sort=sort, q=query or None) }}">{{ filters[key] }}</a>
+    {% endfor %}
+  </p>
+
+  {% set highlight = {'anmeldelser': 'reports', 'blokeringer': 'blocked_by', 'skjult': 'hidden_by', 'likes': 'likes_7', 'beskeder': 'messages_7'}.get(sort) %}
+  {{ user_table(rows, highlight) }}
+
+  <p class="pager">
+    {% if page > 1 %}<a href="{{ url_for('admin.users', filter=filter_key, sort=sort, q=query or None, side=page - 1) }}">← Forrige</a>{% endif %}
+    {% if has_more %}<a href="{{ url_for('admin.users', filter=filter_key, sort=sort, q=query or None, side=page + 1) }}">Næste →</a>{% endif %}
+  </p>
+  {% if filter_key == 'test' %}
+    <p class="muted">Testkonti kan kun se og kontakte andre testkonti og tæller ikke med i målinger. Opret eller nulstil dem med <code>flask sukker create-test-accounts</code>.</p>
+  {% endif %}
 {% endblock %}

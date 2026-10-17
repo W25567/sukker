@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% from "admin/_user_table.html" import user_table %}
+{% block title %}Tilsyn – Administration{% endblock %}
+{% block page_class %}admin-wide{% endblock %}
+{% block content %}
+  {% include "admin/_nav.html" %}
+  <h1>Tilsyn</h1>
+  <p class="muted">Brugere, der skiller sig ud. Signalerne er ikke en afgørelse – kun et sted at kigge. Klik på en bruger for at se alt om vedkommende. Visningen registreres i loggen.</p>
+
+  {% for title, explanation, sort, signal, rows in sections %}
+    <section class="card">
+      <div class="heading-row">
+        <h2>{{ title }}</h2>
+        <a class="small-link" href="{{ url_for('admin.users', sort=sort) }}">Se alle</a>
+      </div>
+      <p class="muted">{{ explanation }}</p>
+      {% if rows %}{{ user_table(rows, signal) }}{% else %}<p class="muted">Ingen lige nu.</p>{% endif %}
+    </section>
+  {% endfor %}
+
+  <section class="card">
+    <div class="heading-row">
+      <h2>Nye uden billede, 30 dage ({{ new_without_image_total }})</h2>
+      <a class="small-link" href="{{ url_for('admin.users', filter='nye_uden_billede') }}">Se alle</a>
+    </div>
+    <p class="muted">Profiler uden billede kan være falske eller ufærdige.</p>
+    {% if new_without_image %}{{ user_table(new_without_image, 'images') }}{% else %}<p class="muted">Ingen lige nu.</p>{% endif %}
+  </section>
+{% endblock %}

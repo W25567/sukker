@@ -124,15 +124,17 @@ def faq_items():
     months = get_setting("signup_premium_months")
     early_bird = early_bird_open()
     if early_bird:
-        bonus = "Lige nu får nye profiler Premium for livstid som tidlige fugle, når e-mailen er bekræftet."
+        bonus = ("Lige nu får nye profiler Premium for livstid som tidlige fugle, når e-mailen er bekræftet, "
+                 "og der er et billede på profilen.")
     elif months:
         bonus = f"Nye profiler får {months} måneders Premium gratis, så snart e-mailen er bekræftet."
     else:
         bonus = "Premium tildeles i øjeblikket ikke automatisk ved oprettelse."
     early_bird_items = [
         ("Hvad er en tidlig fugl?",
-         "Sukker.nu er ny, og der er endnu ikke så mange profiler. Opretter du en profil nu og bekræfter din e-mail, "
-         "får du Premium for livstid som tak, fordi du er med fra starten. Det kræver ingen betaling og intet abonnement."),
+         "Sukker.nu er ny, og der er endnu ikke så mange profiler. Opretter du en profil nu, bekræfter din e-mail og "
+         "uploader et billede, får du Premium for livstid som tak, fordi du er med fra starten. Det kræver ingen "
+         "betaling og intet abonnement."),
     ] if early_bird else []
     return early_bird_items + [
         ("Hvad koster Sukker.nu?",

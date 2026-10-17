@@ -46,7 +46,9 @@ class ProfileForm(FlaskForm):
     )
     expectations = TextAreaField("Forventninger", filters=[_strip_or_none], validators=[Optional(), Length(max=500)])
 
-    hidden_fields = MultiCheckboxField("Skjul for andre", choices=[(f.name, f.label) for f in FIELDS], validators=[Optional()])
+    # Stjernetegnet beregnes ud fra fødselsdatoen og kan ikke redigeres, kun skjules.
+    hidden_fields = MultiCheckboxField("Skjul for andre", choices=[(f.name, f.label) for f in FIELDS] + [("zodiac", "Stjernetegn")],
+                                       validators=[Optional()])
 
     def validate_age_max(self, field):
         if self.age_min.data and field.data and self.age_min.data > field.data:

@@ -6,7 +6,7 @@
   <p class="muted">Det tager et par minutter. Du kan udfylde resten af profilen senere.</p>
   {% if early_bird_open() %}
     <div class="card early-bird-card">
-      <p><strong>Du er tidlig fugl.</strong> Når du har bekræftet din e-mail, får du Premium for livstid – fordi du er med, mens vi stadig er få. <a href="{{ url_for('pages.early_bird') }}">Læs mere</a></p>
+      <p><strong>Du er tidlig fugl.</strong> Når du har bekræftet din e-mail og uploadet et billede, får du Premium for livstid – fordi du er med, mens vi stadig er få. <a href="{{ url_for('pages.early_bird') }}">Læs mere</a></p>
     </div>
   {% endif %}
   <form method="post" novalidate class="form">

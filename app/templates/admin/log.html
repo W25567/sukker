@@ -1,18 +1,28 @@
 {% extends "base.html" %}
 {% block title %}Administrationslog – Sukker.nu{% endblock %}
+{% block page_class %}admin-wide{% endblock %}
 {% block content %}
   {% include "admin/_nav.html" %}
   <h1>Administrationslog</h1>
-  <p class="muted">Ændringer af adgang, status, abonnementer og indstillinger. Loggen kan ikke ændres eller slettes.</p>
-  <table class="mod-table">
-    <thead><tr><th>Tid</th><th>Administrator</th><th>Bruger</th><th>Handling</th><th>Detaljer</th></tr></thead>
-    <tbody>
-      {% for e in entries %}
-        <tr><td>{{ e.at | local_datetime }}</td><td>{{ e.admin_username }}</td><td>{{ e.target_username or '–' }}</td>
-          <td>{{ e.action }}</td><td><code>{{ e.details | tojson if e.details else '' }}</code></td></tr>
-      {% else %}
-        <tr><td colspan="5" class="muted">Ingen registreringer.</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  <p class="muted">Ændringer og visninger af brugerdata. Loggen kan ikke ændres eller slettes.</p>
+  <p class="chips-row">
+    <a class="chip{% if not action %} active{% endif %}" href="{{ url_for('admin.log') }}">Alt</a>
+    {% for key, label in labels.items() %}
+      <a class="chip{% if key == action %} active{% endif %}" href="{{ url_for('admin.log', handling=key) }}">{{ label }}</a>
+    {% endfor %}
+  </p>
+  <div class="table-scroll">
+    <table class="mod-table">
+      <thead><tr><th>Tid</th><th>Administrator</th><th>Bruger</th><th>Handling</th><th>Detaljer</th></tr></thead>
+      <tbody>
+        {% for e in entries %}
+          <tr><td>{{ e.at | local_datetime }}</td><td>{{ e.admin_username }}</td>
+            <td>{% if e.target_user_id %}<a href="{{ url_for('admin.user', user_id=e.target_user_id) }}">{{ e.target_username }}</a>{% else %}–{% endif %}</td>
+            <td>{{ labels.get(e.action, e.action) }}</td><td><code>{{ e.details | tojson if e.details else '' }}</code></td></tr>
+        {% else %}
+          <tr><td colspan="5" class="muted">Ingen registreringer.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 {% endblock %}

@@ -1,0 +1,42 @@
+{# Tabel over brugere med signaler. `rows` er browse.Row. `highlight` fremhæver den kolonne, der sorteres efter. #}
+{% macro user_table(rows, highlight=None) %}
+  <div class="table-scroll">
+    <table class="mod-table admin-users">
+      <thead>
+        <tr>
+          <th>Bruger</th><th>Oprettet</th><th>Senest aktiv</th>
+          <th class="num{% if highlight == 'images' %} hl{% endif %}" title="Offentlige billeder">Billeder</th>
+          <th class="num{% if highlight == 'reports' %} hl{% endif %}">Anmeldt</th>
+          <th class="num{% if highlight == 'blocked_by' %} hl{% endif %}">Blokeret af</th>
+          <th class="num{% if highlight == 'hidden_by' %} hl{% endif %}">Skjult af</th>
+          <th class="num{% if highlight == 'likes_7' %} hl{% endif %}">Likes 7 d</th>
+          <th class="num{% if highlight == 'messages_7' %} hl{% endif %}">Beskeder 7 d</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+          {% set u = r.user %}
+          <tr>
+            <td><a href="{{ url_for('admin.user', user_id=u.id) }}">{{ u.display_name }}</a>
+              <span class="tags">
+                {% if not u.is_verified %}<span class="tag">ubekræftet</span>{% endif %}
+                {% if u.status != 'active' %}<span class="tag warn">{{ 'begrænset' if u.status == 'restricted' else 'suspenderet' }}</span>{% endif %}
+                {% if u.role != 'user' %}<span class="tag">{{ u.role }}</span>{% endif %}
+              </span>
+            </td>
+            <td>{{ u.created_at.strftime('%d-%m-%Y') }}</td>
+            <td>{{ r.last_seen | local_datetime if r.last_seen else '–' }}</td>
+            <td class="num{% if not r.images %} warn{% endif %}">{{ r.images }}</td>
+            <td class="num{% if r.reports %} warn{% endif %}">{{ r.reports }}</td>
+            <td class="num{% if r.blocked_by %} warn{% endif %}">{{ r.blocked_by }}</td>
+            <td class="num">{{ r.hidden_by }}</td>
+            <td class="num">{{ r.likes_7 }}</td>
+            <td class="num">{{ r.messages_7 }}</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="9" class="muted">Ingen brugere.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endmacro %}
