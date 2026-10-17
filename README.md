@@ -10,7 +10,7 @@ Mobilorienteret datingside bygget med Flask og PostgreSQL. Specifikationen ligge
 | M0 Fundament | Flask-app, konfiguration, PostgreSQL-skema `sukker`, migrationer, tests | Færdig |
 | M1 Konto | Oprettelse, e-mailverificering, login, glemt password, sessioner, 3 måneders Premium | Færdig |
 | M2 Profiler og billeder | Profilfelter, skjulte felter, synlighed, pause, forhåndsvisning, upload med omkodning og beskyttet levering | Færdig |
-| M3 Udforsk | Kommune ud fra postnummer, omtrentlig afstand, sortering efter nærhed, Premium-filtre, bundnavigation | Færdig – venter på rigtige kommunedata |
+| M3 Udforsk | Kommune ud fra postnummer, omtrentlig afstand, sortering efter nærhed, Premium-filtre, bundnavigation | Færdig, med DAGI-data i `data/geo/` |
 | M4 Likes og matches | Likes, matches, hvem har liket dig (Premium), fjern match, match igen, match-loft | Færdig |
 | M5–M9 | Beskeder, tryghed, administration, offentlige sider, drift | Ikke startet |
 
