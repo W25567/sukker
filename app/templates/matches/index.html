@@ -11,7 +11,10 @@
         {% for other, age in matches %}
           <li>
             <a href="{{ url_for('profiles.view', username=other.username, fra=url_for('matches.index')) }}">{{ other.username }}, {{ age }}</a>
-            <a class="muted small-link" href="{{ url_for('matches.remove', username=other.username) }}">Fjern match</a>
+            <span class="row-actions">
+              <a class="button small" href="{{ url_for('messaging.start', username=other.username) }}">Skriv</a>
+              <a class="muted small-link" href="{{ url_for('matches.remove', username=other.username) }}">Fjern match</a>
+            </span>
           </li>
         {% endfor %}
       </ul>

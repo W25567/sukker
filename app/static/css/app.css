@@ -210,6 +210,37 @@ body:has(.bottomnav) .page { padding-bottom: 88px; }
 .active-dot { font-size: 0.8rem; color: var(--success); }
 .back-link { display: inline-block; margin-bottom: 12px; }
 
+/* Beskeder (M5) */
+.unread-count {
+  display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; padding: 0 6px;
+  border-radius: 999px; background: var(--accent); color: var(--accent-ink); font-size: 0.75rem; font-weight: 700; margin-left: 4px;
+}
+.lock-badge { margin-left: 6px; padding: 1px 8px; border-radius: 999px; background: var(--info-bg); color: var(--muted); font-size: 0.75rem; }
+.inbox { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.inbox-item {
+  display: grid; gap: 2px; padding: 12px 14px; text-decoration: none; color: var(--text);
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+}
+.inbox-item.unread .inbox-name { font-weight: 700; }
+.inbox-name { display: flex; align-items: center; font-weight: 600; }
+.inbox-preview { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.row-actions { display: flex; align-items: center; gap: 12px; }
+.thread { list-style: none; margin: 0 0 16px; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.bubble {
+  align-self: flex-start; max-width: 85%; padding: 10px 12px; border-radius: 16px 16px 16px 4px;
+  background: var(--surface); border: 1px solid var(--border);
+}
+.bubble.mine { align-self: flex-end; border-radius: 16px 16px 4px 16px; background: var(--info-bg); }
+.bubble p { margin: 0; white-space: pre-line; overflow-wrap: anywhere; }
+.bubble .sender { display: block; font-size: 0.8rem; color: var(--muted); }
+.bubble-meta { display: flex; gap: 10px; justify-content: flex-end; margin-top: 4px; font-size: 0.75rem; color: var(--muted); }
+.bubble-meta .link { font-size: 0.75rem; color: var(--muted); }
+.thread-marker { align-self: center; padding: 4px 12px; border-radius: 999px; background: var(--info-bg); color: var(--muted); font-size: 0.8rem; }
+.composer textarea { min-height: 90px; }
+.conversation-actions { margin-top: 24px; }
+.button.danger { color: var(--error); border-color: var(--error); }
+.button.danger-fill { background: var(--error); color: #fff; }
+
 @media (min-width: 768px) {
   .page { padding-top: 32px; }
   .actions { grid-template-columns: 1fr 1fr; }

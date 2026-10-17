@@ -1,7 +1,6 @@
 from flask import Blueprint, g, jsonify, redirect, render_template, url_for
 from sqlalchemy import text
 
-from ..auth.sessions import login_required
 from ..extensions import db
 from .security import public_page
 
@@ -14,12 +13,6 @@ def home():
     if g.user is not None:
         return redirect(url_for("explore.index"))
     return render_template("core/home.html")
-
-
-@bp.route("/beskeder")
-@login_required
-def messages():
-    return render_template("core/coming_soon.html", name="Beskeder")
 
 
 @bp.route("/health")

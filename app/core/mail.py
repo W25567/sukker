@@ -3,11 +3,14 @@
 Backends:
 - console: skriver mailen til loggen og til instance/outbox (lokal udvikling)
 - memory:  gemmer mailen i app.extensions["mail_outbox"] (tests)
-- smtp:    sender via SMTP med STARTTLS
+- smtp:    sender via SMTP med STARTTLS, eller med TLS fra start på port 465
+
+Udviklingsserveren læser .env ved opstart. Genstart den efter ændringer.
 """
 import os
 import re
 import smtplib
+import ssl
 from email.message import EmailMessage
 
 from flask import current_app, render_template
@@ -16,6 +19,8 @@ from .timeutil import now_utc
 
 
 def send_mail(to, subject, template, **context):
+    """Sender en systemmail. Returnerer False, hvis afsendelsen fejlede. Fejlen logges, men vælter ikke
+    forespørgslen, så fx en oprettelse ikke går tabt. Brugeren kan bede om mailen igen."""
     body = render_template(template, **context)
     backend = current_app.config["MAIL_BACKEND"]
     if backend == "memory":
@@ -23,9 +28,14 @@ def send_mail(to, subject, template, **context):
     elif backend == "console":
         _write_to_outbox(to, subject, body)
     elif backend == "smtp":
-        _send_smtp(to, subject, body)
+        try:
+            _send_smtp(to, subject, body)
+        except (smtplib.SMTPException, OSError):
+            current_app.logger.exception("Mail til %s (%s) kunne ikke sendes", to, subject)
+            return False
     else:
         raise RuntimeError(f"Ukendt mail-backend: {backend!r}")
+    return True
 
 
 def _write_to_outbox(to, subject, body):
@@ -46,8 +56,13 @@ def _send_smtp(to, subject, body):
     message["To"] = to
     message["Subject"] = subject
     message.set_content(body)
-    with smtplib.SMTP(config["SMTP_HOST"], config["SMTP_PORT"], timeout=20) as smtp:
-        smtp.starttls()
+    context = ssl.create_default_context()
+    if config["SMTP_PORT"] == 465:
+        smtp = smtplib.SMTP_SSL(config["SMTP_HOST"], 465, timeout=20, context=context)
+    else:
+        smtp = smtplib.SMTP(config["SMTP_HOST"], config["SMTP_PORT"], timeout=20)
+        smtp.starttls(context=context)
+    with smtp:
         if config["SMTP_USERNAME"]:
             smtp.login(config["SMTP_USERNAME"], config["SMTP_PASSWORD"])
         smtp.send_message(message)

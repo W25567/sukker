@@ -269,6 +269,55 @@ def test_expired_reset_link_is_rejected(client, outbox, ctx):
     assert client.get(link_from(outbox[-1], "/nulstil-password/")).status_code == 400
 
 
+def test_resend_verification_without_login(app, client, outbox, ctx):
+    register(client)
+    old_link = link_from(outbox[-1], "/bekraeft-email/")
+    outbox.clear()
+
+    answer = client.post("/bekraeft-email/ny-mail", data={"email": "anna@example.com"}).get_data(as_text=True)
+    assert len(outbox) == 1
+    assert client.get(old_link).status_code == 400  # det nye link erstatter det gamle
+    assert client.get(link_from(outbox[-1], "/bekraeft-email/")).status_code == 302
+
+    # Ukendte og allerede bekræftede e-mails får samme svar, men ingen mail.
+    outbox.clear()
+    unknown = app.test_client().post("/bekraeft-email/ny-mail", data={"email": "ukendt@example.com"}).get_data(as_text=True)
+    verified = app.test_client().post("/bekraeft-email/ny-mail", data={"email": "anna@example.com"}).get_data(as_text=True)
+    assert answer == unknown == verified
+    assert outbox == []
+
+
+def test_check_email_page_offers_resend(client, ctx):
+    html = register(client).get_data(as_text=True)
+    assert 'action="/bekraeft-email/ny-mail"' in html
+    assert "Send mailen igen" in html
+
+
+# --- Mailfejl ----------------------------------------------------------------------------
+
+
+def test_smtp_failure_does_not_lose_the_registration(app, client, ctx, monkeypatch):
+    import smtplib
+
+    from app.core import mail
+
+    def broken(*args, **kwargs):
+        raise smtplib.SMTPConnectError(421, "nede")
+
+    monkeypatch.setattr(mail, "_send_smtp", broken)
+    app.config["MAIL_BACKEND"] = "smtp"
+    try:
+        response = register(client)
+        assert response.status_code == 200
+        assert _user() is not None
+        login(client)
+        client.post("/bekraeft-email/send-igen")
+        with client.session_transaction() as session:
+            assert "kunne ikke sendes" in session["_flashes"][-1][1]
+    finally:
+        app.config["MAIL_BACKEND"] = "memory"
+
+
 # --- CSRF ------------------------------------------------------------------------------
 
 

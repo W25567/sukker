@@ -104,10 +104,26 @@ def verify_email(token):
 @limiter.limit("3 per hour", methods=["POST"])
 def resend_verification():
     if ActionForm().validate_on_submit() and not g.user.is_verified:
-        services.send_verification_mail(g.user)
+        sent = services.send_verification_mail(g.user)
         db.session.commit()
-        flash("Vi har sendt en ny bekræftelsesmail.", "info")
+        if sent:
+            flash("Vi har sendt en ny bekræftelsesmail.", "info")
+        else:
+            flash("Mailen kunne ikke sendes lige nu. Prøv igen om lidt.", "error")
     return redirect(url_for("core.home"))
+
+
+@bp.route("/bekraeft-email/ny-mail", methods=["GET", "POST"])
+@limiter.limit("5 per hour", methods=["POST"])
+@limiter.limit("3 per hour", key_func=_email_key, methods=["POST"])
+def resend_verification_public():
+    """Ny bekræftelsesmail uden at være logget ind. Svaret er det samme, uanset om e-mailen findes."""
+    form = ForgotPasswordForm()
+    if form.validate_on_submit():
+        services.resend_verification(form.email.data)
+        db.session.commit()
+        return render_template("auth/verification_resent.html")
+    return render_template("auth/resend_verification.html", form=form)
 
 
 @bp.route("/glemt-password", methods=["GET", "POST"])

@@ -3,8 +3,13 @@
 {% block content %}
   <h1>Tjek din e-mail</h1>
   <div class="card">
-    <p>Vi har sendt en mail til <strong>{{ email }}</strong>. Klik på linket i mailen for at bekræfte din e-mail.</p>
-    <p class="muted">Kan du ikke finde mailen, så kig i spam-mappen.</p>
+    <p>Vi har sendt en mail til <strong>{{ email }}</strong> med det næste skridt.</p>
+    <p class="muted">Kan du ikke finde mailen, så kig i spam-mappen, eller bed om at få den igen.</p>
   </div>
+  <form method="post" action="{{ url_for('auth.resend_verification_public') }}" class="form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="email" value="{{ email }}">
+    <button type="submit" class="button secondary wide">Send mailen igen</button>
+  </form>
   <a class="button wide" href="{{ url_for('auth.login') }}">Log ind</a>
 {% endblock %}

@@ -100,5 +100,13 @@ class ChangePasswordForm(FlaskForm):
     )
 
 
+class DeleteAccountForm(FlaskForm):
+    password = PasswordField("Dit password", validators=[DataRequired("Skriv dit password for at bekræfte.")])
+    confirm = BooleanField(
+        "Jeg forstår, at min profil, mine billeder, likes og matches slettes, og at det ikke kan fortrydes",
+        validators=[DataRequired("Bekræft, at du vil slette din profil.")],
+    )
+
+
 class ActionForm(FlaskForm):
     """Tom formular til knapper, der kun skal have CSRF-beskyttelse."""

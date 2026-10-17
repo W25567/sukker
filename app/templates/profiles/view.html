@@ -36,6 +36,7 @@
       <div class="profile-actions">
         {{ like_button(user.username, liked, matched, request.full_path) }}
         {% if matched %}
+          <a class="button wide" href="{{ url_for('messaging.start', username=user.username) }}">Skriv besked</a>
           <a class="muted small-link center" href="{{ url_for('matches.remove', username=user.username) }}">Fjern match</a>
         {% endif %}
       </div>

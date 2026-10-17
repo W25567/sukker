@@ -46,4 +46,10 @@
     </form>
     <p class="muted">Når du skifter password, bliver du logget ud på alle andre enheder.</p>
   </section>
+
+  <section class="card">
+    <h2>Slet profil</h2>
+    <p class="muted">Sletter din profil, dine billeder, likes og matches. Det kan ikke fortrydes.</p>
+    <a class="button secondary danger" href="{{ url_for('account.delete') }}">Slet min profil</a>
+  </section>
 {% endblock %}

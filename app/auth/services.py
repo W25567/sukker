@@ -61,7 +61,7 @@ def register_user(form, kommune_code=None):
 
 def send_verification_mail(user):
     raw = tokens.issue_token(user, tokens.VERIFY_EMAIL, current_app.config["EMAIL_VERIFY_TTL"])
-    send_mail(
+    return send_mail(
         user.email,
         "Bekræft din e-mail på Sukker.nu",
         "mail/verify_email.txt",
@@ -69,6 +69,14 @@ def send_verification_mail(user):
         verify_url=_absolute_url("auth.verify_email", token=raw),
         hours=int(current_app.config["EMAIL_VERIFY_TTL"].total_seconds() // 3600),
     )
+
+
+def resend_verification(email):
+    """Sender en ny bekræftelsesmail, hvis der findes en ubekræftet profil med e-mailen. Svaret til brugeren
+    er altid det samme, så siden ikke afslører, om e-mailen har en profil."""
+    user = find_user_by_email(email)
+    if user is not None and not user.is_verified:
+        send_verification_mail(user)
 
 
 def verify_email(raw_token):

@@ -1,13 +1,14 @@
 """Likes, matches og match-loft (specifikation 7)."""
 from dataclasses import dataclass
 
-from sqlalchemy import delete, or_, select
+from sqlalchemy import delete, or_, select, update
 from sqlalchemy.orm import aliased
 
 from ..auth.models import User
 from ..core.settings import get_setting
 from ..core.timeutil import now_utc
 from ..extensions import db
+from ..messaging.models import Conversation
 from ..profiles.models import Profile
 from ..profiles.services import can_view_profile
 from ..subscriptions.services import effective_tier
@@ -85,7 +86,17 @@ def _create_or_reactivate_match(a_id, b_id, actor_id):
     else:
         match.matched_at, match.removed_at, match.removed_by_id = now, None, None
     db.session.add(MatchEvent(match_id=match.id, kind="matched", actor_id=actor_id, at=now))
+    # Matcher de igen, kommer en skjult samtale tilbage med den tidligere historik (specifikation 7.2).
+    _set_conversation_hidden(low, high, None)
     return match
+
+
+def _set_conversation_hidden(low, high, hidden_at):
+    db.session.execute(
+        update(Conversation)
+        .where(Conversation.user_low_id == low, Conversation.user_high_id == high)
+        .values(hidden_at=hidden_at)
+    )
 
 
 def unlike(liker, target):
@@ -109,6 +120,7 @@ def remove_match(user, other):
     db.session.execute(delete(Like).where(
         or_((Like.liker_id == user.id) & (Like.likee_id == other.id), (Like.liker_id == other.id) & (Like.likee_id == user.id))
     ))
+    _set_conversation_hidden(match.user_low_id, match.user_high_id, now)
     return True
 
 

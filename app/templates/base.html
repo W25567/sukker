@@ -49,7 +49,9 @@
     <nav class="bottomnav" aria-label="Hovedmenu">
       <a href="{{ url_for('explore.index') }}"{% if here.startswith('explore.') %} aria-current="page"{% endif %}>Udforsk</a>
       <a href="{{ url_for('matches.index') }}"{% if here.startswith('matches.') %} aria-current="page"{% endif %}>Likes</a>
-      <a href="{{ url_for('core.messages') }}"{% if here == 'core.messages' %} aria-current="page"{% endif %}>Beskeder</a>
+      <a href="{{ url_for('messaging.inbox') }}"{% if here.startswith('messaging.') %} aria-current="page"{% endif %}>
+        Beskeder{% if unread_messages %} <span class="unread-count" aria-label="{{ unread_messages }} ulæste">{{ unread_messages }}</span>{% endif %}
+      </a>
       <a href="{{ url_for('profiles.me') }}"{% if here.startswith('profiles.') %} aria-current="page"{% endif %}>Min profil</a>
     </nav>
   {% endif %}

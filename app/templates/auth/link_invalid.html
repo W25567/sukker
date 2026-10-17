@@ -10,6 +10,6 @@
   {% elif current_user %}
     <p class="muted">Du kan få en ny bekræftelsesmail via linket øverst på siden.</p>
   {% else %}
-    <a class="button wide" href="{{ url_for('auth.login') }}">Log ind for at få en ny mail</a>
+    <a class="button wide" href="{{ url_for('auth.resend_verification_public') }}">Send en ny bekræftelsesmail</a>
   {% endif %}
 {% endblock %}

@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Tjek din e-mail – Sukker.nu{% endblock %}
+{% block content %}
+  <h1>Tjek din e-mail</h1>
+  <div class="card">
+    <p>Hvis der venter en bekræftelse på den e-mail, har vi sendt en ny mail. Det nye link erstatter det gamle.</p>
+    <p class="muted">Kig også i spam-mappen.</p>
+  </div>
+  <a class="button wide" href="{{ url_for('auth.login') }}">Log ind</a>
+{% endblock %}

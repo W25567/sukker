@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% from "_forms.html" import field, checkbox %}
+{% block title %}Slet profil – Sukker.nu{% endblock %}
+{% block content %}
+  <h1>Slet profil</h1>
+  <div class="card">
+    <p>Når du sletter din profil:</p>
+    <ul>
+      <li>slettes din profil, dine billeder, likes, matches og dit abonnement med det samme</li>
+      <li>bliver beskeder, du har sendt, stående hos modtagerne, men du vises som <strong>Slettet bruger</strong>
+        uden navn, billede eller link til din profil</li>
+      <li>kan sletningen ikke fortrydes</li>
+    </ul>
+  </div>
+  <form method="post" novalidate class="form">
+    {{ form.hidden_tag() }}
+    {{ field(form.password, autocomplete="current-password") }}
+    {{ checkbox(form.confirm) }}
+    <button type="submit" class="button wide danger-fill">Slet min profil</button>
+  </form>
+  <p class="center"><a href="{{ url_for('account.overview') }}">Fortryd</a></p>
+{% endblock %}

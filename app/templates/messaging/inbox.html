@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Beskeder – Sukker.nu{% endblock %}
+{% block content %}
+  <div class="heading-row">
+    <h1>{{ 'Arkiv' if archived else 'Beskeder' }}</h1>
+    {% if archived %}
+      <a class="button small secondary" href="{{ url_for('messaging.inbox') }}">Tilbage</a>
+    {% else %}
+      <a class="button small secondary" href="{{ url_for('messaging.inbox', arkiv=1) }}">Arkiv</a>
+    {% endif %}
+  </div>
+
+  {% if items %}
+    <ul class="inbox">
+      {% for item in items %}
+        <li>
+          <a class="inbox-item{% if item.unread %} unread{% endif %}"
+             href="{{ url_for('messaging.conversation', conversation_id=item.conversation.id) if item.conversation else url_for('messaging.start', username=item.other.username) }}">
+            <span class="inbox-name">
+              {{ item.other.username if item.other else 'Slettet bruger' }}
+              {% if item.unread %}<span class="unread-count">{{ item.unread }}</span>{% endif %}
+              {% if item.locked %}<span class="lock-badge">Låst</span>{% endif %}
+            </span>
+            <span class="muted inbox-preview">
+              {% if item.last_message %}
+                {% if item.last_message.sender_id == current_user.id %}Du: {% endif %}{{ item.last_message.body | truncate(80) }}
+              {% else %}
+                Nyt match. Sig hej!
+              {% endif %}
+            </span>
+          </a>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <div class="card">
+      <p>{{ 'Du har ingen arkiverede samtaler.' if archived else 'Du har ingen samtaler endnu. Når du får et match, kan I skrive sammen her.' }}</p>
+    </div>
+  {% endif %}
+{% endblock %}

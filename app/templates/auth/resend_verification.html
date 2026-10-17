@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% from "_forms.html" import field %}
+{% block title %}Send bekræftelsesmail igen – Sukker.nu{% endblock %}
+{% block content %}
+  <h1>Send bekræftelsesmail igen</h1>
+  <p class="muted">Skriv den e-mail, du oprettede profilen med.</p>
+  <form method="post" novalidate class="form">
+    {{ form.hidden_tag() }}
+    {{ field(form.email, autocomplete="email") }}
+    <button type="submit" class="button wide">Send mailen igen</button>
+  </form>
+{% endblock %}
