@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% from "_forms.html" import field %}
+{% block title %}Administrator – Sukker.nu{% endblock %}
+{% block content %}
+  <a class="back-link" href="{{ url_for('messaging.inbox') }}">← Beskeder</a>
+  <h1>Administrator</h1>
+  <p class="muted">Beskeder fra Sukker.nu's administration. Du kan svare her.</p>
+
+  <ol class="thread" id="thread"
+      data-poll-url="{{ url_for('messaging.admin_updates') }}" data-version="{{ version }}">
+    {% include "messaging/_admin_thread.html" %}
+  </ol>
+  <p id="thread-status" class="visually-hidden" aria-live="polite"></p>
+  <span id="bund"></span>
+  <script src="{{ url_for('static', filename='js/conversation.js') }}" defer></script>
+
+  <form method="post" class="form composer" novalidate>
+    {{ form.hidden_tag() }}
+    {{ field(form.body) }}
+    <button type="submit" class="button">Send</button>
+  </form>
+
+  <div class="actions conversation-actions">
+    <form method="post" action="{{ url_for('messaging.admin_hide') }}">
+      {{ action_form.hidden_tag() }}
+      <button type="submit" class="button secondary danger">Slet samtalen for mig</button>
+    </form>
+  </div>
+  <p class="muted">Sletter du samtalen, forsvinder den for dig. Skriver Administrator igen, kan du se hele samtalen igen.</p>
+{% endblock %}

@@ -10,25 +10,50 @@
     {% endif %}
   </div>
 
-  {% if items %}
+  {% if items or admin_thread %}
     <ul class="inbox">
-      {% for item in items %}
+      {% if admin_thread %}
         <li>
-          <a class="inbox-item{% if item.unread %} unread{% endif %}"
-             href="{{ url_for('messaging.conversation', conversation_id=item.conversation.id) if item.conversation else url_for('messaging.start', handle=item.other.handle) }}">
+          <a class="inbox-item admin-item{% if admin_unread %} unread{% endif %}" href="{{ url_for('messaging.admin_conversation') }}">
             <span class="inbox-name">
-              {{ item.other.display_name if item.other else 'Slettet bruger' }}
-              {% if item.unread %}<span class="unread-count">{{ item.unread }}</span>{% endif %}
-              {% if item.locked %}<span class="lock-badge">Låst</span>{% endif %}
+              Administrator
+              {% if admin_unread %}<span class="unread-count">{{ admin_unread }}</span>{% endif %}
             </span>
             <span class="muted inbox-preview">
-              {% if item.last_message %}
-                {% if item.last_message.sender_id == current_user.id %}Du: {% endif %}{{ item.last_message.body | truncate(80) }}
-              {% else %}
-                Nyt match. Sig hej!
-              {% endif %}
+              {% if admin_last %}{% if not admin_last.from_admin %}Du: {% endif %}{{ admin_last.body | truncate(80) }}{% endif %}
             </span>
           </a>
+        </li>
+      {% endif %}
+      {% for item in items %}
+        <li>
+          {% if item.removed %}
+            {# Samtalen har været der, men matchet er fjernet: intet indhold kan læses. #}
+            <div class="inbox-item removed-item">
+              <span class="inbox-name">{{ item.other.display_name }} <span class="lock-badge">Match fjernet</span></span>
+              <span class="muted inbox-preview">Matchet blev fjernet {{ item.activity_at | local_datetime }}. Samtalen kan ikke længere læses.</span>
+              <form method="post" action="{{ url_for('messaging.dismiss_removed', conversation_id=item.conversation.id) }}" class="inline">
+                {{ action_form.hidden_tag() }}
+                <button type="submit" class="link small-link">Fjern fra listen</button>
+              </form>
+            </div>
+          {% else %}
+            <a class="inbox-item{% if item.unread %} unread{% endif %}"
+               href="{{ url_for('messaging.conversation', conversation_id=item.conversation.id) if item.conversation else url_for('messaging.start', handle=item.other.handle) }}">
+              <span class="inbox-name">
+                {{ item.other.display_name if item.other else 'Slettet bruger' }}
+                {% if item.unread %}<span class="unread-count">{{ item.unread }}</span>{% endif %}
+                {% if item.locked %}<span class="lock-badge">Låst</span>{% endif %}
+              </span>
+              <span class="muted inbox-preview">
+                {% if item.last_message %}
+                  {% if item.last_message.sender_id == current_user.id %}Du: {% endif %}{{ item.last_message.body | truncate(80) }}
+                {% else %}
+                  Nyt match. Sig hej!
+                {% endif %}
+              </span>
+            </a>
+          {% endif %}
         </li>
       {% endfor %}
     </ul>

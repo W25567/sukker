@@ -8,7 +8,7 @@ from ..auth.sessions import login_required
 from ..extensions import db, limiter
 from ..matches.queries import has_active_match
 from ..profiles.services import find_user_by_handle
-from . import services
+from . import admin_threads, services
 from .models import Conversation, Message
 
 bp = Blueprint("messaging", __name__, url_prefix="/beskeder")
@@ -34,7 +34,88 @@ def _conversation_or_404(conversation_id):
 @login_required
 def inbox():
     archived = request.args.get("arkiv") == "1"
-    return render_template("messaging/inbox.html", items=services.inbox(g.user, archived=archived), archived=archived)
+    admin_thread = None if archived else admin_threads.visible_to_user(g.user)
+    admin_last = admin_threads.messages(g.user.id)[-1] if admin_thread else None
+    return render_template("messaging/inbox.html", items=services.inbox(g.user, archived=archived), archived=archived,
+                           admin_thread=admin_thread, admin_last=admin_last, action_form=ActionForm(),
+                           admin_unread=admin_threads.unread_for_user(g.user) if admin_thread else 0)
+
+
+@bp.route("/<int:conversation_id>/fjern-markering", methods=["POST"])
+@login_required
+def dismiss_removed(conversation_id):
+    """Fjerner markeringen af en samtale fra et fjernet match fra brugerens indbakke."""
+    conversation = db.session.get(Conversation, conversation_id)
+    if not services.can_dismiss_removed(g.user, conversation):
+        abort(404)
+    if ActionForm().validate_on_submit():
+        services.clear_for_me(g.user, conversation)
+        db.session.commit()
+    return redirect(url_for("messaging.inbox"))
+
+
+class AdminReplyForm(FlaskForm):
+    body = TextAreaField(
+        "Svar til Administrator",
+        validators=[DataRequired("Skriv en besked."),
+                    Length(max=admin_threads.MAX_LENGTH, message=f"En besked må højst være {admin_threads.MAX_LENGTH} tegn.")],
+    )
+
+
+def _admin_thread_or_404():
+    thread = admin_threads.visible_to_user(g.user)
+    if thread is None:
+        abort(404)
+    return thread
+
+
+@bp.route("/administrator", methods=["GET", "POST"])
+@login_required
+@limiter.limit("30 per minute;200 per day", methods=["POST"])
+def admin_conversation():
+    """Samtalen med Administrator. Virker uanset abonnement, match og begrænsning, så man altid kan svare."""
+    _admin_thread_or_404()
+    form = AdminReplyForm()
+    if form.validate_on_submit():
+        try:
+            admin_threads.reply_from_user(g.user, form.body.data)
+            db.session.commit()
+        except admin_threads.AdminMessageRefused as refusal:
+            db.session.rollback()
+            flash(str(refusal), "error")
+        return redirect(url_for("messaging.admin_conversation") + "#bund")
+    admin_threads.mark_read_by_user(g.user)
+    db.session.commit()
+    return render_template("messaging/admin_conversation.html", form=form, action_form=ActionForm(),
+                           messages=admin_threads.messages(g.user.id), version=admin_threads.version(g.user.id))
+
+
+@bp.route("/administrator/nye")
+@login_required
+def admin_updates():
+    _admin_thread_or_404()
+    version = admin_threads.version(g.user.id)
+    if request.args.get("version") == version:
+        response = Response(status=204)
+    else:
+        admin_threads.mark_read_by_user(g.user)
+        db.session.commit()
+        response = jsonify(version=version, html=render_template("messaging/_admin_thread.html",
+                                                                 messages=admin_threads.messages(g.user.id)))
+    response.headers["Cache-Control"] = "no-store"
+    return response
+
+
+@bp.route("/administrator/slet", methods=["POST"])
+@login_required
+def admin_hide():
+    """Sletter samtalen for brugeren. Skriver Administrator igen, vises hele historikken igen."""
+    _admin_thread_or_404()
+    if ActionForm().validate_on_submit():
+        admin_threads.hide_for_user(g.user)
+        db.session.commit()
+        flash("Samtalen med Administrator er slettet for dig.", "info")
+    return redirect(url_for("messaging.inbox"))
 
 
 @bp.route("/med/<handle>")

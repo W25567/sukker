@@ -328,6 +328,13 @@ a.stat .stat-value { color: var(--accent); }
 .faq details p { margin-top: 0; }
 .early-bird-card { border-color: var(--accent); background: var(--info-bg); }
 .early-bird-card h2 { color: var(--accent); }
+.removed-item { opacity: 0.85; border-style: dashed; }
+.removed-item .inline { margin-top: 4px; }
+.admin-item { border-color: var(--accent); }
+.bubble.from-admin { border: 1px solid var(--accent); }
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin: 0 0 16px; }
+.tabs a { padding: 8px 12px; text-decoration: none; color: var(--muted); border-bottom: 3px solid transparent; }
+.tabs a[aria-current="page"] { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
 .visually-hidden {
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden;
   clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;

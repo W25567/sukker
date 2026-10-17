@@ -272,3 +272,33 @@ def test_live_updates_respect_access(app, outbox, ctx):
     assert carla.get(poll_url).status_code == 404
     bodil.post(f"/bruger/{h('Anna')}/bloker")
     assert anna.get(poll_url).status_code == 404  # blokering slår igennem med det samme
+
+
+# --- Fjernet match i indbakken -------------------------------------------------------------------------------
+
+
+def test_removed_match_is_shown_without_content_for_both(app, outbox, ctx):
+    anna, bodil = matched_pair(app, outbox)
+    send(anna, open_conversation(anna, "Bodil"), "Hemmelig samtale")
+    anna.post(f"/match/{h('Bodil')}/fjern")
+    for client, other in ((anna, "Bodil"), (bodil, "Anna")):
+        inbox = client.get("/beskeder/").get_data(as_text=True)
+        assert other in inbox and "Match fjernet" in inbox and "kan ikke længere læses" in inbox
+        assert "Hemmelig samtale" not in inbox
+    conversation_id = db.session.scalar(select(Conversation.id))
+    assert bodil.get(f"/beskeder/{conversation_id}").status_code == 404  # indholdet kan ikke læses
+
+    bodil.post(f"/beskeder/{conversation_id}/fjern-markering")
+    assert "Match fjernet" not in bodil.get("/beskeder/").get_data(as_text=True)
+    assert "Match fjernet" in anna.get("/beskeder/").get_data(as_text=True)  # kun fjernet for Bodil
+
+
+def test_blocked_conversation_disappears_completely(app, outbox, ctx):
+    anna, bodil = matched_pair(app, outbox)
+    send(anna, open_conversation(anna, "Bodil"), "Hej")
+    bodil.post(f"/bruger/{h('Anna')}/bloker")
+    for client in (anna, bodil):
+        inbox = client.get("/beskeder/").get_data(as_text=True)
+        assert '<ul class="inbox">' not in inbox and "Du har ingen samtaler endnu" in inbox  # skjult uden videre
+    conversation_id = db.session.scalar(select(Conversation.id))
+    assert anna.post(f"/beskeder/{conversation_id}/fjern-markering").status_code == 404

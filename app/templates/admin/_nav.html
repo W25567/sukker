@@ -3,6 +3,8 @@
   <a href="{{ url_for('admin.dashboard') }}"{% if here == 'admin.dashboard' %} aria-current="page"{% endif %}>Overblik</a>
   <a href="{{ url_for('admin.users') }}"{% if here in ('admin.users', 'admin.user') %} aria-current="page"{% endif %}>Brugere</a>
   <a href="{{ url_for('admin.oversight') }}"{% if here == 'admin.oversight' %} aria-current="page"{% endif %}>Tilsyn</a>
+  {% set waiting = admin_unread_threads() %}
+  <a href="{{ url_for('admin.threads') }}"{% if here in ('admin.threads', 'admin.user_thread') %} aria-current="page"{% endif %}>Henvendelser{% if waiting %} <span class="unread-count">{{ waiting }}</span>{% endif %}</a>
   <a href="{{ url_for('admin.settings') }}"{% if here == 'admin.settings' %} aria-current="page"{% endif %}>Indstillinger</a>
   <a href="{{ url_for('admin.log') }}"{% if here == 'admin.log' %} aria-current="page"{% endif %}>Log</a>
   <a href="{{ url_for('moderation.log') }}">Moderatoradgang</a>

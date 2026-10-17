@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Samtale med {{ target.display_name }} – Administration{% endblock %}
+{% block page_class %}admin-wide{% endblock %}
+{% block content %}
+  {% include "admin/_nav.html" %}
+  <h1>{{ target.display_name }}</h1>
+  {% include "admin/_user_tabs.html" %}
+
+  <p class="muted">Brugeren ser beskederne som fra <strong>Administrator</strong> – ikke hvem af jer, der skriver. Hver besked registreres i administrationsloggen.
+    {% if thread and thread.user_hidden_at %}Brugeren slettede samtalen {{ thread.user_hidden_at | local_datetime }}. Skriver du igen, vises hele historikken for brugeren igen.{% endif %}</p>
+
+  <ol class="thread">
+    {% for m in messages %}
+      <li class="bubble{% if m.from_admin %} mine{% endif %}">
+        <span class="sender">{{ ('Administrator (' ~ admins.get(m.admin_id, 'tidligere administrator') ~ ')') if m.from_admin else target.display_name }}</span>
+        <p>{{ m.body }}</p>
+        <span class="bubble-meta">{{ m.created_at | local_datetime }}</span>
+      </li>
+    {% else %}
+      <li class="muted center">Ingen beskeder endnu. Skriv en henstilling eller et spørgsmål til brugeren.</li>
+    {% endfor %}
+  </ol>
+  <span id="bund"></span>
+
+  <form method="post" class="form composer">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="field">
+      <label for="body">Besked fra Administrator</label>
+      <textarea id="body" name="body" rows="4" maxlength="2000" required></textarea>
+      <small class="hint">Skriv sagligt og venligt. Henvis gerne til brugervilkårene, hvis det er en henstilling.</small>
+    </div>
+    <button type="submit" class="button">Send som Administrator</button>
+  </form>
+{% endblock %}

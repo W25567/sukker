@@ -56,6 +56,39 @@ class Message(db.Model):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
 
 
+class AdminThread(db.Model):
+    """Én samtale mellem en bruger og "Administrator", fx til en henstilling.
+
+    Brugeren ser aldrig, hvilken administrator der skriver. Sletter brugeren samtalen, er den skjult,
+    indtil en administrator skriver igen – så vises hele historikken igen.
+    """
+
+    __tablename__ = "admin_threads"
+
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    last_message_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    user_hidden_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    user_last_read_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    admin_last_read_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class AdminMessage(db.Model):
+    __tablename__ = "admin_messages"
+    __table_args__ = (
+        CheckConstraint("length(body) BETWEEN 1 AND 2000", name="body_length"),
+        Index("ix_admin_messages_thread_created", "user_id", "created_at"),
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("admin_threads.user_id", ondelete="CASCADE"), nullable=False)
+    from_admin: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    # Hvilken administrator der skrev. Vises kun i administrationen, aldrig for brugeren.
+    admin_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+    body: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+
+
 class MessageDeletion(db.Model):
     """En besked, som én deltager har slettet for sig selv. Den anden part beholder den (specifikation 7.2)."""
 

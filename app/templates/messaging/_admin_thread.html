@@ -1,0 +1,8 @@
+{# Beskederne i samtalen med Administrator. Bruges af siden og af den automatiske opdatering. #}
+{% for m in messages %}
+  <li class="bubble{% if not m.from_admin %} mine{% else %} from-admin{% endif %}">
+    {% if m.from_admin %}<span class="sender">Administrator</span>{% endif %}
+    <p>{{ m.body }}</p>
+    <span class="bubble-meta">{{ m.created_at | local_datetime }}</span>
+  </li>
+{% endfor %}

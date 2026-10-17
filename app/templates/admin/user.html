@@ -6,6 +6,7 @@
   {% include "admin/_nav.html" %}
   {% set names = data.names %}
   <h1>{{ target.display_name }}, {{ data.age }}{% if target.is_test %} <span class="lock-badge">Testkonto</span>{% endif %}</h1>
+  {% include "admin/_user_tabs.html" %}
   <p class="muted">Du ser alle oplysninger om brugeren. Visningen er registreret i administrationsloggen og ændrer intet for brugeren.</p>
 
   <nav class="section-nav" aria-label="Afsnit">

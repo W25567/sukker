@@ -206,7 +206,13 @@ def unread_count(user, conversation):
 
 
 def total_unread(user):
-    """Antal ulæste beskeder til bundnavigationen."""
+    """Antal ulæste beskeder til bundnavigationen, inklusive beskeder fra Administrator."""
+    from .admin_threads import unread_for_user
+
+    return _unread_from_members(user) + unread_for_user(user)
+
+
+def _unread_from_members(user):
     member = ConversationMember
     deleted = select(MessageDeletion.message_id).where(
         MessageDeletion.message_id == Message.id, MessageDeletion.user_id == user.id
@@ -234,6 +240,35 @@ class InboxItem:
     locked: bool
     archived: bool
     activity_at: datetime
+    removed: bool = False  # matchet er fjernet: samtalen har været der, men kan ikke længere læses
+
+
+def removed_match_items(user):
+    """Samtaler fra fjernede matches. De vises for begge som en markering uden indhold.
+    Er den ene blokeret, vises intet (specifikation 9.2)."""
+    items = []
+    rows = db.session.execute(
+        select(Conversation, ConversationMember)
+        .join(ConversationMember, and_(ConversationMember.conversation_id == Conversation.id,
+                                       ConversationMember.user_id == user.id))
+        .where(Conversation.hidden_at.isnot(None),
+               Conversation.user_low_id.isnot(None), Conversation.user_high_id.isnot(None))
+    ).all()
+    for conversation, member in rows:
+        other = db.session.get(User, conversation.other_id(user.id))
+        if other is None or is_blocked_between(user.id, other.id):
+            continue
+        if db.session.scalar(_visible_messages_query(user.id, member).limit(1)) is None:
+            continue  # brugeren har selv fjernet markeringen, eller der blev aldrig skrevet
+        items.append(InboxItem(other, conversation, None, 0, True, member.archived, conversation.hidden_at, removed=True))
+    return items
+
+
+def can_dismiss_removed(user, conversation):
+    if conversation is None or conversation.hidden_at is None or membership(conversation, user.id) is None:
+        return False
+    other_id = conversation.other_id(user.id)
+    return other_id is not None and not is_blocked_between(user.id, other_id)
 
 
 def inbox(user, archived=False):
@@ -254,6 +289,7 @@ def inbox(user, archived=False):
         item = _inbox_item(user, None, conversation, fallback_at=conversation.created_at)
         if item.last_message is not None:
             items.append(item)
+    items += removed_match_items(user)
 
     items = [item for item in items if item.archived == archived]
     return sorted(items, key=lambda item: item.activity_at, reverse=True)

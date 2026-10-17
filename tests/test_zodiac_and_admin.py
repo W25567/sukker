@@ -1,5 +1,6 @@
 """Tests for stjernetegn og den udvidede administration (fuld brugervisning, filtre, tilsyn)."""
 import io
+import re
 from datetime import date
 
 import pytest
@@ -81,7 +82,7 @@ def test_admin_sees_everything_and_the_view_is_logged(app, outbox, ctx):
     log = db.session.scalar(select(AdminAuditLog).where(AdminAuditLog.action == "view_user"))
     assert log.admin_username == "Admin" and log.target_username == "Anna"
 
-    image_id = page.split("/admin/bruger/")[2].split("/billede/")[1].split("/")[0]
+    image_id = re.search(r"/admin/bruger/\d+/billede/([^/]+)/", page).group(1)
     assert admin.get(f"/admin/bruger/{user('Anna').id}/billede/{image_id}/lille.webp").status_code == 200
     assert admin.get(f"/admin/bruger/{user('Bodil').id}/billede/{image_id}/lille.webp").status_code == 404
     assert anna.get(f"/admin/bruger/{user('Anna').id}").status_code == 404  # kun administratorer
@@ -112,3 +113,56 @@ def test_dashboard_numbers_link_to_lists_and_oversight_renders(app, outbox, ctx)
     oversight = admin.get("/admin/tilsyn").get_data(as_text=True)
     assert "Blokeret af flest" in oversight and ">Anna<" in oversight
     assert make_user(app, outbox, "Moderator", role="moderator").get("/admin/tilsyn").status_code == 404
+
+
+# --- Samtaler med Administrator --------------------------------------------------------------------------
+
+
+def test_admin_message_is_anonymous_logged_and_can_be_answered(app, outbox, ctx):
+    admin = make_user(app, outbox, "Hanne", role="admin")
+    anna = make_user(app, outbox, "Anna")
+    admin.post(f"/admin/bruger/{user('Anna').id}/samtale", data={"body": "Husk venligst at skrive pænt."})
+
+    log = db.session.scalar(select(AdminAuditLog).where(AdminAuditLog.action == "admin_message"))
+    assert log.admin_username == "Hanne" and log.target_username == "Anna"
+
+    inbox = anna.get("/beskeder/").get_data(as_text=True)
+    assert "Administrator" in inbox and "Husk venligst" in inbox
+    assert 'class="unread-count"' in inbox
+    page = anna.get("/beskeder/administrator").get_data(as_text=True)
+    assert "Husk venligst at skrive pænt." in page and "Hanne" not in page  # anonymt for brugeren
+
+    anna.post("/beskeder/administrator", data={"body": "Undskyld, det skal jeg nok."})
+    admin_page = admin.get(f"/admin/bruger/{user('Anna').id}/samtale").get_data(as_text=True)
+    assert "Undskyld, det skal jeg nok." in admin_page and "Administrator (Hanne)" in admin_page
+    assert "Henvendelser" in admin.get("/admin/samtaler").get_data(as_text=True)
+
+
+def test_user_can_delete_admin_thread_until_admin_writes_again(app, outbox, ctx):
+    admin = make_user(app, outbox, "Hanne", role="admin")
+    anna = make_user(app, outbox, "Anna")
+    admin.post(f"/admin/bruger/{user('Anna').id}/samtale", data={"body": "Første besked"})
+    anna.post("/beskeder/administrator/slet")
+    assert 'href="/beskeder/administrator"' not in anna.get("/beskeder/").get_data(as_text=True)
+    assert anna.get("/beskeder/administrator").status_code == 404
+
+    admin.post(f"/admin/bruger/{user('Anna').id}/samtale", data={"body": "Anden besked"})
+    page = anna.get("/beskeder/administrator").get_data(as_text=True)
+    assert "Første besked" in page and "Anden besked" in page  # hele historikken kommer igen
+
+
+def test_admin_thread_is_admin_only_and_not_for_other_users(app, outbox, ctx):
+    anna, bodil = make_user(app, outbox, "Anna"), make_user(app, outbox, "Bodil")
+    assert anna.post(f"/admin/bruger/{user('Bodil').id}/samtale", data={"body": "x"}).status_code == 404
+    assert bodil.get("/beskeder/administrator").status_code == 404  # ingen samtale endnu
+
+
+def test_admin_thread_live_updates(app, outbox, ctx):
+    admin = make_user(app, outbox, "Hanne", role="admin")
+    anna = make_user(app, outbox, "Anna")
+    admin.post(f"/admin/bruger/{user('Anna').id}/samtale", data={"body": "Hej"})
+    page = anna.get("/beskeder/administrator").get_data(as_text=True)
+    version = re.search(r'data-version="([^"]+)"', page).group(1)
+    assert anna.get(f"/beskeder/administrator/nye?version={version}").status_code == 204
+    admin.post(f"/admin/bruger/{user('Anna').id}/samtale", data={"body": "Er du der?"})
+    assert "Er du der?" in anna.get(f"/beskeder/administrator/nye?version={version}").get_json()["html"]

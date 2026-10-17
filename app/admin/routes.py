@@ -7,6 +7,7 @@ from sqlalchemy import select
 from ..auth.models import User
 from ..media import storage
 from ..media.models import ProfileImage
+from ..messaging import admin_threads
 from ..moderation import userdata
 from ..moderation.models import DECISIONS, REASON_LABELS, STATUSES
 from ..profiles.zodiac import zodiac_for
@@ -122,6 +123,7 @@ def user(user_id):
         zodiac=zodiac_for(target.birthdate),
         user_log=services.audit_log_for(target),
         audit_labels=services.AUDIT_LABELS,
+        unread_thread=admin_threads.unread_for_admin(target.id),
         reasons=REASON_LABELS, statuses=dict(STATUSES), decisions=dict(DECISIONS),
         tier_label=TIER_LABELS[effective_tier(target.id)],
         subscription=subscription,
@@ -131,6 +133,43 @@ def user(user_id):
         feature_labels=features.FEATURES,
         tier_labels=TIER_LABELS,
         form=FlaskForm(),
+    )
+
+
+@bp.route("/samtaler")
+@admin_required
+def threads():
+    """Alle samtaler mellem brugere og "Administrator". Ulæste svar øverst."""
+    return render_template("admin/threads.html", threads=admin_threads.admin_overview())
+
+
+@bp.route("/bruger/<int:user_id>/samtale", methods=["GET", "POST"])
+@admin_required
+def user_thread(user_id):
+    """Skriv til brugeren som "Administrator", fx en henstilling. Hver besked registreres i loggen."""
+    target = db.session.get(User, user_id)
+    if target is None:
+        abort(404)
+    form = FlaskForm()
+    if request.method == "POST":
+        if not form.validate_on_submit():
+            abort(400)
+        try:
+            message = admin_threads.send_from_admin(g.user, target, request.form.get("body"))
+            services.audit(g.user, "admin_message", target, message_id=message.id, length=len(message.body))
+            db.session.commit()
+            flash("Beskeden er sendt fra Administrator og registreret i loggen.", "success")
+        except admin_threads.AdminMessageRefused as refusal:
+            db.session.rollback()
+            flash(str(refusal), "error")
+        return redirect(url_for("admin.user_thread", user_id=target.id) + "#bund")
+    admin_threads.mark_read_by_admin(target.id)
+    db.session.commit()
+    thread = admin_threads.thread_for(target.id)
+    admins = {u.id: u.display_name for u in db.session.scalars(select(User).where(User.role == "admin"))}
+    return render_template(
+        "admin/user_thread.html", target=target, form=form, thread=thread, admins=admins,
+        messages=admin_threads.messages(target.id), unread_thread=0,
     )
 
 

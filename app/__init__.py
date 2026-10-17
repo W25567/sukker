@@ -116,9 +116,10 @@ def create_app(config_name=None):
     @app.context_processor
     def inject_footer():
         # En funktion, så databasen kun spørges, når sidefoden faktisk vises (kun for besøgende).
+        from .messaging.admin_threads import total_unread_for_admins
         from .subscriptions.services import early_bird_open
 
         return {"footer_pages": lambda: visible_pages()[1:], "current_year": datetime.now(DANISH_TZ).year,
-                "early_bird_open": early_bird_open}
+                "early_bird_open": early_bird_open, "admin_unread_threads": total_unread_for_admins}
 
     return app

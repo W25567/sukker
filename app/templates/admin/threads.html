@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Henvendelser – Administration{% endblock %}
+{% block page_class %}admin-wide{% endblock %}
+{% block content %}
+  {% include "admin/_nav.html" %}
+  <h1>Henvendelser</h1>
+  <p class="muted">Samtaler mellem brugere og Administrator. Ulæste svar fra brugere står øverst. Start en ny samtale fra brugerens side under "Samtale som Administrator".</p>
+  {% if threads %}
+    <ul class="inbox">
+      {% for t in threads %}
+        <li>
+          <a class="inbox-item{% if t.unread %} unread{% endif %}" href="{{ url_for('admin.user_thread', user_id=t.user_id) }}">
+            <span class="inbox-name">{{ t.display_name }}{% if t.unread %} <span class="unread-count">{{ t.unread }}</span>{% endif %}</span>
+            <span class="muted inbox-preview">
+              {% if t.last_message %}{{ 'Administrator: ' if t.last_message.from_admin else '' }}{{ t.last_message.body | truncate(80) }} · {{ t.last_message_at | local_datetime }}{% endif %}
+            </span>
+          </a>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <div class="card"><p>Ingen samtaler endnu.</p></div>
+  {% endif %}
+{% endblock %}

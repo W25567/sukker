@@ -1,0 +1,8 @@
+{# Undermenu for én bruger i administrationen. #}
+{% set here = request.endpoint or '' %}
+<nav class="tabs" aria-label="{{ target.display_name }}">
+  <a href="{{ url_for('admin.user', user_id=target.id) }}"{% if here == 'admin.user' %} aria-current="page"{% endif %}>Oplysninger</a>
+  <a href="{{ url_for('admin.user_thread', user_id=target.id) }}"{% if here == 'admin.user_thread' %} aria-current="page"{% endif %}>
+    Samtale som Administrator{% if unread_thread %} <span class="unread-count">{{ unread_thread }}</span>{% endif %}
+  </a>
+</nav>

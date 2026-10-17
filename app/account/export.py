@@ -12,6 +12,7 @@ from ..extensions import db
 from ..location.services import kommune_name
 from ..matches.models import Like, Match
 from ..media.models import ProfileImage
+from ..messaging.admin_threads import messages as admin_messages
 from ..messaging.models import Message, MessageDeletion
 from ..profiles.fields import FIELDS, display_value
 from ..profiles.models import Profile
@@ -85,6 +86,10 @@ def export_user_data(user):
             {"samtale": m.conversation_id, "tidspunkt": _iso(m.created_at), "tekst": m.body,
              "slettet_af_dig": m.id in deleted}
             for m in messages
+        ],
+        "beskeder_med_administrator": [
+            {"fra": "Administrator" if m.from_admin else "dig", "tidspunkt": _iso(m.created_at), "tekst": m.body}
+            for m in admin_messages(user.id)
         ],
         "blokeringer": [{"bruger": names.get(b.blocked_id), "tidspunkt": _iso(b.created_at)} for b in blocks],
         "skjulte_profiler": [{"bruger": names.get(h.hidden_id), "tidspunkt": _iso(h.created_at)} for h in hides],
