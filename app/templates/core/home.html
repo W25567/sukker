@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Sukker.nu – dating for voksne{% endblock %}
+{% block meta %}
+  <meta name="description" content="Sukker.nu er en moderne og diskret datingside for voksne. Opret en profil på et par minutter og mød nye mennesker i nærheden.">
+  <link rel="canonical" href="{{ config.BASE_URL }}/">
+{% endblock %}
+{% block content %}
+  <section class="hero">
+    <h1>Mød nye mennesker – diskret og enkelt</h1>
+    <p>Opret en profil på et par minutter. Du bestemmer selv, hvor meget du deler.</p>
+    <a class="button" href="{{ url_for('auth.register') }}">Opret gratis profil</a>
+    <p class="muted">Nye profiler får 3 måneders Premium. Kun for personer over 18 år.</p>
+  </section>
+{% endblock %}

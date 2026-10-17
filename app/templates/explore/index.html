@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% from "_like.html" import like_button %}
+{% block title %}Udforsk – Sukker.nu{% endblock %}
+{% block content %}
+  <div class="heading-row">
+    <h1>Udforsk</h1>
+  </div>
+
+  <details class="card filters"{% if filters_active %} open{% endif %}>
+    <summary>Filtre{% if filters_active %} <span class="badge-inline">Aktive</span>{% endif %}</summary>
+    {% if filters_allowed %}
+      <form method="get" action="{{ url_for('explore.index') }}" class="form">
+        <div class="field">{{ form.afstand.label }}{{ form.afstand() }}</div>
+        <div class="row">
+          <div class="field">{{ form.alder_fra.label }}{{ form.alder_fra(min=18, max=99) }}</div>
+          <div class="field">{{ form.alder_til.label }}{{ form.alder_til(min=18, max=99) }}</div>
+        </div>
+        <fieldset class="field"><legend>{{ form.koen.label.text }}</legend>
+          <div class="chips">{% for o in form.koen %}<label class="chip">{{ o() }} {{ o.label.text }}</label>{% endfor %}</div>
+        </fieldset>
+        <fieldset class="field"><legend>{{ form.soeger.label.text }}</legend>
+          <div class="chips">{% for o in form.soeger %}<label class="chip">{{ o() }} {{ o.label.text }}</label>{% endfor %}</div>
+        </fieldset>
+        <div class="field checkbox"><label>{{ form.kun_billeder() }} {{ form.kun_billeder.label.text }}</label></div>
+        <div class="actions">
+          <button type="submit" class="button">Vis profiler</button>
+          <a class="button secondary" href="{{ url_for('explore.index') }}">Nulstil</a>
+        </div>
+      </form>
+    {% else %}
+      <p>Filtrering på afstand, alder, køn, hvad folk søger og billeder kræver Premium eller Premium+.</p>
+      <p class="muted">Du kan stadig se alle profiler, sorteret efter hvem der bor tættest på.</p>
+    {% endif %}
+  </details>
+
+  {% if not has_kommune %}
+    <p class="muted">Afstande vises, når kommunedata er indlæst.</p>
+  {% endif %}
+
+  {% if cards %}
+    <ul class="cards">
+      {% for card in cards %}
+        <li class="profile-card">
+          <a class="profile-card-link" href="{{ url_for('profiles.view', username=card.username, fra=request.full_path) }}">
+            {% if card.image_id %}
+              <img src="{{ url_for('media.image', public_id=card.image_id, variant='lille') }}"
+                   alt="" loading="{{ 'eager' if loop.index <= 4 else 'lazy' }}">
+            {% else %}
+              <div class="card-no-photo" aria-hidden="true">{{ card.username[:1] | upper }}</div>
+            {% endif %}
+            <div class="card-body">
+              <strong>{{ card.username }}, {{ card.age }}</strong>
+              <span class="muted">
+                {{ card.distance_label or '' }}{% if card.distance_label and card.kommune %} · {% endif %}{{ card.kommune or '' }}
+              </span>
+              {% if card.recently_active %}<span class="active-dot">Aktiv for nylig</span>{% endif %}
+              {% if card.presentation %}<p class="card-text">{{ card.presentation }}</p>{% endif %}
+            </div>
+          </a>
+          <div class="card-actions">{{ like_button(card.username, card.liked, card.matched, request.full_path, compact=True) }}</div>
+        </li>
+      {% endfor %}
+    </ul>
+    {% if has_more %}
+      <a class="button secondary wide" href="{{ url_for('explore.index', **next_args) }}">Vis flere</a>
+    {% endif %}
+  {% else %}
+    <div class="card">
+      <p>{{ 'Ingen profiler matcher dine filtre.' if filters_active else 'Der er ingen profiler at vise endnu.' }}</p>
+    </div>
+  {% endif %}
+{% endblock %}

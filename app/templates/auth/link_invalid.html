@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Linket virker ikke – Sukker.nu{% endblock %}
+{% block content %}
+  <h1>Linket virker ikke</h1>
+  <div class="card">
+    <p>Linket er udløbet, allerede brugt eller erstattet af et nyere link.</p>
+  </div>
+  {% if purpose == 'reset_password' %}
+    <a class="button wide" href="{{ url_for('auth.forgot_password') }}">Send et nyt link</a>
+  {% elif current_user %}
+    <p class="muted">Du kan få en ny bekræftelsesmail via linket øverst på siden.</p>
+  {% else %}
+    <a class="button wide" href="{{ url_for('auth.login') }}">Log ind for at få en ny mail</a>
+  {% endif %}
+{% endblock %}

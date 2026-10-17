@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+
+# Lokal konfiguration og hemmeligheder (se .env.example)
+.env
+
+# Flask instance-mappe (lokal udbakke for mails m.m.)
+instance/
+
+# Editor og OS
+.vscode/
+.idea/
+Thumbs.db
+~$*.docx
+
+specs/

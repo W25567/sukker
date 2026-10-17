@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "sukker",
+      "runtimeExecutable": ".venv\\Scripts\\flask.exe",
+      "runtimeArgs": ["run", "--port", "5000"],
+      "port": 5000
+    }
+  ]
+}

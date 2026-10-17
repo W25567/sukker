@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Min profil – Sukker.nu{% endblock %}
+{% block content %}
+  <div class="heading-row">
+    <h1>Min profil</h1>
+    <a class="button small secondary" href="{{ url_for('profiles.preview') }}">Se som andre</a>
+  </div>
+
+  {% if profile.is_paused %}
+    <div class="card notice-card">
+      <p><strong>Din profil er på pause.</strong> Den vises ikke i Udforsk, og du kan ikke skrive beskeder.</p>
+    </div>
+  {% endif %}
+
+  <div class="progress" aria-label="Profilen er {{ completeness }} % udfyldt">
+    <div class="progress-bar" data-percent="{{ ((completeness + 5) // 10) * 10 }}"></div>
+  </div>
+  <p class="muted">Profilen er {{ completeness }} % udfyldt. <a href="{{ url_for('profiles.edit') }}">Udfyld mere</a></p>
+
+  <section class="card">
+    <h2>Billeder</h2>
+    {% if images %}
+      <ul class="image-grid">
+        {% for image in images %}
+          <li>
+            <img src="{{ url_for('media.image', public_id=image.public_id, variant='lille') }}"
+                 alt="Dit billede {{ loop.index }}" loading="lazy">
+            {% if loop.first %}<span class="badge">Profilbillede</span>{% endif %}
+            {% if image.is_animated %}<span class="badge badge-right">Animation</span>{% endif %}
+            <div class="image-actions">
+              {% if not loop.first %}
+                <form method="post" action="{{ url_for('profiles.make_primary', public_id=image.public_id) }}">
+                  {{ action_form.hidden_tag() }}
+                  <button type="submit" class="link">Gør til profilbillede</button>
+                </form>
+              {% endif %}
+              <form method="post" action="{{ url_for('profiles.delete_image', public_id=image.public_id) }}">
+                {{ action_form.hidden_tag() }}
+                <button type="submit" class="link danger">Slet</button>
+              </form>
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="muted">Du har ingen billeder endnu. Profiler med billeder får flere likes.</p>
+    {% endif %}
+    <form method="post" action="{{ url_for('profiles.upload') }}" enctype="multipart/form-data" class="form upload">
+      {{ upload_form.hidden_tag() }}
+      <label for="image" class="field-label">Tilføj billede</label>
+      {{ upload_form.image(accept=accept) }}
+      <small class="hint">JPEG, PNG, WebP, GIF eller AVIF, højst 15 MB. Placering og andre oplysninger i billedet fjernes automatisk.</small>
+      <button type="submit" class="button">Upload</button>
+    </form>
+  </section>
+
+  <section class="card">
+    <h2>Synlighed</h2>
+    <form method="post" action="{{ url_for('profiles.visibility') }}" class="form">
+      {{ visibility_form.hidden_tag() }}
+      {% for field in [visibility_form.hidden_from_search, visibility_form.matches_only, visibility_form.show_kommune, visibility_form.show_activity] %}
+        <div class="field checkbox"><label>{{ field() }} {{ field.label.text }}</label></div>
+      {% endfor %}
+      <button type="submit" class="button secondary">Gem synlighed</button>
+    </form>
+    <p class="muted">Vil du skjule enkelte oplysninger, kan du gøre det, når du <a href="{{ url_for('profiles.edit') }}">redigerer profilen</a>.</p>
+  </section>
+
+  <section class="card">
+    <h2>Pause</h2>
+    <p class="muted">På pause forsvinder profilen fra Udforsk, men dine matches og samtaler bevares.</p>
+    <form method="post" action="{{ url_for('profiles.toggle_pause') }}">
+      {{ action_form.hidden_tag() }}
+      <button type="submit" class="button secondary">{{ 'Aktivér profilen igen' if profile.is_paused else 'Sæt profilen på pause' }}</button>
+    </form>
+  </section>
+{% endblock %}

@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block title %}Filen er for stor – Sukker.nu{% endblock %}
+{% block content %}
+  <h1>Filen er for stor</h1>
+  <p>Billeder må højst fylde 15 MB, og animationer højst 8 MB.</p>
+  <p><a href="{{ url_for('profiles.me') }}">Tilbage til din profil</a></p>
+{% endblock %}

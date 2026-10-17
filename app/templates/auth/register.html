@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% from "_forms.html" import field, checkbox %}
+{% block title %}Opret profil – Sukker.nu{% endblock %}
+{% block content %}
+  <h1>Opret profil</h1>
+  <p class="muted">Det tager et par minutter. Du kan udfylde resten af profilen senere.</p>
+  <form method="post" novalidate class="form">
+    {{ form.hidden_tag() }}
+    {{ field(form.username, autocomplete="username", hint="Vises for andre. Brug ikke dit rigtige navn, hvis du ikke vil.") }}
+    {{ field(form.email, autocomplete="email", hint="Vises aldrig for andre.") }}
+    {{ field(form.password, autocomplete="new-password", hint="Mindst 10 tegn.") }}
+    {{ field(form.password_confirm, autocomplete="new-password") }}
+    {{ field(form.birthdate, autocomplete="bday", hint="Bruges til at vise din alder. Datoen vises ikke.") }}
+    {{ field(form.postcode, autocomplete="postal-code", hint="Bruges til omtrentlig afstand. Postnummeret vises aldrig.") }}
+    {% if form.kommune.choices %}{{ field(form.kommune) }}{% endif %}
+    {{ checkbox(form.accept_terms) }}
+    <button type="submit" class="button wide">Opret profil</button>
+  </form>
+  <p class="muted center">Har du allerede en profil? <a href="{{ url_for('auth.login') }}">Log ind</a></p>
+{% endblock %}

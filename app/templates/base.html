@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="da">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Sukker.nu{% endblock %}</title>
+  {% block meta %}{% endblock %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="{{ url_for('core.home') }}">Sukker<span>.nu</span></a>
+    <nav class="topnav">
+      {% if current_user %}
+        <a href="{{ url_for('account.overview') }}">Konto</a>
+        <form method="post" action="{{ url_for('auth.logout') }}" class="inline">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="link">Log ud</button>
+        </form>
+      {% else %}
+        <a href="{{ url_for('auth.login') }}">Log ind</a>
+        <a class="button small" href="{{ url_for('auth.register') }}">Opret profil</a>
+      {% endif %}
+    </nav>
+  </header>
+
+  {% if current_user and not current_user.is_verified %}
+    <div class="notice">
+      <span>Bekræft din e-mail for at få adgang til alt, også dine 3 måneders Premium.</span>
+      <form method="post" action="{{ url_for('auth.resend_verification') }}" class="inline">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="link">Send mailen igen</button>
+      </form>
+    </div>
+  {% endif %}
+
+  <main class="page">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="flash flash-{{ category }}" role="status">{{ message }}</div>
+      {% endfor %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+
+  {% if current_user %}
+    {# Fast bundnavigation på mobil, topnavigation på større skærme (specifikation 6.1). #}
+    {% set here = request.endpoint or '' %}
+    <nav class="bottomnav" aria-label="Hovedmenu">
+      <a href="{{ url_for('explore.index') }}"{% if here.startswith('explore.') %} aria-current="page"{% endif %}>Udforsk</a>
+      <a href="{{ url_for('matches.index') }}"{% if here.startswith('matches.') %} aria-current="page"{% endif %}>Likes</a>
+      <a href="{{ url_for('core.messages') }}"{% if here == 'core.messages' %} aria-current="page"{% endif %}>Beskeder</a>
+      <a href="{{ url_for('profiles.me') }}"{% if here.startswith('profiles.') %} aria-current="page"{% endif %}>Min profil</a>
+    </nav>
+  {% endif %}
+</body>
+</html>

@@ -1,0 +1,14 @@
+Hej {{ username }}
+
+Tak fordi du har oprettet en profil på Sukker.nu.
+
+Bekræft din e-mail ved at åbne linket herunder. Så får du også dine 3 måneders Premium.
+
+{{ verify_url }}
+
+Linket virker i {{ hours }} timer og kan kun bruges én gang.
+
+Har du ikke oprettet en profil, kan du se bort fra denne mail.
+
+Venlig hilsen
+Sukker.nu

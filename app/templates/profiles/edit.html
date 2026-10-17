@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% from "_forms.html" import field %}
+{% block title %}Rediger profil – Sukker.nu{% endblock %}
+
+{% macro hide_toggle(name) %}
+  {% for option in form.hidden_fields if option.data == name %}
+    <label class="hide-toggle">{{ option() }} Skjul for andre</label>
+  {% endfor %}
+{% endmacro %}
+
+{% macro checkboxes(f) %}
+  <fieldset class="field{% if f.errors %} has-error{% endif %}">
+    <legend>{{ f.label.text }}</legend>
+    <div class="chips">
+      {% for option in f %}<label class="chip">{{ option() }} {{ option.label.text }}</label>{% endfor %}
+    </div>
+    {% for error in f.errors %}<small class="error">{{ error }}</small>{% endfor %}
+  </fieldset>
+{% endmacro %}
+
+{% block content %}
+  <h1>Rediger profil</h1>
+  <p class="muted">Alt er valgfrit. Udfyld det, du har lyst til at dele.</p>
+  <form method="post" novalidate class="form">
+    {{ form.hidden_tag() }}
+
+    <section class="card">
+      <h2>Grundlæggende</h2>
+      {{ field(form.presentation) }}{{ hide_toggle('presentation') }}
+      {{ field(form.gender) }}{{ hide_toggle('gender') }}
+      {{ checkboxes(form.seeking_genders) }}{{ hide_toggle('seeking_genders') }}
+      {{ field(form.height_cm) }}{{ hide_toggle('height_cm') }}
+      {{ field(form.occupation) }}{{ hide_toggle('occupation') }}
+      {{ field(form.education) }}{{ hide_toggle('education') }}
+    </section>
+
+    <section class="card">
+      <h2>Livsstil</h2>
+      {{ field(form.children) }}{{ hide_toggle('children') }}
+      {{ field(form.wants_children) }}{{ hide_toggle('wants_children') }}
+      {{ field(form.exercise) }}{{ hide_toggle('exercise') }}
+      {{ field(form.smoking) }}{{ hide_toggle('smoking') }}
+      {{ field(form.alcohol) }}{{ hide_toggle('alcohol') }}
+      {{ field(form.interests) }}{{ hide_toggle('interests') }}
+      {{ field(form.travel) }}{{ hide_toggle('travel') }}
+    </section>
+
+    <section class="card">
+      <h2>Relation</h2>
+      {{ checkboxes(form.relationship_types) }}{{ hide_toggle('relationship_types') }}
+      <div class="row">
+        {{ field(form.age_min) }}
+        {{ field(form.age_max) }}
+      </div>
+      {{ hide_toggle('age_range') }}
+      {{ field(form.preferred_distance_km) }}{{ hide_toggle('preferred_distance_km') }}
+      {{ field(form.long_distance_ok) }}{{ hide_toggle('long_distance_ok') }}
+      {{ field(form.expectations) }}{{ hide_toggle('expectations') }}
+    </section>
+
+    <button type="submit" class="button wide">Gem profil</button>
+  </form>
+{% endblock %}

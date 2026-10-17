@@ -1,0 +1,139 @@
+from flask import Blueprint, flash, g, redirect, render_template, request, url_for
+from flask_limiter.util import get_remote_address
+from sqlalchemy.exc import IntegrityError
+
+from ..extensions import db, limiter
+from ..location.services import geo_loaded, kommuner_for_postcode
+from . import services, tokens
+from .forms import ActionForm, ForgotPasswordForm, LoginForm, RegistrationForm, ResetPasswordForm
+from .sessions import end_current_session, login_required, safe_next_url, start_session
+
+bp = Blueprint("auth", __name__)
+
+LOGIN_FAILED = "Forkert e-mail eller password."
+
+
+def _email_key():
+    """Begrænser loginforsøg pr. konto, uanset hvilken IP de kommer fra."""
+    return (request.form.get("email") or "").strip().lower() or get_remote_address()
+
+
+@bp.route("/opret", methods=["GET", "POST"])
+@limiter.limit("5 per hour", methods=["POST"])
+def register():
+    if g.user is not None:
+        return redirect(url_for("core.home"))
+    form = RegistrationForm()
+    if form.validate_on_submit():
+        kommune_code = _resolve_kommune(form)
+        if services.username_taken(form.username.data):
+            form.username.errors.append("Brugernavnet er taget. Vælg et andet.")
+        elif kommune_code is not False:
+            try:
+                services.register_user(form, kommune_code)
+                db.session.commit()
+            except IntegrityError:
+                db.session.rollback()
+                form.username.errors.append("Brugernavnet er taget. Vælg et andet.")
+            else:
+                return render_template("auth/check_email.html", email=form.email.data)
+    return render_template("auth/register.html", form=form)
+
+
+def _resolve_kommune(form):
+    """Finder kommunen ud fra postnummeret (specifikation 5).
+
+    Returnerer kommunekoden, None hvis kommunedata ikke er indlæst endnu, eller False hvis brugeren
+    skal rette noget. Dækker postnummeret flere kommuner, vælger brugeren selv.
+    """
+    if not geo_loaded():
+        return None
+    options = kommuner_for_postcode(form.postcode.data)
+    if not options:
+        form.postcode.errors.append("Postnummeret findes ikke.")
+        return False
+    if len(options) == 1:
+        return options[0].code
+    form.kommune.choices = [("", "Vælg kommune")] + [(k.code, k.name) for k in options]
+    if form.kommune.data in {k.code for k in options}:
+        return form.kommune.data
+    form.kommune.errors = ["Postnummeret dækker flere kommuner. Vælg den, du bor i."]
+    return False
+
+
+@bp.route("/log-ind", methods=["GET", "POST"])
+@limiter.limit("10 per minute", methods=["POST"])
+@limiter.limit("20 per hour", key_func=_email_key, methods=["POST"])
+def login():
+    if g.user is not None:
+        return redirect(url_for("core.home"))
+    form = LoginForm()
+    if form.validate_on_submit():
+        user = services.authenticate(form.email.data, form.password.data)
+        if user is None:
+            flash(LOGIN_FAILED, "error")
+        else:
+            start_session(user)
+            db.session.commit()
+            return redirect(safe_next_url(request.args.get("next")) or url_for("core.home"))
+    return render_template("auth/login.html", form=form)
+
+
+@bp.route("/log-ud", methods=["POST"])
+@login_required
+def logout():
+    if ActionForm().validate_on_submit():
+        end_current_session()
+        db.session.commit()
+        flash("Du er logget ud.", "info")
+    return redirect(url_for("core.home"))
+
+
+@bp.route("/bekraeft-email/<token>")
+def verify_email(token):
+    user = services.verify_email(token)
+    db.session.commit()
+    if user is None:
+        return render_template("auth/link_invalid.html", purpose=tokens.VERIFY_EMAIL), 400
+    flash("Din e-mail er bekræftet. Velkommen til Sukker.nu.", "success")
+    return redirect(url_for("core.home"))
+
+
+@bp.route("/bekraeft-email/send-igen", methods=["POST"])
+@login_required
+@limiter.limit("3 per hour", methods=["POST"])
+def resend_verification():
+    if ActionForm().validate_on_submit() and not g.user.is_verified:
+        services.send_verification_mail(g.user)
+        db.session.commit()
+        flash("Vi har sendt en ny bekræftelsesmail.", "info")
+    return redirect(url_for("core.home"))
+
+
+@bp.route("/glemt-password", methods=["GET", "POST"])
+@limiter.limit("5 per hour", methods=["POST"])
+def forgot_password():
+    form = ForgotPasswordForm()
+    if form.validate_on_submit():
+        services.request_password_reset(form.email.data)
+        db.session.commit()
+        return render_template("auth/reset_requested.html")
+    return render_template("auth/forgot_password.html", form=form)
+
+
+@bp.route("/nulstil-password/<token>", methods=["GET", "POST"])
+@limiter.limit("10 per hour", methods=["POST"])
+def reset_password(token):
+    if tokens.peek_token(token, tokens.RESET_PASSWORD) is None:
+        return render_template("auth/link_invalid.html", purpose=tokens.RESET_PASSWORD), 400
+    form = ResetPasswordForm()
+    if form.validate_on_submit():
+        user = services.reset_password(token, form.password.data)
+        if user is None:
+            db.session.rollback()
+            return render_template("auth/link_invalid.html", purpose=tokens.RESET_PASSWORD), 400
+        end_current_session()
+        db.session.commit()
+        flash("Dit password er ændret, og du er logget ud på alle enheder. Log ind med dit nye password.", "success")
+        return redirect(url_for("auth.login"))
+    return render_template("auth/reset_password.html", form=form)

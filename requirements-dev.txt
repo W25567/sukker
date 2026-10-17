@@ -1,0 +1,4 @@
+-r requirements.txt
+pytest==9.1.1
+# Kun til at bygge kommunedata (flask sukker build-geo). Bruges ikke af den kørende app.
+shapely==2.2.0

@@ -1,0 +1,17 @@
+{% macro field(f, autocomplete=None, hint=None) %}
+  <div class="field{% if f.errors %} has-error{% endif %}">
+    {{ f.label }}
+    {% set attrs = {'autocomplete': autocomplete} if autocomplete else {} %}
+    {% if f.errors %}{% set attrs = dict(attrs, **{'aria-invalid': 'true'}) %}{% endif %}
+    {{ f(**attrs) }}
+    {% if hint %}<small class="hint">{{ hint }}</small>{% endif %}
+    {% for error in f.errors %}<small class="error">{{ error }}</small>{% endfor %}
+  </div>
+{% endmacro %}
+
+{% macro checkbox(f) %}
+  <div class="field checkbox{% if f.errors %} has-error{% endif %}">
+    <label>{{ f() }} {{ f.label.text }}</label>
+    {% for error in f.errors %}<small class="error">{{ error }}</small>{% endfor %}
+  </div>
+{% endmacro %}

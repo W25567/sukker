@@ -1,0 +1,14 @@
+Hej {{ username }}
+
+Nogen har forsøgt at oprette en ny profil på Sukker.nu med din e-mail. Du har allerede en profil, så der er ikke oprettet en ny.
+
+Var det dig, kan du logge ind her:
+{{ login_url }}
+
+Har du glemt dit password, kan du nulstille det her:
+{{ reset_url }}
+
+Var det ikke dig, behøver du ikke gøre noget.
+
+Venlig hilsen
+Sukker.nu

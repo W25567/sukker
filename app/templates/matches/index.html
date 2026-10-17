@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% from "_like.html" import like_button %}
+{% block title %}Likes og matches – Sukker.nu{% endblock %}
+{% block content %}
+  <h1>Likes</h1>
+
+  <section class="card">
+    <h2>Dine matches</h2>
+    {% if matches %}
+      <ul class="person-list">
+        {% for other, age in matches %}
+          <li>
+            <a href="{{ url_for('profiles.view', username=other.username, fra=url_for('matches.index')) }}">{{ other.username }}, {{ age }}</a>
+            <a class="muted small-link" href="{{ url_for('matches.remove', username=other.username) }}">Fjern match</a>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="muted">Du har ingen matches endnu. Når I liker hinanden, bliver det et match.</p>
+    {% endif %}
+  </section>
+
+  <section class="card">
+    <h2>Har liket dig</h2>
+    {% if can_see_likers %}
+      {% if likers %}
+        <ul class="person-list">
+          {% for liker, age in likers %}
+            <li>
+              <a href="{{ url_for('profiles.view', username=liker.username, fra=url_for('matches.index')) }}">{{ liker.username }}, {{ age }}</a>
+              {{ like_button(liker.username, False, False, url_for('matches.index'), compact=True) }}
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="muted">Ingen nye likes lige nu.</p>
+      {% endif %}
+    {% else %}
+      {% if like_count %}
+        <p><strong>{{ like_count }} {{ 'person har' if like_count == 1 else 'personer har' }} liket dig.</strong></p>
+      {% else %}
+        <p class="muted">Ingen nye likes lige nu.</p>
+      {% endif %}
+      <p class="muted">Med Premium eller Premium+ kan du se, hvem der har liket dig. Ellers opdager du det, når I matcher.</p>
+    {% endif %}
+  </section>
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% from "_forms.html" import field %}
+{% block title %}Log ind – Sukker.nu{% endblock %}
+{% block content %}
+  <h1>Log ind</h1>
+  <form method="post" novalidate class="form">
+    {{ form.hidden_tag() }}
+    {{ field(form.email, autocomplete="email") }}
+    {{ field(form.password, autocomplete="current-password") }}
+    <button type="submit" class="button wide">Log ind</button>
+  </form>
+  <p class="center"><a href="{{ url_for('auth.forgot_password') }}">Glemt password?</a></p>
+  <p class="muted center">Ny her? <a href="{{ url_for('auth.register') }}">Opret profil</a></p>
+{% endblock %}

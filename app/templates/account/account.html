@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% from "_forms.html" import field %}
+{% block title %}Konto – Sukker.nu{% endblock %}
+{% block content %}
+  <h1>Konto</h1>
+
+  <section class="card">
+    <h2>Abonnement</h2>
+    {% if subscription %}
+      <p><strong>{{ tier_label }}</strong> til og med {{ subscription.expires_at.strftime('%d-%m-%Y') }}.</p>
+    {% else %}
+      <p><strong>Free</strong></p>
+    {% endif %}
+  </section>
+
+  <section class="card">
+    <h2>Enheder, hvor du er logget ind</h2>
+    <ul class="sessions">
+      {% for s in sessions %}
+        <li>
+          <span class="device">{{ s.user_agent | device }}</span>
+          <span class="muted">Sidst aktiv {{ s.last_seen_at.strftime('%d-%m-%Y') }}{% if s.id == current_session_id %} · denne enhed{% endif %}</span>
+        </li>
+      {% endfor %}
+    </ul>
+    <div class="actions">
+      <form method="post" action="{{ url_for('account.logout_other_sessions') }}">
+        {{ action_form.hidden_tag() }}
+        <button type="submit" class="button secondary">Log ud på alle andre enheder</button>
+      </form>
+      <form method="post" action="{{ url_for('account.logout_everywhere') }}">
+        {{ action_form.hidden_tag() }}
+        <button type="submit" class="button secondary">Log ud overalt</button>
+      </form>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Skift password</h2>
+    <form method="post" action="{{ url_for('account.change_password') }}" novalidate class="form">
+      {{ password_form.hidden_tag() }}
+      {{ field(password_form.current_password, autocomplete="current-password") }}
+      {{ field(password_form.password, autocomplete="new-password", hint="Mindst 10 tegn.") }}
+      {{ field(password_form.password_confirm, autocomplete="new-password") }}
+      <button type="submit" class="button">Skift password</button>
+    </form>
+    <p class="muted">Når du skifter password, bliver du logget ud på alle andre enheder.</p>
+  </section>
+{% endblock %}
