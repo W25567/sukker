@@ -5,32 +5,6 @@
 
 {% macro lock_icon() %}<svg class="lock-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 10V7a5 5 0 0 1 10 0v3h1a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1zm2 0h6V7a3 3 0 0 0-6 0z"/></svg>{% endmacro %}
 
-{# Knap eller status for adgang til det private album. Står ved de andre handlinger i profilheaderen. #}
-{% macro private_action() %}
-  {% set p = private_state %}
-  {% if p.total and not preview %}
-    {% if p.status == 'approved' %}
-      <span class="action-note">{{ lock_icon() }} Adgang til {{ 'alle' if p.visible == p.total else p.visible ~ ' af ' ~ p.total }} private billeder</span>
-    {% elif p.status == 'pending' or (p.status == 'declined' and p.cooldown_until) %}
-      {# En afvisning vises som en ventende anmodning, så den, der spurgte, ikke får besked om afvisningen. #}
-      <span class="action-note">{{ lock_icon() }} Anmodning sendt</span>
-      {% if p.status == 'pending' %}
-        <form method="post" action="{{ url_for('profiles.cancel_private', handle=user.handle) }}" class="inline">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <button type="submit" class="link small-link">Træk tilbage</button>
-        </form>
-      {% endif %}
-    {% elif p.cooldown_until %}
-      <span class="action-note muted">{{ lock_icon() }} Du kan anmode om adgang igen efter {{ p.cooldown_until | local_datetime }}</span>
-    {% else %}
-      <form method="post" action="{{ url_for('profiles.request_private', handle=user.handle) }}" class="inline">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <button type="submit" class="button secondary action-button">{{ lock_icon() }} Anmod om adgang</button>
-      </form>
-    {% endif %}
-  {% endif %}
-{% endmacro %}
-
 {% block content %}
   {% if back_url %}<a class="back-link" href="{{ back_url }}">← Tilbage til Udforsk</a>{% endif %}
   {% if preview %}
@@ -45,9 +19,9 @@
   {% set max_thumbs = 8 %}
   {% set locked = private_state.total - private_state.visible %}
 
-  {# Mobil: hovedbillede, header med handlinger, miniaturer, profiltekst og oplysninger i én kolonne
+  {# Mobil: hovedbillede, header med handlinger, miniaturer, privat album, profiltekst og oplysninger i én kolonne
      (billedkolonnen er "display: contents", så miniaturerne kan stå efter headeren).
-     Desktop: billeder til venstre, header og profiltekst til højre, oplysningerne i tre kolonner nedenunder. #}
+     Desktop: billeder og privat album til venstre; header, profiltekst og oplysninger til højre. #}
   <article class="profile-view">
     <div class="pv-media">
       {% if images %}
@@ -60,27 +34,59 @@
         <div class="pv-hero pv-hero-empty">{{ photo_placeholder() }}</div>
       {% endif %}
 
-      {% if thumbs or (locked > 0) %}
+      {% if thumbs %}
         <div class="pv-thumbs">
-          {% set shown = thumbs[:max_thumbs - (1 if locked > 0 else 0)] %}
+          {% set shown = thumbs[:max_thumbs] %}
           {% for image in shown %}
             <a class="pv-thumb" href="{{ url_for('media.image', public_id=image.public_id, variant='stor') }}"
                data-index="{{ loop.index }}" target="_blank" rel="noopener">
               <img src="{{ url_for('media.image', public_id=image.public_id, variant='lille') }}" alt="Billede {{ loop.index + 1 }} af {{ user.display_name }}" loading="lazy">
-              {% if loop.index >= public_count %}<span class="pv-badge">{{ lock_icon() }}</span>{% endif %}
+              {% if loop.index >= public_count %}<span class="pv-badge">{{ lock_icon() }} Privat</span>{% endif %}
               {% if loop.last and thumbs | length > shown | length %}<span class="pv-more">+{{ thumbs | length - shown | length }}</span>{% endif %}
             </a>
           {% endfor %}
-          {% if locked > 0 %}
-            {# Låste billeder vises kun som et antal. Intet fra selve billederne sendes til browseren. #}
-            <a class="pv-thumb pv-locked" href="#handlinger" title="Privat album">
-              {{ lock_icon() }}<span>{{ locked }} privat{{ 'e' if locked > 1 }}</span>
-            </a>
-          {% endif %}
         </div>
       {% endif %}
-      {% if preview and private_state.total %}
-        <p class="muted small-note">{{ lock_icon() }} Dit private album har {{ private_state.total }} billede{{ 'r' if private_state.total > 1 }}. Andre kan se antallet og bede om adgang.</p>
+      {% if private_state.total %}
+        {# Låste billeder vises kun som et antal. Intet fra selve billederne sendes til browseren. #}
+        <section class="card private-album" id="privat">
+          <div class="private-album-head">
+            <span class="private-album-icon">{{ lock_icon() }}</span>
+            <div>
+              <h2>Privat album</h2>
+              <p class="muted">{{ private_state.total }} {{ 'privat billede' if private_state.total == 1 else 'private billeder' }}</p>
+            </div>
+          </div>
+          {% if locked > 0 %}
+            <div class="locked-tiles" aria-hidden="true">
+              {% for _ in range([locked, 3] | min) %}<span class="locked-tile">{{ lock_icon() }}</span>{% endfor %}
+            </div>
+          {% endif %}
+          {% if preview %}
+            <p class="muted">Andre kan se, at du har et privat album, og bede om adgang. Du bestemmer, hvem der får lov.</p>
+          {% elif private_state.status == 'approved' and locked == 0 %}
+            <p>Du har adgang til {{ 'billedet' if private_state.total == 1 else 'alle billederne' }}. De vises i galleriet med mærket <strong>Privat</strong>.</p>
+          {% elif private_state.status == 'approved' %}
+            <p>Du har adgang til {{ private_state.visible }} af {{ private_state.total }} private billeder. De vises i galleriet.</p>
+          {% elif private_state.status == 'pending' or (private_state.status == 'declined' and private_state.cooldown_until) %}
+            {# En afvisning vises som en ventende anmodning, så den, der spurgte, ikke får besked om afvisningen. #}
+            <p><strong>Anmodning sendt.</strong> {{ user.display_name }} bestemmer, om du får adgang.</p>
+            {% if private_state.status == 'pending' %}
+              <form method="post" action="{{ url_for('profiles.cancel_private', handle=user.handle) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="link small-link">Træk anmodningen tilbage</button>
+              </form>
+            {% endif %}
+          {% elif private_state.cooldown_until %}
+            <p class="muted">Du har ikke adgang lige nu. Du kan anmode om adgang igen efter {{ private_state.cooldown_until | local_datetime }}.</p>
+          {% else %}
+            <p class="muted">{{ user.display_name }} deler kun disse billeder med udvalgte personer.</p>
+            <form method="post" action="{{ url_for('profiles.request_private', handle=user.handle) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="button wide">{{ lock_icon() }} Anmod om adgang</button>
+            </form>
+          {% endif %}
+        </section>
       {% endif %}
       <ul class="gallery-items" hidden data-gallery-items>
         {% for image in images %}
@@ -102,7 +108,6 @@
           <div class="pv-actions" id="handlinger">
             {{ like_button(user.handle, liked, matched, request.full_path) }}
             {% if matched %}<a class="button action-button" href="{{ url_for('messaging.start', handle=user.handle) }}">Skriv besked</a>{% endif %}
-            {{ private_action() }}
           </div>
         {% endif %}
       </header>

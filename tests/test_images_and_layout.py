@@ -71,3 +71,25 @@ def test_profile_pages_layout(app, outbox, ctx):
     assert 'form="profile-form"' in edit and 'id="profile-form"' in edit and "desktop-only" in edit
     response = anna.post("/profil/rediger", data={"presentation": "Hej"})
     assert response.status_code == 302
+
+
+def test_image_delete_requires_confirmation(app, outbox, ctx):
+    anna = make_user(app, outbox, "Anna")
+    for color in ("red", "blue"):
+        buffer = io.BytesIO()
+        Image.new("RGB", (300, 300), color).save(buffer, "JPEG")
+        anna.post("/profil/billeder", data={"image": (io.BytesIO(buffer.getvalue()), "a.jpg")},
+                  content_type="multipart/form-data")
+    image = db.session.scalars(select(ProfileImage).order_by(ProfileImage.position)).all()[1]
+    page = anna.get("/profil").get_data(as_text=True)
+    assert 'data-confirm="Vil du slette billedet? Det kan ikke fortrydes."' in page and "js/confirm.js" in page
+
+    response = anna.post(f"/profil/billeder/{image.public_id}/slet")  # uden bekræftelse
+    assert response.status_code == 200 and "Ja, slet billedet" in response.get_data(as_text=True)
+    db.session.refresh(image)
+    assert not image.is_deleted
+    assert "Ja, slet billedet" in anna.get(f"/profil/billeder/{image.public_id}/slet").get_data(as_text=True)
+
+    anna.post(f"/profil/billeder/{image.public_id}/slet", data={"bekraeft": "1"})
+    db.session.refresh(image)
+    assert image.is_deleted

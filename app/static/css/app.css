@@ -382,29 +382,39 @@ a.stat .stat-value { color: var(--accent); }
 .profile-view { display: flex; flex-direction: column; gap: 14px; }
 .pv-media { display: contents; }
 .pv-hero { order: 1; position: relative; display: block; overflow: hidden; border-radius: var(--radius);
-  background: var(--border); aspect-ratio: 4 / 5; max-height: 72vh; width: 100%; }
-.pv-hero img { width: 100%; height: 100%; object-fit: cover; object-position: center 30%; display: block; }
+  background: var(--info-bg); aspect-ratio: 4 / 5; max-height: 72vh; width: 100%; }
+/* Hovedbilledet vises helt uden beskæring (scale-down); miniaturerne beskæres (cover). */
+.pv-hero img { width: 100%; height: 100%; object-fit: scale-down; display: block; }
 .pv-hero-empty .photo-placeholder { height: 100%; aspect-ratio: auto; }
 .pv-count { position: absolute; right: 10px; bottom: 10px; padding: 2px 10px; border-radius: 999px;
   background: rgba(0, 0, 0, 0.55); color: #fff; font-size: 0.8rem; font-weight: 600; }
 .pv-header { order: 2; }
 .pv-thumbs { order: 3; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
-.small-note { order: 4; display: flex; align-items: center; gap: 6px; margin: 0; }
+.private-album { order: 4; }
 .pv-about { order: 5; }
 .pv-details { order: 6; }
 .pv-safety { order: 7; }
 .pv-thumb { position: relative; display: block; aspect-ratio: 1; overflow: hidden; border-radius: 10px; background: var(--border); }
 .pv-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.2s ease; }
 .pv-thumb:hover img, .pv-thumb:focus-visible img { transform: scale(1.05); }
-.pv-badge { position: absolute; left: 5px; bottom: 5px; display: grid; place-items: center; width: 22px; height: 22px;
-  border-radius: 50%; background: rgba(0, 0, 0, 0.6); color: #fff; }
-.pv-badge .lock-icon { width: 12px; height: 12px; }
+.pv-badge { position: absolute; left: 5px; bottom: 5px; display: inline-flex; align-items: center; gap: 3px; padding: 1px 7px;
+  border-radius: 999px; background: rgba(0, 0, 0, 0.6); color: #fff; font-size: 0.7rem; font-weight: 600; }
+.pv-badge .lock-icon { width: 11px; height: 11px; }
 .pv-more { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(0, 0, 0, 0.5);
   color: #fff; font-size: 1.3rem; font-weight: 700; }
-.pv-locked { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-decoration: none;
-  color: var(--accent); font-size: 0.8rem; font-weight: 600; border: 1px dashed var(--accent);
-  background: repeating-linear-gradient(135deg, var(--info-bg) 0 8px, var(--surface) 8px 16px); }
-.pv-locked .lock-icon { width: 22px; height: 22px; }
+.private-album { margin: 0; }
+.private-album h2 { margin: 0; }
+.private-album-head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.private-album-head p { margin: 0; }
+.private-album-icon { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: var(--info-bg); color: var(--accent); }
+.private-album-icon .lock-icon { width: 22px; height: 22px; }
+.private-album .button .lock-icon { margin-right: 8px; }
+.locked-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-bottom: 12px; }
+.locked-tile {
+  display: grid; place-items: center; aspect-ratio: 1; border-radius: 10px; color: var(--muted);
+  background: repeating-linear-gradient(135deg, var(--info-bg) 0 10px, var(--border) 10px 20px);
+}
+.locked-tile .lock-icon { width: 26px; height: 26px; opacity: 0.6; }
 .lock-icon { width: 16px; height: 16px; fill: currentColor; flex: none; }
 .pv-header h1 { display: flex; align-items: baseline; gap: 10px; font-size: 1.85rem; line-height: 1.1; margin: 0 0 6px; }
 .pv-age { font-weight: 400; color: var(--muted); }
@@ -432,6 +442,7 @@ a.stat .stat-value { color: var(--accent); }
 .pv-tag { display: inline-block; margin: 2px 4px 0 0; padding: 1px 9px; border-radius: 999px; background: var(--info-bg); font-size: 0.85rem; }
 .pv-safety { justify-content: flex-start; margin: 8px 0 0; }
 .preview-note p { margin: 0; }
+.confirm-delete-image { display: block; width: 160px; max-width: 100%; aspect-ratio: 3 / 4; object-fit: cover; border-radius: 10px; margin-bottom: 12px; }
 .lightbox { width: 100vw; height: 100vh; max-width: none; max-height: none; margin: 0; padding: 0; border: 0; background: rgba(10, 6, 12, 0.94); color: #fff; }
 .lightbox[open] { display: grid; grid-template-columns: 56px minmax(0, 1fr) 56px; grid-template-rows: 1fr auto; align-items: center; }
 .lightbox::backdrop { background: rgba(10, 6, 12, 0.94); }
@@ -536,16 +547,18 @@ body:has(.bottomnav) .site-footer { padding-bottom: 80px; }
   .image-grid { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); }
   .filters .form { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 24px; align-items: start; }
   .filters .form > .checkbox, .filters .form > .actions { grid-column: 1 / -1; }
+  /* Billeder til venstre over alle rækker; til højre header, profiltekst, oplysninger og til sidst en række,
+     der tager resten af højden, så der aldrig opstår huller mellem elementerne i højre kolonne. */
   .profile-view {
     display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); column-gap: 32px; row-gap: 0;
-    grid-template-areas: "media header" "media about" "details details" "safety safety"; grid-template-rows: auto 1fr auto auto;
+    grid-template-areas: "media header" "media about" "media details" "media safety"; grid-template-rows: auto auto auto 1fr;
   }
+  .pv-media { align-self: start; }
   .pv-media { grid-area: media; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
   .pv-header { grid-area: header; align-self: start; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
   .pv-about { grid-area: about; align-self: start; margin-top: 20px; }
-  .pv-details { grid-area: details; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 8px 32px; margin-top: 24px; }
-  .pv-safety { grid-area: safety; }
+  .pv-details { grid-area: details; margin-top: 20px; }
+  .pv-safety { grid-area: safety; align-self: start; }
   .pv-hero { aspect-ratio: auto; height: 450px; max-height: none; }
   .pv-thumbs { grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); gap: 8px; }
   .pv-header h1 { font-size: 2.2rem; }

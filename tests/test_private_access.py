@@ -84,7 +84,7 @@ def test_selected_images_only(app, outbox, ctx):
     anna.post(f"/profil/privat-adgang/{access().id}", data={"scope": "selected", "image": [str(private[0].id)]})
     assert access().scope == "selected"
     assert status(bodil, private[0]) == 200 and status(bodil, private[1]) == 404
-    assert "Adgang til 1 af 2 private billeder" in bodil.get(f"/bruger/{h('Anna')}").get_data(as_text=True)
+    assert "Du har adgang til 1 af 2 private billeder" in bodil.get(f"/bruger/{h('Anna')}").get_data(as_text=True)
 
     # Et billede, der bliver offentligt, forsvinder fra udvalget; gøres det privat igen, er det ikke med
     anna.post(f"/profil/billeder/{private[0].public_id}/offentlig")

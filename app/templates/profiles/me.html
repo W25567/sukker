@@ -62,7 +62,8 @@
                 </form>
               {% endif %}
               {% if not (images | length == 1 and private_images) %}
-                <form method="post" action="{{ url_for('profiles.delete_image', public_id=image.public_id) }}">
+                <form method="post" action="{{ url_for('profiles.delete_image', public_id=image.public_id) }}"
+                      data-confirm="Vil du slette billedet? Det kan ikke fortrydes.">
                   {{ action_form.hidden_tag() }}
                   <button type="submit" class="link danger">Slet</button>
                 </form>
@@ -93,7 +94,8 @@
                 {{ action_form.hidden_tag() }}
                 <button type="submit" class="link">Gør offentlig</button>
               </form>
-              <form method="post" action="{{ url_for('profiles.delete_image', public_id=image.public_id) }}">
+              <form method="post" action="{{ url_for('profiles.delete_image', public_id=image.public_id) }}"
+                      data-confirm="Vil du slette billedet? Det kan ikke fortrydes.">
                 {{ action_form.hidden_tag() }}
                 <button type="submit" class="link danger">Slet</button>
               </form>
@@ -118,6 +120,7 @@
       <button type="submit" class="button secondary upload-submit">Upload valgte billeder</button>
     </form>
     <script src="{{ url_for('static', filename='js/upload.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/confirm.js') }}" defer></script>
   </section>
 
   <div class="panels">

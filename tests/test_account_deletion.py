@@ -70,7 +70,7 @@ def test_admin_sees_deleted_user_with_name_email_images_and_threads(app, outbox,
     upload(anna, "blue")
     first, second = db.session.scalars(select(ProfileImage).where(ProfileImage.user_id == user("Anna").id)
                                        .order_by(ProfileImage.position)).all()
-    anna.post(f"/profil/billeder/{second.public_id}/slet")  # billedet slettes af brugeren selv
+    anna.post(f"/profil/billeder/{second.public_id}/slet", data={"bekraeft": "1"})  # billedet slettes af brugeren selv
     admin.post(f"/admin/bruger/{user('Anna').id}/samtale", data={"body": "Husk reglerne"})
     delete(anna)
     anna_id = user("Anna").id
@@ -142,7 +142,7 @@ def test_deleted_image_is_kept_until_retention_then_purged(app, outbox, ctx):
     upload(anna, "blue")
     image = db.session.scalars(select(ProfileImage).order_by(ProfileImage.position)).all()[1]
     path = storage.file_path(image, "lille")
-    anna.post(f"/profil/billeder/{image.public_id}/slet")
+    anna.post(f"/profil/billeder/{image.public_id}/slet", data={"bekraeft": "1"})
     db.session.refresh(image)
     assert image.is_deleted and os.path.exists(path)
     assert image.public_id not in anna.get("/profil").get_data(as_text=True)

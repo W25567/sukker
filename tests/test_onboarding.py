@@ -86,7 +86,7 @@ def test_lifetime_pauses_without_photos(app, outbox, ctx):
     expire_signup_bonus("Anna")
     assert effective_tier(user("Anna").id) == "premium"  # livstid
     image = db.session.scalar(select(ProfileImage).where(ProfileImage.user_id == user("Anna").id))
-    anna.post(f"/profil/billeder/{image.public_id}/slet")
+    anna.post(f"/profil/billeder/{image.public_id}/slet", data={"bekraeft": "1"})
     assert effective_tier(user("Anna").id) == "free"
     assert "sat på pause" in anna.get("/profil").get_data(as_text=True)
     upload_photo(anna)

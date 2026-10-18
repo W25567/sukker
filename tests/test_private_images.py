@@ -60,14 +60,14 @@ def test_last_public_image_cannot_be_made_private_or_deleted_while_private_exist
     upload(anna, "blue")
     first, second = images("Anna")
     anna.post(f"/profil/billeder/{second.public_id}/privat")
-    response = anna.post(f"/profil/billeder/{first.public_id}/slet", follow_redirects=True)
+    response = anna.post(f"/profil/billeder/{first.public_id}/slet", data={"bekraeft": "1"}, follow_redirects=True)
     assert "mindst ét offentligt billede" in response.get_data(as_text=True)
     assert len(images("Anna")) == 2
     page = anna.get("/profil").get_data(as_text=True)
     assert not re.search(rf"/profil/billeder/{first.public_id}/(slet|privat)", page)
 
-    anna.post(f"/profil/billeder/{second.public_id}/slet")  # private kan altid slettes
-    anna.post(f"/profil/billeder/{first.public_id}/slet")  # nu er der ingen private
+    anna.post(f"/profil/billeder/{second.public_id}/slet", data={"bekraeft": "1"})  # private kan altid slettes
+    anna.post(f"/profil/billeder/{first.public_id}/slet", data={"bekraeft": "1"})  # nu er der ingen private
     assert all(image.is_deleted for image in images("Anna"))
 
 

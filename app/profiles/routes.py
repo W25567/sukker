@@ -190,13 +190,18 @@ def upload():
     return redirect(url_for("profiles.me") + "#billeder")
 
 
-@bp.route("/profil/billeder/<public_id>/slet", methods=["POST"])
+@bp.route("/profil/billeder/<public_id>/slet", methods=["GET", "POST"])
 @login_required
 def delete_image(public_id):
+    """Sletning skal bekræftes, så et billede ikke slettes ved et uheld. Med JavaScript spørger browseren og
+    sender bekraeft=1 (static/js/confirm.js). Ellers vises en side, hvor sletningen bekræftes."""
     image = media.owned_image(g.user, public_id)
     if image is None:
         abort(404)
-    if ActionForm().validate_on_submit():
+    form = ActionForm()
+    if request.method == "GET" or request.form.get("bekraeft") != "1":
+        return render_template("profiles/confirm_delete_image.html", image=image, form=form)
+    if form.validate_on_submit():
         refusal = media.delete_refusal(image)
         if refusal:
             flash(refusal, "error")
