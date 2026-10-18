@@ -31,6 +31,12 @@ PUBLIC_PAGES = [
         date(2026, 10, 17), "1.0",
     ),
     PublicPage(
+        "pages.purpose", "Hvorfor Sukker.nu", "Hvorfor findes Sukker.nu? Ærlig dating uden fiduser",
+        "Sukker.nu er et ærligt alternativ til dyre datingsider: rigtige mennesker, ingen falske profiler eller robotter, "
+        "rimelige priser og en administrator, du kan skrive til.",
+        date(2026, 10, 18), "0.9",
+    ),
+    PublicPage(
         "pages.early_bird", "Tidlige fugle", "Premium for livstid til tidlige fugle – Sukker.nu",
         "Sukker.nu er en ny dansk datingside. Opret en gratis profil nu, mens vi er få, og få Premium for livstid "
         "som tidlig fugl: skriv med dine matches, se hvem der har liket dig, og filtrér i Udforsk.",

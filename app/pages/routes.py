@@ -91,6 +91,13 @@ def faq():
     return _render("pages/faq.html", "pages.faq", items=items, structured=structured)
 
 
+@bp.route("/hvorfor-sukker")
+@public_page
+def purpose():
+    """Formålet med Sukker.nu: ærlig dating uden falske profiler, rimelige priser og et menneske at tale med."""
+    return _render("pages/purpose.html", "pages.purpose", **_legal_context())
+
+
 @bp.route("/om")
 @public_page
 def about():

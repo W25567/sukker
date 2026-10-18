@@ -353,6 +353,15 @@ a.stat .stat-value { color: var(--accent); }
 .faq summary h2 { display: inline; font-size: 1.02rem; margin: 0; }
 .faq details p { margin-top: 0; }
 .early-bird-card { border-color: var(--accent); background: var(--info-bg); }
+/* Formålssiden (pages/purpose.html) */
+.purpose section { padding-top: 8px; }
+.purpose-intro .lead { font-size: 1.25rem; font-weight: 600; color: var(--accent); }
+.purpose-claim { margin: 18px 0; padding-left: 14px; border-left: 4px solid var(--accent); font-size: 1.12rem; font-weight: 700; }
+.purpose-summary { margin: 32px 0 20px; padding: 20px 22px; border-radius: var(--radius); background: var(--info-bg);
+  border: 1px solid var(--accent); }
+.purpose-summary h2 { margin-top: 0; }
+.purpose-summary ul { padding-left: 20px; }
+.purpose-welcome { font-size: 1.2rem; font-weight: 700; color: var(--accent); }
 .early-bird-card h2 { color: var(--accent); }
 .removed-item { opacity: 0.85; border-style: dashed; }
 .removed-item .inline { margin-top: 4px; }

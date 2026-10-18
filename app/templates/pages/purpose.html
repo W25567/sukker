@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block page_class %}public{% endblock %}
+{% block content %}
+  <article class="prose purpose">
+    <header class="purpose-intro">
+      <h1>Hvorfor findes Sukker.nu?</h1>
+      <p class="lead">Dating behøver hverken være dyrt, besværligt eller fyldt med fiduser.</p>
+      <p>Vi har skabt Sukker.nu, fordi vi mener, at der mangler et ærligt alternativ til de eksisterende datingsider.</p>
+      <p>Mange datingsider er efterhånden blevet dyre abonnementstjenester, hvor man betaler mange penge for få muligheder.
+        Funktioner, der burde være helt naturlige, bliver låst bag betalingsmure, og det kan være svært at gennemskue,
+        hvad man egentlig får for pengene.</p>
+      <p class="purpose-claim">Det vil vi gerne gøre op med.</p>
+    </header>
+
+    <section>
+      <h2>Rigtige mennesker. Ægte forbindelser.</h2>
+      <p>Sukker.nu skal være et sted, hvor rigtige mennesker finder hinanden. Vi ønsker ikke robotter, opdigtede profiler
+        eller kunstig aktivitet, der skal få siden til at virke mere populær, end den er.</p>
+      <p>Vi opretter ikke falske profiler for at lokke nogen til at betale, og vi bruger ikke automatiske samtaler til at
+        holde dig beskæftiget. Vi viser heller ikke opdigtede tal for, hvor mange der er på siden.</p>
+      <p>Vi kan ikke love, at ingen nogensinde forsøger at oprette en falsk profil. Men vi kan love, at vi tager det alvorligt:
+        Alle kan anmelde en profil eller en besked, og anmeldelser behandles af mennesker, der kan fjerne falske profiler.</p>
+      <p class="purpose-claim">Når du skriver til nogen på Sukker.nu, skal du kunne stole på, at der sidder et rigtigt menneske i den anden ende.</p>
+    </section>
+
+    <section>
+      <h2>Rimelige priser og reel værdi</h2>
+      <p>Det skal ikke koste en formue at møde nye mennesker. Selvfølgelig koster det penge at udvikle, drive og vedligeholde
+        en datingside – det lægger vi ikke skjul på.</p>
+      <p>Men vores ambition er enkel: Vælger du at betale for noget på Sukker.nu, skal du også opleve, at du får reel værdi
+        for pengene. Vi vil hellere have tilfredse brugere end dyre abonnementer, der er svære at komme ud af.</p>
+      <p>Lige nu er det gratis at komme i gang, og der er endnu ikke indført betaling. Kommer der betaling, får du besked,
+        før noget koster penge. Og sikkerhed – blokering, anmeldelse og moderation – er altid gratis.
+        <a href="{{ url_for('pages.premium') }}">Se, hvad Free, Premium og Premium+ giver</a>.</p>
+    </section>
+
+    <section>
+      <h2>Der skal være nogen at tale med</h2>
+      <p>Noget af det, vi savner hos mange store platforme, er muligheden for at komme i kontakt med et menneske, når noget
+        går galt. Automatiske hjælpesider, standardsvar og lukkede supportsystemer kan være frustrerende – især når det
+        handler om din profil, din betaling eller dine oplevelser med andre.</p>
+      <p>På Sukker.nu kan du skrive direkte til en administrator. Når du er logget ind, finder du "Skriv til Administrator"
+        under Min profil, og svaret kommer i dine beskeder – fra et menneske. Har du fundet en fejl, kan du rapportere den
+        med skærmbilleder samme sted.</p>
+      <p>Det betyder ikke, at vi kan løse ethvert problem med det samme. Men <strong>du skal kunne komme i kontakt med os,
+        og vi tager din henvendelse alvorligt.</strong> Vi vil også meget gerne høre dine forslag, din kritik og dine idéer.</p>
+    </section>
+
+    <section>
+      <h2>Dit privatliv er ikke til salg</h2>
+      <p>Vi tjener ikke penge på dine oplysninger, og vi bruger ingen sporings- eller markedsføringscookies. Profiler og
+        billeder kan kun ses af medlemmer, der er logget ind – aldrig af besøgende eller søgemaskiner. Andre ser kun en
+        omtrentlig afstand, aldrig din adresse, og du bestemmer selv, hvor meget du deler.
+        <a href="{{ url_for('pages.safety') }}">Læs om tryghed og sikkerhed</a>.</p>
+    </section>
+
+    <section>
+      <h2>Plads til forskellige mennesker og forskellige ønsker</h2>
+      <p>Ikke alle leder efter det samme. Nogle søger kærligheden. Andre søger flirt, venskab, selskab eller bare et
+        menneske at lære at kende.</p>
+      <p>Derfor vælger du selv, hvad du søger, og hvem du er interesseret i. Vælger du et bestemt køn, er det også kun dem,
+        der kan finde og like dig – så du slipper for støj. Der er plads til forskellige ønsker, så længe man behandler hinanden ordentligt og respekterer andres grænser.</p>
+      <p>Du skal kunne være dig selv uden at skulle passe ind i en bestemt skabelon.</p>
+    </section>
+
+    <section>
+      <h2>Vi er ikke perfekte – og vi bliver aldrig færdige</h2>
+      <p>Sukker.nu udvikles med udgangspunkt i brugernes oplevelser. Der vil være ting, vi kan gøre bedre. Der vil komme nye
+        funktioner, og der vil sikkert også være idéer, som viser sig ikke at fungere. Det er helt i orden.</p>
+      <p>Vi vil hellere være åbne om fejl og mangler end at foregive, at vi har skabt verdens perfekte datingside.</p>
+      <p class="purpose-claim">Sukker.nu skal udvikles sammen med brugerne – ikke på bekostning af dem.</p>
+    </section>
+
+    <aside class="purpose-summary" aria-labelledby="kort-fortalt">
+      <h2 id="kort-fortalt">Kort fortalt</h2>
+      <ul>
+        <li>Ingen opdigtede profiler fra vores side.</li>
+        <li>Ingen robotter, der lader som om, de er interesserede.</li>
+        <li>Ingen skjulte fiduser – og et menneske, du kan skrive til.</li>
+      </ul>
+      <p>Bare en datingside, der prøver at gøre tingene lidt mere ærligt, lidt mere menneskeligt og til en pris, der giver mening.</p>
+      <p class="purpose-welcome">Velkommen til Sukker.nu.</p>
+      {% if current_user %}
+        <a class="button" href="{{ url_for('messaging.admin_conversation') }}">Skriv til Administrator</a>
+      {% else %}
+        <a class="button" href="{{ url_for('auth.register') }}">Opret gratis profil</a>
+      {% endif %}
+    </aside>
+
+    <p class="muted" id="kontakt">Har du spørgsmål, forslag eller brug for hjælp?
+      {% if current_user %}
+        <a href="{{ url_for('messaging.admin_conversation') }}">Skriv til en administrator</a>.
+      {% else %}
+        Skriv til <a href="mailto:{{ contact_email }}">{{ contact_email }}</a> – eller opret en profil og skriv direkte til en administrator fra Min profil.
+      {% endif %}
+    </p>
+  </article>
+{% endblock %}

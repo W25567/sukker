@@ -13,7 +13,7 @@ from app.pages.legal import TERMS_VERSION
 
 from .conftest import h, link_from, login, register
 
-PUBLIC_PATHS = ["/", "/tidlige-fugle", "/saadan-virker-det", "/tryghed", "/premium", "/ofte-stillede-spoergsmaal", "/om",
+PUBLIC_PATHS = ["/", "/hvorfor-sukker", "/tidlige-fugle", "/saadan-virker-det", "/tryghed", "/premium", "/ofte-stillede-spoergsmaal", "/om",
                 "/vilkaar", "/privatlivspolitik", "/cookies"]
 
 
@@ -262,3 +262,21 @@ def test_export_contains_own_data_only(app, outbox, ctx):
 def test_export_requires_login(client):
     response = client.post("/konto/mine-data")
     assert response.status_code == 302 and "/log-ind" in response.headers["Location"]
+
+
+
+def test_purpose_page(app, outbox, ctx):
+    visitor = app.test_client()
+    response = visitor.get("/hvorfor-sukker")
+    page = response.get_data(as_text=True)
+    assert response.status_code == 200 and "X-Robots-Tag" not in response.headers
+    assert "<h1>Hvorfor findes Sukker.nu?</h1>" in page and "Kort fortalt" in page
+    assert '<link rel="canonical" href="' in page and "Ærlig dating uden fiduser" in page
+    assert "mailto:" in page and 'href="/opret"' in page  # besøgende: mail og opret profil
+    assert 'href="/hvorfor-sukker"' in visitor.get("/").get_data(as_text=True)  # forside og sidefod
+    assert "/hvorfor-sukker</loc>" in visitor.get("/sitemap.xml").get_data(as_text=True)
+
+    register(visitor)
+    visitor.get(link_from(outbox[-1], "/bekraeft-email/"))
+    login(visitor)
+    assert 'href="/beskeder/administrator"' in visitor.get("/hvorfor-sukker").get_data(as_text=True)
