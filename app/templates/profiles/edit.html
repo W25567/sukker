@@ -19,10 +19,14 @@
 {% endmacro %}
 
 {% block content %}
-  <h1>Rediger profil</h1>
+  <div class="heading-row page-heading">
+    <h1>Rediger profil</h1>
+    {# Ekstra gemmeknap øverst på desktop. Den hører til formularen nedenfor (form="profile-form"). #}
+    <button type="submit" form="profile-form" class="button small desktop-only">Gem profil</button>
+  </div>
   <p class="muted">Alt er valgfrit. Udfyld det, du har lyst til at dele. Skriv ikke e-mail, links eller telefonnummer –
     det er imod <a href="{{ url_for('pages.terms') }}">brugervilkårene</a>.</p>
-  <form method="post" novalidate class="form">
+  <form method="post" novalidate class="form" id="profile-form">
     {{ form.hidden_tag() }}
 
     <div class="panels">

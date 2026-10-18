@@ -9,7 +9,7 @@ from ..profiles.services import can_view_profile
 from ..core.features import has_feature
 from . import storage
 from .models import ProfileImage
-from .processing import ImageRejected, process_upload
+from .processing import ImageRejected, process_upload, rotate
 
 MB = 1024 * 1024
 # Billeder, der ikke er slettet. Slettede billeder bevares til sporbarhed, men bruges ingen steder for brugerne.
@@ -73,6 +73,16 @@ def upload_image(user, data, collection="public"):
 
 def owned_image(user, public_id):
     return db.session.scalar(select(ProfileImage).where(ProfileImage.public_id == public_id, ProfileImage.user_id == user.id, LIVE))
+
+
+def rotate_image(image, clockwise=True):
+    """Drejer billedet 90 grader. Fx når et billede er gemt på højkant, selvom det er taget på tværs."""
+    if image.is_animated:
+        raise ImageRejected("Animerede billeder kan ikke drejes.")
+    with open(storage.file_path(image, "stor"), "rb") as fh:
+        processed = rotate(fh.read(), clockwise)
+    storage.replace_files(image, processed)
+    image.width, image.height, image.size_bytes = processed.width, processed.height, len(processed.full)
 
 
 def delete_image(image):

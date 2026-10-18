@@ -40,6 +40,16 @@ def save_files(image, processed):
         raise
 
 
+def replace_files(image, processed):
+    """Erstatter filerne for et eksisterende billede, fx efter rotation. Hver fil skrives færdig, før den flyttes på plads."""
+    target = _image_dir(image.collection, image.public_id)
+    for variant, data in ((VARIANTS["stor"], processed.full), (VARIANTS["lille"], processed.thumb)):
+        temporary = os.path.join(target, f"{variant}.{uuid.uuid4().hex}.tmp")
+        with open(temporary, "wb") as fh:
+            fh.write(data)
+        os.replace(temporary, os.path.join(target, variant))
+
+
 def move_files(public_id, from_collection, to_collection):
     """Flytter et billedes filer mellem offentligt og privat område. Samme filsystem, så flytningen er atomar."""
     target = _image_dir(to_collection, public_id)

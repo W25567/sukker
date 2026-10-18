@@ -50,13 +50,13 @@ def test_zodiac_is_shown_by_default_and_can_be_hidden(app, outbox, ctx):
     anna = make_user(app, outbox, "Anna", birthdate="1990-08-01")  # Løven
     bodil = make_user(app, outbox, "Bodil")
     assert "Løven" in bodil.get(f"/bruger/{h('Anna')}").get_data(as_text=True)
-    assert "Løven" in anna.get("/profil").get_data(as_text=True)
+    assert "Løven" in anna.get("/profil/rediger").get_data(as_text=True)
 
     anna.post("/profil/rediger", data={"hidden_fields": ["zodiac"]})
     assert "zodiac" in db.session.get(Profile, user("Anna").id).hidden_fields
     assert "Løven" not in bodil.get(f"/bruger/{h('Anna')}").get_data(as_text=True)
     assert "Løven" not in anna.get("/profil/forhaandsvisning").get_data(as_text=True)
-    assert "skjult for andre" in anna.get("/profil").get_data(as_text=True)
+    assert re.search(r'<input checked[^>]*value="zodiac"', anna.get("/profil/rediger").get_data(as_text=True))
 
 
 # --- Administration -------------------------------------------------------------------------------------

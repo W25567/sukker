@@ -31,6 +31,8 @@
 }
 
 * { box-sizing: border-box; }
+/* hidden skal altid skjule, også elementer med display i en klasse (fx .button). */
+[hidden] { display: none !important; }
 
 body {
   margin: 0;
@@ -111,6 +113,8 @@ h2 { font-size: 1.15rem; margin: 0 0 0.75rem; }
 
 /* Profil (M2) */
 .heading-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.page-heading { margin-bottom: 12px; }
+.desktop-only { display: none !important; }
 .notice-card { background: var(--info-bg); }
 .field select, .field textarea {
   width: 100%; min-height: 48px; padding: 10px 12px; font: inherit;
@@ -125,7 +129,7 @@ fieldset.field { border: 0; padding: 0; margin: 0; }
 fieldset.field legend { font-weight: 600; margin-bottom: 6px; }
 .field-label { font-weight: 600; }
 .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chips { display: flex; flex-wrap: wrap; align-items: center; align-content: flex-start; gap: 8px; }
 .chip {
   display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 12px;
   border: 1px solid var(--border); border-radius: 999px; background: var(--surface); cursor: pointer;
@@ -166,13 +170,24 @@ fieldset.field legend { font-weight: 600; margin-bottom: 6px; }
 .upload-input:focus-visible + .upload-pick { outline: 3px solid var(--accent); outline-offset: 2px; }
 .upload-status:empty { display: none; }
 .badge-private { background: var(--text); color: var(--surface); }
+/* Drej billede: to runde knapper øverst til højre på billedet (animationer kan ikke drejes og har mærket der). */
+.image-rotate { position: absolute; right: 8px; top: 8px; display: flex; gap: 6px; }
+.icon-button {
+  width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border); cursor: pointer;
+  background: var(--surface); color: var(--text); font-size: 1.15rem; line-height: 1; opacity: 0.92;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+.icon-button:hover, .icon-button:focus-visible { opacity: 1; border-color: var(--accent); }
 
 .gallery { display: grid; gap: 8px; margin-bottom: 16px; }
 .gallery img { width: 100%; height: auto; border-radius: var(--radius); display: block; }
-.no-photo {
-  display: grid; place-items: center; aspect-ratio: 1; max-width: 220px; margin: 0 auto 16px;
-  border-radius: 50%; background: var(--info-bg); color: var(--accent); font-size: 4rem; font-weight: 700;
+/* Profil uden billede: en neutral silhuet i samme format som billederne (templates/_avatar.html). */
+.photo-placeholder {
+  display: grid; place-items: end center; width: 100%; aspect-ratio: 3 / 4; overflow: hidden;
+  background: linear-gradient(160deg, var(--info-bg), var(--border)); color: var(--muted);
 }
+.photo-placeholder .silhouette { width: 62%; height: auto; fill: currentColor; opacity: 0.35; }
+.profile-placeholder { border-radius: var(--radius); margin-bottom: 16px; max-width: 360px; }
 .facts { margin: 0; display: grid; gap: 10px; }
 .facts div { display: grid; gap: 2px; }
 .facts dt { color: var(--muted); font-size: 0.88rem; }
@@ -219,8 +234,7 @@ body:has(.bottomnav) .page { padding-bottom: 88px; }
 .person-list li .like-form { width: 120px; }
 .small-link { font-size: 0.88rem; }
 .profile-actions { display: grid; gap: 8px; margin: 12px 0 16px; }
-.profile-card img, .card-no-photo { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; display: block; background: var(--border); }
-.card-no-photo { display: grid; place-items: center; font-size: 3rem; font-weight: 700; color: var(--accent); background: var(--info-bg); }
+.profile-card img { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; display: block; background: var(--border); }
 .card-body { display: grid; gap: 2px; padding: 10px 12px 12px; }
 .card-text { margin: 4px 0 0; font-size: 0.88rem; color: var(--muted); }
 .active-dot { font-size: 0.8rem; color: var(--success); }
@@ -375,6 +389,9 @@ a.stat .stat-value { color: var(--accent); }
   flex: none; width: 44px; height: 44px; border-radius: 50%; object-fit: cover; display: block; background: var(--border);
 }
 .avatar-letter { display: inline-flex; align-items: center; justify-content: center; background: var(--info-bg); color: var(--accent); font-weight: 700; }
+.avatar-empty { display: inline-flex; align-items: flex-end; justify-content: center; overflow: hidden;
+  background: linear-gradient(160deg, var(--info-bg), var(--border)); color: var(--muted); }
+.avatar-empty .silhouette { width: 78%; height: auto; fill: currentColor; opacity: 0.45; }
 .avatar-admin { background: var(--accent); color: var(--accent-ink); }
 .removed-item .avatar { opacity: 0.6; }
 .admin-image { position: relative; display: block; }
@@ -435,11 +452,12 @@ body:has(.bottomnav) .site-footer { padding-bottom: 80px; }
   .panels > * { break-inside: avoid; }
   .cards { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
   .image-grid { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); }
-  .filters .form { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 24px; }
+  .filters .form { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 24px; align-items: start; }
   .filters .form > .checkbox, .filters .form > .actions { grid-column: 1 / -1; }
   .profile { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 24px; align-items: start; }
   .profile .gallery { position: sticky; top: 16px; }
   .profile h1 { margin-top: 0; }
   .bubble { max-width: min(85%, 640px); }
   .toasts { bottom: 24px; right: 24px; }
+  .desktop-only { display: inline-flex !important; }
 }

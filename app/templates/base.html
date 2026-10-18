@@ -106,7 +106,7 @@
         Beskeder<span class="nav-badge" data-badge="messages" data-label="ulæste"{% if not unread_messages %} hidden{% endif %}
                       aria-label="{{ unread_messages }} ulæste">{{ unread_messages }}</span>
       </a>
-      <a href="{{ url_for('profiles.me') }}"{% if here.startswith('profiles.') %} aria-current="page"{% endif %}>Min profil</a>
+      <a href="{{ url_for('profiles.me') }}"{% if here.startswith('profiles.') and here != 'profiles.view' or here.startswith('support.') %} aria-current="page"{% endif %}>Min profil</a>
     </nav>
     {# Midlertidige beskeder om nye beskeder og matches, nederst til højre. #}
     <div class="toasts" id="toasts" aria-live="polite" data-url="{{ url_for('core.notifications') }}"></div>

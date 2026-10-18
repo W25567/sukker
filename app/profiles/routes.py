@@ -66,8 +66,6 @@ def me():
         explore_form=explore_form,
         action_form=ActionForm(),
         accept=ACCEPT,
-        zodiac=zodiac_for(g.user.birthdate),
-        zodiac_hidden="zodiac" in (profile.hidden_fields or []),
         is_early_bird=has_early_bird(g.user),
         early_bird_open=early_bird_open(),
     )
@@ -190,6 +188,24 @@ def delete_image(public_id):
             media.delete_image(image)
             db.session.commit()
             flash("Billedet er slettet.", "info")
+    return redirect(url_for("profiles.me") + "#billeder")
+
+
+@bp.route("/profil/billeder/<public_id>/drej/<any(venstre, hoejre):direction>", methods=["POST"])
+@login_required
+@limiter.limit("60 per hour", methods=["POST"])
+def rotate_image(public_id, direction):
+    """Drejer et billede 90 grader til venstre eller højre."""
+    image = media.owned_image(g.user, public_id)
+    if image is None:
+        abort(404)
+    if ActionForm().validate_on_submit():
+        try:
+            media.rotate_image(image, clockwise=direction == "hoejre")
+            db.session.commit()
+        except ImageRejected as rejection:
+            db.session.rollback()
+            flash(str(rejection), "error")
     return redirect(url_for("profiles.me") + "#billeder")
 
 

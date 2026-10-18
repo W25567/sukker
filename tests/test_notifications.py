@@ -75,7 +75,7 @@ def test_avatars_in_inbox_and_likes(app, outbox, ctx):
     for page in (anna.get("/beskeder/").get_data(as_text=True), anna.get("/likes").get_data(as_text=True)):
         assert re.search(r'<img class="avatar" src="/billede/[^/]+/lille\.webp"', page)
     # Anna har intet billede: Bodil ser forbogstavet
-    assert 'avatar-letter" aria-hidden="true">A<' in bodil.get("/beskeder/").get_data(as_text=True)
+    assert 'class="avatar avatar-empty"' in bodil.get("/beskeder/").get_data(as_text=True)
 
 
 def test_hide_liked_filter_and_preference(app, outbox, ctx):

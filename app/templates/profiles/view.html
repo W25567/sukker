@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "_like.html" import like_button %}
+{% from "_avatar.html" import photo_placeholder %}
 {% block title %}{{ user.display_name }} – Sukker.nu{% endblock %}
 {% block content %}
   {% if back_url %}
@@ -24,7 +25,7 @@
         {% endfor %}
       </div>
     {% else %}
-      <div class="no-photo" aria-hidden="true">{{ user.display_name[:1] | upper }}</div>
+      {{ photo_placeholder('profile-placeholder') }}
     {% endif %}
 
     <div class="profile-info">

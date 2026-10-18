@@ -1,7 +1,19 @@
 {% extends "base.html" %}
 {% block title %}Min profil – Sukker.nu{% endblock %}
+{% macro rotate_buttons(image) %}
+  {% if not image.is_animated %}
+    <div class="image-rotate">
+      {% for direction, symbol, label in [('venstre', '↺', 'Drej til venstre'), ('hoejre', '↻', 'Drej til højre')] %}
+        <form method="post" action="{{ url_for('profiles.rotate_image', public_id=image.public_id, direction=direction) }}">
+          {{ action_form.hidden_tag() }}
+          <button type="submit" class="icon-button" title="{{ label }}" aria-label="{{ label }}">{{ symbol }}</button>
+        </form>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endmacro %}
 {% block content %}
-  <div class="heading-row">
+  <div class="heading-row page-heading">
     <h1>Min profil</h1>
     <a class="button small secondary" href="{{ url_for('profiles.preview') }}">Se som andre</a>
   </div>
@@ -16,8 +28,6 @@
     <div class="progress-bar" data-percent="{{ ((completeness + 5) // 10) * 10 }}"></div>
   </div>
   <p class="muted">Profilen er {{ completeness }} % udfyldt. <a href="{{ url_for('profiles.edit') }}">Udfyld mere</a></p>
-  <p class="muted">Dit stjernetegn: <span aria-hidden="true">{{ zodiac.symbol }}</span> {{ zodiac.name }} ·
-    {{ 'skjult for andre' if zodiac_hidden else 'vises på din profil' }}. <a href="{{ url_for('profiles.edit') }}#stjernetegn">Ret</a></p>
 
   <section class="card" id="billeder">
     <h2>Billeder</h2>
@@ -36,6 +46,7 @@
                  alt="Dit billede {{ loop.index }}" loading="lazy">
             {% if loop.first %}<span class="badge">Profilbillede</span>{% endif %}
             {% if image.is_animated %}<span class="badge badge-right">Animation</span>{% endif %}
+            {{ rotate_buttons(image) }}
             <div class="image-actions">
               {% if not loop.first %}
                 <form method="post" action="{{ url_for('profiles.make_primary', public_id=image.public_id) }}">
@@ -73,6 +84,7 @@
                  alt="Dit private billede {{ loop.index }}" loading="lazy">
             <span class="badge badge-private">Privat</span>
             {% if image.is_animated %}<span class="badge badge-right">Animation</span>{% endif %}
+            {{ rotate_buttons(image) }}
             <div class="image-actions">
               <form method="post" action="{{ url_for('profiles.move_image', public_id=image.public_id, target='offentlig') }}">
                 {{ action_form.hidden_tag() }}

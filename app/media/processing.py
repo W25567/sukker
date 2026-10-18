@@ -15,6 +15,7 @@ THUMB_DIMENSION = 480
 MAX_PIXELS = 50_000_000
 MAX_FRAMES = 300
 ACCEPT = "image/jpeg,image/png,image/webp,image/gif,image/avif"
+ANIMATABLE = {"GIF", "WEBP", "PNG", "AVIF"}  # formater, der kan indeholde en animation
 
 Image.MAX_IMAGE_PIXELS = MAX_PIXELS
 
@@ -82,6 +83,19 @@ def _webp(image, quality, **extra):
     return out.getvalue()
 
 
+def rotate(full_data, clockwise):
+    """Drejer et gemt stillbillede 90 grader og laver billedet og miniaturen igen. Returnerer ProcessedImage."""
+    image = Image.open(io.BytesIO(full_data), formats=["WEBP"])
+    if getattr(image, "n_frames", 1) > 1:
+        raise ImageRejected("Animerede billeder kan ikke drejes.")
+    image.load()
+    turned = image.transpose(Image.Transpose.ROTATE_270 if clockwise else Image.Transpose.ROTATE_90)
+    thumb = turned.copy()
+    thumb.thumbnail((THUMB_DIMENSION, THUMB_DIMENSION), Image.Resampling.LANCZOS)
+    return ProcessedImage(full=_webp(turned, 90), thumb=_webp(thumb, 80), width=turned.width, height=turned.height,
+                          animated=False)
+
+
 def process_upload(data, *, max_still_bytes, max_animated_bytes, animated_refusal=None):
     """Validerer og omkoder et billede. Er `animated_refusal` sat, afvises animationer med den besked."""
     fmt = sniff_format(data)
@@ -91,7 +105,9 @@ def process_upload(data, *, max_still_bytes, max_animated_bytes, animated_refusa
         raise ImageRejected("Filen er for stor.")
 
     image = _open(data, fmt)
-    animated = getattr(image, "n_frames", 1) > 1
+    # JPEG kan ikke være animeret. Billeder fra iPhone er ofte MPO: en JPEG med et ekstra, indlejret billede
+    # (dybde eller HDR), som Pillow tæller som en ekstra frame. Kun det første billede bruges.
+    animated = fmt in ANIMATABLE and getattr(image, "n_frames", 1) > 1
 
     if animated:
         if animated_refusal:
