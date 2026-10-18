@@ -106,10 +106,13 @@ def create_app(config_name=None):
 
         from .notifications import new_match_count
 
+        from .media.access import pending_count
+
         user = g.get("user")
         if user is None:
-            return {"unread_messages": 0, "new_matches": 0}
-        return {"unread_messages": total_unread(user), "new_matches": new_match_count(user)}
+            return {"unread_messages": 0, "new_matches": 0, "access_requests": 0}
+        return {"unread_messages": total_unread(user), "new_matches": new_match_count(user),
+                "access_requests": pending_count(user)}
 
     @app.url_defaults
     def static_version(endpoint, values):

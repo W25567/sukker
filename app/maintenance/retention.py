@@ -12,6 +12,7 @@ from flask import current_app
 from sqlalchemy import and_, delete, exists, not_, or_, select
 
 from ..account.services import delete_files, purge_deleted_accounts, purge_deleted_images
+from ..media.access import purge_closed as purge_closed_private_access
 from ..support.services import purge_closed as purge_closed_bug_reports
 from ..auth.models import EmailToken, UserSession
 from ..core.settings import get_setting
@@ -148,6 +149,7 @@ def run():
     image_files = purge_deleted_images(before)
     counts["slettede_billeder"] = len(image_files)
     counts["fejlrapporter"], report_files = purge_closed_bug_reports(before)
+    counts["afviste_adgange"] = purge_closed_private_access(before)
     counts.update({
         "skjulte_samtaler": purge_hidden_conversations(before),
         "samtaler_uden_deltagere": purge_orphaned_conversations(),

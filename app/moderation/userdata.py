@@ -8,7 +8,7 @@ from ..auth.models import User, UserSession
 from ..extensions import db
 from ..location.services import kommune_name
 from ..matches.models import Like, Match
-from ..media.models import ProfileImage
+from ..media.models import PrivateAccess, ProfileImage
 from ..media.services import list_images
 from ..messaging.models import Conversation, ConversationMember, Message, MessageDeletion
 from ..profiles.fields import FIELDS, display_value
@@ -58,7 +58,13 @@ def collect(user):
         conversations.append({"conversation": conversation, "messages": messages, "deleted": deleted,
                               "other_id": conversation.other_id(user.id)})
 
+    # Hvem har adgang til brugerens private album, og hvis album har brugeren adgang til (specifikation 9.3)?
+    private_access = db.session.scalars(
+        select(PrivateAccess).where(or_(PrivateAccess.owner_id == user.id, PrivateAccess.viewer_id == user.id))
+        .order_by(PrivateAccess.requested_at.desc())
+    ).all()
     names = _usernames(
+        [a.owner_id for a in private_access] + [a.viewer_id for a in private_access] +
         [l.likee_id for l in likes_given] + [l.liker_id for l in likes_received]
         + [m.other_id(user.id) for m in matches] + [b.blocker_id for b in blocks] + [b.blocked_id for b in blocks]
         + [c["other_id"] for c in conversations]
@@ -82,6 +88,7 @@ def collect(user):
         "blocks": blocks,
         "cases": cases,
         "conversations": conversations,
+        "private_access": private_access,
         "sessions": db.session.scalars(select(UserSession).where(UserSession.user_id == user.id).order_by(UserSession.created_at.desc())).all(),
         "names": names,
     }

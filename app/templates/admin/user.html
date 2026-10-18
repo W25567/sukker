@@ -94,6 +94,20 @@
     {% endfor %}
   </section>
 
+  <section class="card" id="privat-adgang">
+    <h2>Adgang til private billeder</h2>
+    {% set statuses_da = {'pending': 'venter', 'approved': 'har adgang', 'declined': 'afvist', 'revoked': 'trukket tilbage'} %}
+    {% for a in data.private_access %}
+      <p>{% if a.owner_id == target.id %}
+          <a href="{{ url_for('admin.user', user_id=a.viewer_id) }}">{{ names.get(a.viewer_id, '?') }}</a> → brugerens album
+        {% else %}
+          brugeren → <a href="{{ url_for('admin.user', user_id=a.owner_id) }}">{{ names.get(a.owner_id, '?') }}</a>s album
+        {% endif %}
+        · {{ statuses_da[a.status] }}{% if a.status == 'approved' %} ({{ 'hele albummet' if a.scope == 'all' else 'udvalgte billeder' }}){% endif %}
+        · anmodet {{ a.requested_at | local_datetime }}{% if a.decided_at %} · afgjort {{ a.decided_at | local_datetime }}{% endif %}</p>
+    {% else %}<p class="muted">Ingen.</p>{% endfor %}
+  </section>
+
   <section class="card" id="aktivitet">
     <h2>Aktivitet</h2>
     <p><strong>Likes givet ({{ data.likes_given | length }}):</strong>

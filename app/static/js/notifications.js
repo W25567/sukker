@@ -61,10 +61,13 @@
   function handle(data) {
     setBadge("messages", data.messages);
     setBadge("matches", data.matches);
+    setBadge("requests", data.requests);
     var latest = {
       message: idOf(data.latest_message),
       admin: idOf(data.latest_admin),
-      match: idOf(data.latest_match)
+      match: idOf(data.latest_match),
+      request: idOf(data.latest_request),
+      grant: idOf(data.latest_grant)
     };
     if (known !== null && !inChat) {
       if (latest.match > known.match) {
@@ -76,12 +79,20 @@
       if (latest.admin > known.admin) {
         toast("Ny besked fra", data.latest_admin.name, data.latest_admin.url);
       }
+      if (latest.request > known.request) {
+        toast("Ny anmodning om dine private billeder fra", data.latest_request.name, data.latest_request.url);
+      }
+      if (latest.grant > known.grant) {
+        toast("Du har fået adgang til private billeder hos", data.latest_grant.name, data.latest_grant.url);
+      }
     }
     // Det højeste id huskes, så en ældre ulæst besked ikke vises igen, når en nyere bliver læst.
     known = known === null ? latest : {
       message: Math.max(known.message, latest.message),
       admin: Math.max(known.admin, latest.admin),
-      match: Math.max(known.match, latest.match)
+      match: Math.max(known.match, latest.match),
+      request: Math.max(known.request, latest.request),
+      grant: Math.max(known.grant, latest.grant)
     };
   }
 

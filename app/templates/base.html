@@ -106,7 +106,10 @@
         Beskeder<span class="nav-badge" data-badge="messages" data-label="ulæste"{% if not unread_messages %} hidden{% endif %}
                       aria-label="{{ unread_messages }} ulæste">{{ unread_messages }}</span>
       </a>
-      <a href="{{ url_for('profiles.me') }}"{% if here.startswith('profiles.') and here != 'profiles.view' or here.startswith('support.') %} aria-current="page"{% endif %}>Min profil</a>
+      <a href="{{ url_for('profiles.me') }}"{% if here.startswith('profiles.') and here != 'profiles.view' or here.startswith('support.') %} aria-current="page"{% endif %}>
+        Min profil<span class="nav-badge" data-badge="requests" data-label="anmodninger om private billeder"{% if not access_requests %} hidden{% endif %}
+                        aria-label="{{ access_requests }} anmodninger om private billeder">{{ access_requests }}</span>
+      </a>
     </nav>
     {# Midlertidige beskeder om nye beskeder og matches, nederst til højre. #}
     <div class="toasts" id="toasts" aria-live="polite" data-url="{{ url_for('core.notifications') }}"></div>

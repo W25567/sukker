@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% from "_avatar.html" import avatar %}
+{% block title %}Adgang til private billeder – Sukker.nu{% endblock %}
+{% block content %}
+  <a class="back-link" href="{{ url_for('profiles.me') }}#billeder">← Min profil</a>
+  <h1>Adgang til private billeder</h1>
+  <p class="muted">Kun dem, du giver adgang, kan se dine private billeder – til hele albummet eller kun udvalgte billeder.
+    Du kan altid ændre eller trække adgangen tilbage. Den anden får ikke besked, hvis du afviser eller lader en anmodning ligge.</p>
+  {% if not private_total %}
+    <div class="card notice-card"><p>Du har ingen private billeder lige nu. Gør et billede privat under <a href="{{ url_for('profiles.me') }}#billeder">Min profil</a>.</p></div>
+  {% endif %}
+
+  <div class="panels">
+  <section class="card">
+    <h2>Anmodninger{% if pending %} <span class="nav-badge">{{ pending | length }}</span>{% endif %}</h2>
+    {% if pending %}
+      <ul class="access-list">
+        {% for row in pending %}
+          <li>
+            <a class="person" href="{{ url_for('profiles.view', handle=row.user.handle) }}">
+              {{ avatar(row.user, avatars.get(row.user.id)) }}
+              <span><strong>{{ row.user.display_name }}</strong><br><small class="muted">Bad om adgang {{ row.access.requested_at | local_datetime }}</small></span>
+            </a>
+            <div class="access-actions">
+              <form method="post" action="{{ url_for('profiles.private_access_action', access_id=row.access.id, action='alle') }}">
+                {{ action_form.hidden_tag() }}<button type="submit" class="button small">Giv adgang</button>
+              </form>
+              <a class="button small secondary" href="{{ url_for('profiles.private_access_edit', access_id=row.access.id) }}">Vælg billeder</a>
+              <form method="post" action="{{ url_for('profiles.private_access_action', access_id=row.access.id, action='afvis') }}">
+                {{ action_form.hidden_tag() }}<button type="submit" class="link danger small-link">Afvis</button>
+              </form>
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="muted">Ingen anmodninger lige nu.</p>
+    {% endif %}
+  </section>
+
+  <section class="card">
+    <h2>Har adgang</h2>
+    {% if approved %}
+      <ul class="access-list">
+        {% for row in approved %}
+          <li>
+            <a class="person" href="{{ url_for('profiles.view', handle=row.user.handle) }}">
+              {{ avatar(row.user, avatars.get(row.user.id)) }}
+              <span><strong>{{ row.user.display_name }}</strong><br>
+                <small class="muted">{{ 'Hele albummet' if row.access.scope == 'all' else (row.selected ~ (' udvalgt billede' if row.selected == 1 else ' udvalgte billeder')) }}
+                  · siden {{ row.access.decided_at | local_datetime }}</small></span>
+            </a>
+            <div class="access-actions">
+              <a class="button small secondary" href="{{ url_for('profiles.private_access_edit', access_id=row.access.id) }}">Ret</a>
+              <form method="post" action="{{ url_for('profiles.private_access_action', access_id=row.access.id, action='tilbagekald') }}">
+                {{ action_form.hidden_tag() }}<button type="submit" class="link danger small-link">Tilbagekald</button>
+              </form>
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="muted">Ingen har adgang til dine private billeder.</p>
+    {% endif %}
+  </section>
+  </div>
+{% endblock %}

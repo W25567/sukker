@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Adgang for {{ viewer.display_name }} – Sukker.nu{% endblock %}
+{% block content %}
+  <a class="back-link" href="{{ url_for('profiles.private_access') }}">← Adgang til private billeder</a>
+  <h1>Adgang for {{ viewer.display_name }}</h1>
+  <p class="muted">Vælg, hvad {{ viewer.display_name }} må se. Du kan altid ændre det eller trække adgangen tilbage.</p>
+  <form method="post" class="form access-form">
+    {{ form.hidden_tag() }}
+    <fieldset class="field">
+      <legend>Adgangen gælder</legend>
+      <div class="radio-list">
+        <label><input type="radio" name="scope" value="all"{% if access.scope == 'all' or access.status == 'pending' %} checked{% endif %}>
+          Hele mit private album – også billeder, jeg lægger der senere</label>
+        <label><input type="radio" name="scope" value="selected"{% if access.scope == 'selected' and access.status == 'approved' %} checked{% endif %}>
+          Kun de billeder, jeg vælger herunder</label>
+      </div>
+    </fieldset>
+    {% if images %}
+      <ul class="image-grid pick-grid">
+        {% for image in images %}
+          <li>
+            <label class="pick">
+              <input type="checkbox" name="image" value="{{ image.id }}"{% if image.id in selected %} checked{% endif %}>
+              <img src="{{ url_for('media.image', public_id=image.public_id, variant='lille') }}" alt="Privat billede {{ loop.index }}" loading="lazy">
+              <span class="pick-mark" aria-hidden="true">✓</span>
+            </label>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="muted">Du har ingen private billeder endnu.</p>
+    {% endif %}
+    <button type="submit" class="button">{{ 'Giv adgang' if access.status == 'pending' else 'Gem adgang' }}</button>
+  </form>
+  <script src="{{ url_for('static', filename='js/access.js') }}" defer></script>
+{% endblock %}

@@ -41,7 +41,7 @@ def test_make_private_and_public_moves_files_and_hides_image(app, outbox, ctx):
     assert anna.get(f"/billede/{second.public_id}/lille.webp").status_code == 200  # ejeren ser det
     assert bodil.get(f"/billede/{second.public_id}/lille.webp").status_code == 404
     assert second.public_id not in bodil.get(f"/bruger/{h('Anna')}").get_data(as_text=True)
-    assert "Privat arkiv" in anna.get("/profil").get_data(as_text=True)
+    assert "Privat album" in anna.get("/profil").get_data(as_text=True)
 
     anna.post(f"/profil/billeder/{second.public_id}/offentlig")
     db.session.refresh(second)

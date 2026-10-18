@@ -2,6 +2,9 @@
 {% from "_like.html" import like_button %}
 {% from "_avatar.html" import photo_placeholder %}
 {% block title %}{{ user.display_name }} – Sukker.nu{% endblock %}
+
+{% macro lock_icon() %}<svg class="lock-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 10V7a5 5 0 0 1 10 0v3h1a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1zm2 0h6V7a3 3 0 0 0-6 0z"/></svg>{% endmacro %}
+
 {% block content %}
   {% if back_url %}
     <a class="back-link" href="{{ back_url }}">← Tilbage til Udforsk</a>
@@ -9,65 +12,154 @@
 
   {% if preview %}
     <div class="card notice-card">
-      <p>Sådan ser andre din profil. Skjulte oplysninger vises ikke.</p>
+      <p>Sådan ser andre din profil. Skjulte oplysninger og dine private billeder vises ikke.</p>
       <a href="{{ url_for('profiles.me') }}">Tilbage til Min profil</a>
     </div>
   {% endif %}
 
-  <article class="profile">
-    {% if images %}
-      <div class="gallery">
-        {% for image in images %}
-          <img src="{{ url_for('media.image', public_id=image.public_id, variant='stor') }}"
-               alt="Billede {{ loop.index }} af {{ user.display_name }}"
-               width="{{ image.width }}" height="{{ image.height }}"
-               {% if not loop.first %}loading="lazy"{% endif %}>
-        {% endfor %}
-      </div>
-    {% else %}
-      {{ photo_placeholder('profile-placeholder') }}
-    {% endif %}
+  {% set total = images | length %}
+  {# Mosaik: ét stort billede og mindre ved siden af. Antallet af felter vælges, så mosaikken altid går op. #}
+  {% set shown = 1 if total == 1 else (2 if total == 2 else (3 if total < 6 else 6)) %}
+
+  <article class="profile-view">
+    <div class="profile-media">
+      {% if images %}
+        <div class="mosaic count-{{ shown }}" data-gallery>
+          {% for image in images[:shown] %}
+            <a class="tile" href="{{ url_for('media.image', public_id=image.public_id, variant='stor') }}"
+               data-index="{{ loop.index0 }}" target="_blank" rel="noopener">
+              <img src="{{ url_for('media.image', public_id=image.public_id, variant='stor' if loop.first else 'lille') }}"
+                   alt="Billede {{ loop.index }} af {{ user.display_name }}" {% if not loop.first %}loading="lazy"{% endif %}>
+              {% if loop.index0 >= public_count %}<span class="tile-badge">{{ lock_icon() }} Privat</span>{% endif %}
+              {% if loop.last and total > shown %}<span class="tile-more">+{{ total - shown }}</span>{% endif %}
+            </a>
+          {% endfor %}
+        </div>
+        {# Alle billeder til den store visning (static/js/gallery.js). #}
+        <ul class="gallery-items" hidden data-gallery-items>
+          {% for image in images %}
+            <li data-src="{{ url_for('media.image', public_id=image.public_id, variant='stor') }}"
+                data-alt="Billede {{ loop.index }} af {{ user.display_name }}"{% if loop.index0 >= public_count %} data-private{% endif %}></li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        {{ photo_placeholder('profile-placeholder') }}
+      {% endif %}
+
+      {% if private_state.total %}
+        {% set locked = private_state.total - private_state.visible %}
+        <section class="card private-album" id="privat">
+          <div class="private-album-head">
+            <span class="private-album-icon">{{ lock_icon() }}</span>
+            <div>
+              <h2>Privat album</h2>
+              <p class="muted">{{ private_state.total }} {{ 'privat billede' if private_state.total == 1 else 'private billeder' }}</p>
+            </div>
+          </div>
+          {% if locked > 0 %}
+            <div class="locked-tiles" aria-hidden="true">
+              {% for _ in range([locked, 3] | min) %}<span class="locked-tile">{{ lock_icon() }}</span>{% endfor %}
+            </div>
+          {% endif %}
+          {% if preview %}
+            <p class="muted">Andre kan se, at du har et privat album, og bede om adgang. Du bestemmer, hvem der får lov.</p>
+          {% elif private_state.status == 'approved' and locked == 0 %}
+            <p>Du har adgang til {{ 'billedet' if private_state.total == 1 else 'alle billederne' }}. De vises i galleriet med mærket <strong>Privat</strong>.</p>
+          {% elif private_state.status == 'approved' %}
+            <p>Du har adgang til {{ private_state.visible }} af {{ private_state.total }} private billeder. De vises i galleriet.</p>
+          {% elif private_state.status in ('pending', 'declined') and (private_state.status == 'pending' or private_state.cooldown_until) %}
+            {# En afvisning vises som en ventende anmodning, så den, der spurgte, ikke får besked om afvisningen. #}
+            <p><strong>Anmodning sendt.</strong> {{ user.display_name }} bestemmer, om du får adgang.</p>
+            {% if private_state.status == 'pending' %}
+              <form method="post" action="{{ url_for('profiles.cancel_private', handle=user.handle) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="link small-link">Træk anmodningen tilbage</button>
+              </form>
+            {% endif %}
+          {% elif private_state.cooldown_until %}
+            <p class="muted">Du har ikke adgang lige nu. Du kan anmode igen efter {{ private_state.cooldown_until | local_datetime }}.</p>
+          {% else %}
+            <p class="muted">{{ user.display_name }} deler kun disse billeder med udvalgte personer.</p>
+            <form method="post" action="{{ url_for('profiles.request_private', handle=user.handle) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="button wide">{{ lock_icon() }} Anmod om adgang</button>
+            </form>
+          {% endif %}
+        </section>
+      {% endif %}
+    </div>
 
     <div class="profile-info">
-    <h1>{{ user.display_name }}, {{ age }}</h1>
-    {% if zodiac %}<p class="zodiac"><span aria-hidden="true">{{ zodiac.symbol }}</span> {{ zodiac.name }}</p>{% endif %}
-    {% if distance or kommune %}
-      <p class="muted">{{ distance or '' }}{% if distance and kommune %} · {% endif %}{{ kommune or '' }}</p>
-    {% endif %}
+      <header class="profile-header">
+        <h1>{{ user.display_name }}<span class="age">, {{ age }}</span></h1>
+        <div class="pills">
+          {% if recently_active %}<span class="pill pill-active">Aktiv for nylig</span>{% endif %}
+          {% if distance %}<span class="pill">{{ distance }}</span>{% endif %}
+          {% if kommune %}<span class="pill">{{ kommune }}</span>{% endif %}
+          {% if zodiac %}<span class="pill"><span aria-hidden="true">{{ zodiac.symbol }}</span> {{ zodiac.name }}</span>{% endif %}
+        </div>
+      </header>
 
-    {% if not preview %}
-      <div class="profile-actions">
-        {{ like_button(user.handle, liked, matched, request.full_path) }}
-        {% if matched %}
-          <a class="button wide" href="{{ url_for('messaging.start', handle=user.handle) }}">Skriv besked</a>
-          <a class="muted small-link center" href="{{ url_for('matches.remove', handle=user.handle) }}">Fjern match</a>
+      {% if not preview %}
+        <div class="profile-actions">
+          {{ like_button(user.handle, liked, matched, request.full_path) }}
+          {% if matched %}
+            <a class="button wide" href="{{ url_for('messaging.start', handle=user.handle) }}">Skriv besked</a>
+          {% endif %}
+        </div>
+      {% endif %}
+
+      {% if presentation %}
+        <blockquote class="presentation">{{ presentation }}</blockquote>
+      {% endif %}
+
+      {% set titles = {'Grundlæggende': 'Om mig', 'Livsstil': 'Livsstil', 'Relation': 'Det søger jeg'} %}
+      {% set wide = ['interests', 'travel', 'expectations', 'occupation'] %}
+      {% for group, items in groups %}
+        {% set facts = items | rejectattr('0.name', 'equalto', 'presentation') | list %}
+        {% if facts %}
+          <section class="fact-section">
+            <h2>{{ titles.get(group, group) }}</h2>
+            <dl class="fact-grid">
+              {% for field, value in facts %}
+                <div class="fact{% if field.multiple or field.name in wide %} wide{% endif %}">
+                  <dt>{{ field.label }}</dt>
+                  {% if field.multiple %}
+                    <dd class="fact-chips">{% for part in value.split(', ') %}<span class="chip-static">{{ part }}</span>{% endfor %}</dd>
+                  {% else %}
+                    <dd>{{ value }}</dd>
+                  {% endif %}
+                </div>
+              {% endfor %}
+            </dl>
+          </section>
         {% endif %}
-      </div>
-    {% endif %}
+      {% else %}
+        {% if not presentation %}<p class="muted">{{ 'Du har ikke udfyldt noget endnu.' if preview else 'Profilen er ikke udfyldt endnu.' }}</p>{% endif %}
+      {% endfor %}
 
-    {% for group, items in groups %}
-      <section class="card">
-        <h2>{{ group }}</h2>
-        <dl class="facts">
-          {% for field, value in items %}
-            <div><dt>{{ field.label }}</dt><dd>{{ value }}</dd></div>
-          {% endfor %}
-        </dl>
-      </section>
-    {% else %}
-      <p class="muted">{{ 'Du har ikke udfyldt noget endnu.' if preview else 'Profilen er ikke udfyldt endnu.' }}</p>
-    {% endfor %}
-
-    {% if not preview %}
-      <div class="safety-actions">
-        <form method="post" action="{{ url_for('safety.hide', handle=user.handle) }}" class="inline">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <button type="submit" class="link">Skjul</button>
-        </form>
-        <a href="{{ url_for('safety.block', handle=user.handle) }}">Blokér</a>
-        <a href="{{ url_for('safety.report_profile', handle=user.handle) }}">Anmeld</a>
-      </div>
-    {% endif %}
+      {% if not preview %}
+        <div class="safety-actions">
+          {% if matched %}<a href="{{ url_for('matches.remove', handle=user.handle) }}">Fjern match</a>{% endif %}
+          <form method="post" action="{{ url_for('safety.hide', handle=user.handle) }}" class="inline">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="link">Skjul</button>
+          </form>
+          <a href="{{ url_for('safety.block', handle=user.handle) }}">Blokér</a>
+          <a href="{{ url_for('safety.report_profile', handle=user.handle) }}">Anmeld</a>
+        </div>
+      {% endif %}
     </div>
   </article>
+
+  {% if images %}
+    <dialog class="lightbox" aria-label="Billeder af {{ user.display_name }}">
+      <button type="button" class="lightbox-close" aria-label="Luk">×</button>
+      <button type="button" class="lightbox-prev" aria-label="Forrige billede">‹</button>
+      <img class="lightbox-image" alt="">
+      <button type="button" class="lightbox-next" aria-label="Næste billede">›</button>
+      <p class="lightbox-caption" aria-live="polite"></p>
+    </dialog>
+    <script src="{{ url_for('static', filename='js/gallery.js') }}" defer></script>
+  {% endif %}
 {% endblock %}

@@ -75,7 +75,10 @@
       <p class="muted">Du har ingen billeder endnu. Profiler med billeder får flere likes.</p>
     {% endif %}
 
-    <h3 class="subheading">Privat arkiv</h3>
+    <div class="heading-row">
+      <h3 class="subheading">Privat album</h3>
+      <a class="small-link" href="{{ url_for('profiles.private_access') }}">Styr adgang{% if access_requests %} <span class="nav-badge">{{ access_requests }}</span>{% endif %}</a>
+    </div>
     {% if private_images %}
       <ul class="image-grid">
         {% for image in private_images %}
@@ -98,7 +101,7 @@
           </li>
         {% endfor %}
       </ul>
-      <p class="muted">Private billeder kan kun ses af dig. De vises ikke på din profil.</p>
+      <p class="muted">Private billeder kan kun ses af dig og af dem, du giver adgang. Andre kan se, at du har et privat album, og bede om adgang.</p>
     {% elif images | length > 1 %}
       <p class="muted">Du kan gøre et billede privat, så kun du kan se det. Du skal altid have mindst ét offentligt billede.</p>
     {% else %}

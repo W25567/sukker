@@ -179,8 +179,6 @@ fieldset.field legend { font-weight: 600; margin-bottom: 6px; }
 }
 .icon-button:hover, .icon-button:focus-visible { opacity: 1; border-color: var(--accent); }
 
-.gallery { display: grid; gap: 8px; margin-bottom: 16px; }
-.gallery img { width: 100%; height: auto; border-radius: var(--radius); display: block; }
 /* Profil uden billede: en neutral silhuet i samme format som billederne (templates/_avatar.html). */
 .photo-placeholder {
   display: grid; place-items: end center; width: 100%; aspect-ratio: 3 / 4; overflow: hidden;
@@ -233,7 +231,6 @@ body:has(.bottomnav) .page { padding-bottom: 88px; }
   padding-bottom: 10px; border-bottom: 1px solid var(--border); }
 .person-list li .like-form { width: 120px; }
 .small-link { font-size: 0.88rem; }
-.profile-actions { display: grid; gap: 8px; margin: 12px 0 16px; }
 .profile-card img { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; display: block; background: var(--border); }
 .card-body { display: grid; gap: 2px; padding: 10px 12px 12px; }
 .card-text { margin: 4px 0 0; font-size: 0.88rem; color: var(--muted); }
@@ -379,6 +376,90 @@ a.stat .stat-value { color: var(--accent); }
 .help-list li { border-bottom: 1px solid var(--border); }
 .help-list li:last-child { border-bottom: 0; }
 .help-list a { display: flex; min-height: 48px; align-items: center; text-decoration: none; }
+/* Profilsiden: mosaik, stor visning, privat album og oplysninger */
+.profile-view { display: grid; gap: 16px; }
+.mosaic { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.mosaic .tile { position: relative; display: block; overflow: hidden; border-radius: 10px; background: var(--border); aspect-ratio: 1; }
+.mosaic .tile img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.25s ease; }
+.mosaic .tile:hover img, .mosaic .tile:focus-visible img { transform: scale(1.03); }
+.mosaic .tile:first-child { grid-column: span 2; grid-row: span 2; aspect-ratio: auto; border-radius: var(--radius); }
+.mosaic.count-1 { grid-template-columns: 1fr; }
+.mosaic.count-1 .tile:first-child { grid-column: auto; grid-row: auto; aspect-ratio: 4 / 5; }
+.mosaic.count-2 { grid-template-rows: repeat(2, minmax(0, 1fr)); aspect-ratio: 3 / 2; }
+.mosaic.count-2 .tile:nth-child(2) { grid-row: span 2; aspect-ratio: auto; }
+.tile-badge {
+  position: absolute; left: 8px; bottom: 8px; display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px;
+  border-radius: 999px; background: rgba(0, 0, 0, 0.6); color: #fff; font-size: 0.75rem; font-weight: 600;
+}
+.tile-badge .lock-icon { width: 12px; height: 12px; fill: currentColor; }
+.tile-more {
+  position: absolute; inset: 0; display: grid; place-items: center; background: rgba(0, 0, 0, 0.45);
+  color: #fff; font-size: 1.6rem; font-weight: 700;
+}
+.lock-icon { width: 18px; height: 18px; fill: currentColor; flex: none; }
+.private-album { margin-top: 12px; }
+.private-album h2 { margin: 0; }
+.private-album-head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.private-album-head p { margin: 0; }
+.private-album-icon { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: var(--info-bg); color: var(--accent); }
+.private-album-icon .lock-icon { width: 22px; height: 22px; }
+.private-album .button .lock-icon { margin-right: 8px; }
+.locked-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-bottom: 12px; }
+.locked-tile {
+  display: grid; place-items: center; aspect-ratio: 1; border-radius: 10px; color: var(--muted);
+  background: repeating-linear-gradient(135deg, var(--info-bg) 0 10px, var(--border) 10px 20px);
+}
+.locked-tile .lock-icon { width: 26px; height: 26px; opacity: 0.6; }
+.profile-header h1 { font-size: 1.9rem; margin: 0 0 8px; line-height: 1.15; }
+.profile-header .age { font-weight: 400; color: var(--muted); }
+.pills { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+.pill { display: inline-flex; align-items: center; gap: 4px; padding: 4px 12px; border-radius: 999px; background: var(--info-bg); font-size: 0.88rem; }
+.pill-active { color: var(--success); }
+.pill-active::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.profile-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 20px; }
+.profile-actions > * { flex: 1 1 160px; }
+.presentation {
+  margin: 0 0 20px; padding: 16px 18px; border-left: 4px solid var(--accent); border-radius: 0 var(--radius) var(--radius) 0;
+  background: var(--surface); font-size: 1.08rem; line-height: 1.6; white-space: pre-line; overflow-wrap: anywhere;
+}
+.fact-section { margin-bottom: 20px; }
+.fact-section h2 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 0 0 8px; }
+.fact-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 0; }
+.fact { padding: 10px 12px; border-radius: 10px; background: var(--surface); border: 1px solid var(--border); }
+.fact.wide { grid-column: 1 / -1; }
+.fact dt { font-size: 0.78rem; color: var(--muted); }
+.fact dd { margin: 2px 0 0; font-weight: 600; white-space: pre-line; overflow-wrap: anywhere; }
+.fact-chips { display: flex; flex-wrap: wrap; gap: 6px; font-weight: 400 !important; margin-top: 6px !important; }
+.chip-static { padding: 3px 10px; border-radius: 999px; background: var(--info-bg); color: var(--text); font-size: 0.88rem; }
+.lightbox { width: 100vw; height: 100vh; max-width: none; max-height: none; margin: 0; padding: 0; border: 0; background: rgba(10, 6, 12, 0.94); color: #fff; }
+.lightbox[open] { display: grid; grid-template-columns: 56px minmax(0, 1fr) 56px; grid-template-rows: 1fr auto; align-items: center; }
+.lightbox::backdrop { background: rgba(10, 6, 12, 0.94); }
+.lightbox-image { grid-column: 2; grid-row: 1; max-width: 100%; max-height: calc(100vh - 80px); margin: auto; object-fit: contain; border-radius: 6px; }
+.lightbox-prev, .lightbox-next, .lightbox-close {
+  border: 0; background: rgba(255, 255, 255, 0.12); color: #fff; cursor: pointer; border-radius: 50%;
+  width: 44px; height: 44px; font-size: 1.8rem; line-height: 1; justify-self: center;
+}
+.lightbox-prev { grid-column: 1; grid-row: 1; }
+.lightbox-next { grid-column: 3; grid-row: 1; }
+.lightbox-close { position: absolute; top: 12px; right: 12px; z-index: 1; }
+.lightbox-caption { grid-column: 1 / -1; grid-row: 2; text-align: center; margin: 8px 0 16px; font-size: 0.9rem; opacity: 0.85; }
+/* Adgang til private billeder */
+.access-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.access-list li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+.access-list li:last-child { border-bottom: 0; padding-bottom: 0; }
+.access-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.pick-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+.pick { position: relative; display: block; cursor: pointer; }
+.pick input { position: absolute; opacity: 0; }
+.pick img { border: 3px solid transparent; }
+.pick input:checked ~ img { border-color: var(--accent); }
+.pick input:focus-visible ~ img { outline: 3px solid var(--accent); outline-offset: 2px; }
+.pick-mark {
+  position: absolute; top: 8px; right: 8px; display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%;
+  background: var(--surface); color: transparent; border: 2px solid var(--border); font-weight: 700;
+}
+.pick input:checked ~ .pick-mark { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+
 /* Notifikationer, små profilbilleder og "skjul likede" */
 .nav-badge {
   display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px; padding: 0 5px;
@@ -454,9 +535,9 @@ body:has(.bottomnav) .site-footer { padding-bottom: 80px; }
   .image-grid { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); }
   .filters .form { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 24px; align-items: start; }
   .filters .form > .checkbox, .filters .form > .actions { grid-column: 1 / -1; }
-  .profile { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 24px; align-items: start; }
-  .profile .gallery { position: sticky; top: 16px; }
-  .profile h1 { margin-top: 0; }
+  .profile-view { grid-template-columns: minmax(0, 6fr) minmax(0, 5fr); gap: 28px; align-items: start; }
+  .profile-media { position: sticky; top: 16px; }
+  .profile-header h1 { font-size: 2.3rem; }
   .bubble { max-width: min(85%, 640px); }
   .toasts { bottom: 24px; right: 24px; }
   .desktop-only { display: inline-flex !important; }

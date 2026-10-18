@@ -9,6 +9,12 @@ from ..profiles.services import can_view_profile
 from ..core.features import has_feature
 from . import storage
 from .models import ProfileImage
+
+
+def forget_image(image_id):
+    from .access import forget_image as forget
+
+    forget(image_id)
 from .processing import ImageRejected, process_upload, rotate
 
 MB = 1024 * 1024
@@ -89,6 +95,7 @@ def delete_image(image):
     """Brugeren sletter et billede. Det forsvinder fra profilen med det samme, men billedet og filerne bevares
     til administration og moderation i opbevaringsperioden (app/maintenance/retention.py)."""
     image.deleted_at = now_utc()
+    forget_image(image.id)
     db.session.flush()
     for position, remaining in enumerate(list_images(image.user_id, image.collection)):
         remaining.position = position
@@ -120,6 +127,8 @@ def set_collection(image, collection):
         .where(ProfileImage.user_id == user_id, ProfileImage.collection == collection, LIVE)
     )
     image.collection = collection
+    if collection == "public":
+        forget_image(image.id)  # et offentligt billede hører ikke til nogen udvalgt adgang
     db.session.flush()
     for position, remaining in enumerate(list_images(user_id, old)):
         remaining.position = position
@@ -164,11 +173,15 @@ def avatar_ids(viewer, users):
 def can_view_image(viewer, image, owner):
     """Adgang kontrolleres ved hver forespørgsel (specifikation 4.3).
 
-    Offentlige billeder følger profilens synlighed. Private arkiver kommer i fase 2 og er indtil da
-    kun synlige for ejeren.
+    Offentlige billeder følger profilens synlighed. Private billeder kan ses af ejeren og af dem, ejeren har
+    givet adgang til hele albummet eller netop dette billede (media/access.py), så længe profilen må ses.
     """
+    from .access import has_image_access
+
     if viewer is None or image.is_deleted:
         return False
-    if image.collection == "public":
-        return can_view_profile(viewer, owner)
-    return viewer.id == owner.id
+    if viewer.id == owner.id:
+        return True
+    if not can_view_profile(viewer, owner):
+        return False
+    return image.collection == "public" or has_image_access(viewer.id, image)

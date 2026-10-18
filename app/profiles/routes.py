@@ -1,8 +1,12 @@
+from sqlalchemy import func, select
+
 from flask import Blueprint, abort, flash, g, jsonify, redirect, render_template, request, url_for
 from flask_wtf import FlaskForm
 from wtforms import MultipleFileField
 
 from ..auth.forms import ActionForm
+from ..auth.models import User, UserSession
+from ..explore.services import RECENTLY_ACTIVE
 from ..auth.sessions import login_required, safe_next_url
 from ..core.timeutil import now_utc
 from ..extensions import db, limiter
@@ -10,7 +14,9 @@ from ..location.distance import distance_label
 from ..location.services import km_between, kommune_name
 from ..matches.queries import has_active_match
 from ..matches.services import has_liked
+from ..media import access as private
 from ..media import services as media
+from ..media.models import PrivateAccess
 from ..media.processing import ACCEPT, ImageRejected
 from ..subscriptions.services import early_bird_open, grant_early_bird, has_early_bird
 from .fields import completeness, visible_fields
@@ -29,11 +35,21 @@ class UploadForm(FlaskForm):
 
 def _render_profile_view(user, *, preview):
     profile = get_or_create_profile(user)
+    public = media.list_images(user.id)
+    # Private billeder, den besøgende har fået adgang til, vises i galleriet efter de offentlige. Ved
+    # forhåndsvisning ser ejeren profilen som en, der ikke har adgang.
+    unlocked = [] if preview else private.visible_private_images(g.user, user)
+    last_seen = db.session.scalar(select(func.max(UserSession.last_seen_at)).where(UserSession.user_id == user.id))
     return render_template(
         "profiles/view.html",
         user=user,
         age=age_of(user),
-        images=media.list_images(user.id),
+        images=public + unlocked,
+        public_count=len(public),
+        private_state=private.ViewerState(private.private_count(user.id), 0, None, None) if preview
+        else private.viewer_state(g.user, user),
+        recently_active=bool(profile.show_activity and last_seen and last_seen >= now_utc() - RECENTLY_ACTIVE),
+        presentation=profile.presentation if "presentation" not in profile.hidden_fields else None,
         groups=visible_fields(profile, as_owner=False),
         zodiac=visible_zodiac(user, profile),
         preview=preview,
@@ -247,3 +263,104 @@ def make_primary(public_id):
         db.session.commit()
         flash("Profilbilledet er skiftet.", "success")
     return redirect(url_for("profiles.me"))
+
+
+# --- Private album: anmodninger og adgang (specifikation 4.2) ---------------------------------------------------
+
+
+@bp.route("/bruger/<handle>/privat/anmod", methods=["POST"])
+@login_required
+@limiter.limit("30 per hour", methods=["POST"])
+def request_private(handle):
+    """Anmod om adgang til en profils private album."""
+    owner = find_user_by_handle(handle)
+    if owner is None or not can_view_profile(g.user, owner):
+        abort(404)
+    if ActionForm().validate_on_submit():
+        try:
+            private.request_access(g.user, owner)
+            db.session.commit()
+            flash(f"Din anmodning er sendt. {owner.display_name} kan give dig adgang til hele albummet eller udvalgte billeder.",
+                  "success")
+        except private.AccessRefused as refusal:
+            db.session.rollback()
+            flash(str(refusal), "error")
+    return redirect(url_for("profiles.view", handle=owner.handle) + "#privat")
+
+
+@bp.route("/bruger/<handle>/privat/fortryd", methods=["POST"])
+@login_required
+def cancel_private(handle):
+    owner = find_user_by_handle(handle)
+    if owner is None:
+        abort(404)
+    if ActionForm().validate_on_submit():
+        private.cancel_request(g.user, owner)
+        db.session.commit()
+        flash("Din anmodning er trukket tilbage.", "info")
+    return redirect(url_for("profiles.view", handle=owner.handle) + "#privat")
+
+
+@bp.route("/profil/privat-adgang")
+@login_required
+def private_access():
+    """Ejerens oversigt: anmodninger om adgang og hvem der har adgang til det private album."""
+    pending, approved = private.owner_overview(g.user)
+    users = [row.user for row in pending + approved]
+    return render_template("profiles/private_access.html", pending=pending, approved=approved,
+                           avatars=media.avatar_ids(g.user, users), private_total=private.private_count(g.user.id),
+                           action_form=ActionForm())
+
+
+def _own_access_or_404(access_id):
+    access = db.session.get(PrivateAccess, access_id)
+    if access is None or access.owner_id != g.user.id:
+        abort(404)
+    return access
+
+
+@bp.route("/profil/privat-adgang/<int:access_id>", methods=["GET", "POST"])
+@login_required
+def private_access_edit(access_id):
+    """Giv eller ret adgang: hele albummet eller udvalgte billeder."""
+    access = _own_access_or_404(access_id)
+    viewer = db.session.get(User, access.viewer_id)
+    if viewer is None or access.status not in ("pending", "approved"):
+        abort(404)
+    form = ActionForm()
+    if request.method == "POST" and form.validate_on_submit():
+        try:
+            private.approve(g.user, access, request.form.get("scope", "all"), request.form.getlist("image"))
+            db.session.commit()
+            flash(f"{viewer.display_name} har nu adgang til {'hele dit private album' if access.scope == 'all' else 'de valgte billeder'}.",
+                  "success")
+            return redirect(url_for("profiles.private_access"))
+        except private.AccessRefused as refusal:
+            db.session.rollback()
+            flash(str(refusal), "error")
+    return render_template("profiles/private_access_edit.html", access=access, viewer=viewer,
+                           images=private.private_images(g.user.id), selected=private.selected_ids(access), form=form)
+
+
+@bp.route("/profil/privat-adgang/<int:access_id>/<any(alle, afvis, tilbagekald):action>", methods=["POST"])
+@login_required
+def private_access_action(access_id, action):
+    access = _own_access_or_404(access_id)
+    viewer = db.session.get(User, access.viewer_id)
+    if ActionForm().validate_on_submit():
+        try:
+            if action == "alle":
+                private.approve(g.user, access, "all")
+                message = f"{viewer.display_name} har nu adgang til hele dit private album."
+            elif action == "afvis":
+                private.decline(g.user, access)
+                message = f"Anmodningen fra {viewer.display_name} er afvist."
+            else:
+                private.revoke(g.user, access)
+                message = f"{viewer.display_name} har ikke længere adgang til dine private billeder."
+            db.session.commit()
+            flash(message, "success" if action == "alle" else "info")
+        except private.AccessRefused as refusal:
+            db.session.rollback()
+            flash(str(refusal), "error")
+    return redirect(url_for("profiles.private_access"))

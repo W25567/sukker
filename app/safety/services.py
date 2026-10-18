@@ -5,6 +5,7 @@ from ..extensions import db
 from ..matches.models import Like
 from ..matches.queries import has_active_match
 from ..matches.services import remove_match
+from ..media.access import remove_between as remove_private_access
 from .models import UserBlock, UserHide
 
 
@@ -20,6 +21,7 @@ def block(user, target):
         and_(Like.liker_id == user.id, Like.likee_id == target.id),
         and_(Like.liker_id == target.id, Like.likee_id == user.id),
     )))
+    remove_private_access(user.id, target.id)  # al adgang til private billeder fjernes i begge retninger
 
 
 def unblock(user, target_id):

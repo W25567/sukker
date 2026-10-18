@@ -14,6 +14,7 @@ from .matches.models import Match, MatchEvent
 from .messaging.admin_threads import SENDER_NAME, visible_to_user
 from .messaging.models import AdminMessage, Conversation, ConversationMember, Message, MessageDeletion
 from .messaging.services import total_unread
+from .media.models import PrivateAccess
 
 
 def _new_matches_query(user):
@@ -97,10 +98,34 @@ def summary(user, url_for):
         event_id, other = matches[0]
         latest_match = {"key": f"x{event_id}", "id": event_id, "name": other.display_name,
                         "url": url_for("matches.index")}
+    requests = db.session.execute(
+        select(PrivateAccess.id, User).join(User, User.id == PrivateAccess.viewer_id)
+        .where(PrivateAccess.owner_id == user.id, PrivateAccess.status == "pending", User.status == "active")
+        .order_by(PrivateAccess.id.desc())
+    ).all()
+    latest_request = None
+    if requests:
+        access_id, viewer = requests[0]
+        latest_request = {"key": f"r{access_id}", "id": access_id, "name": viewer.display_name,
+                          "url": url_for("profiles.private_access")}
+    granted = db.session.execute(
+        select(PrivateAccess.decided_at, User).join(User, User.id == PrivateAccess.owner_id)
+        .where(PrivateAccess.viewer_id == user.id, PrivateAccess.status == "approved", User.status == "active")
+        .order_by(PrivateAccess.decided_at.desc()).limit(1)
+    ).first()
+    latest_grant = None
+    if granted:
+        decided_at, owner = granted
+        # Tidspunktet bruges som id, så også en ændret adgang (fx flere billeder) giver en ny besked.
+        latest_grant = {"id": int(decided_at.timestamp() * 1000), "name": owner.display_name,
+                        "url": url_for("profiles.view", handle=owner.handle) + "#privat"}
     return {
         "messages": total_unread(user),
         "matches": len(matches),
+        "requests": len(requests),
         "latest_message": latest_message,
         "latest_admin": latest_admin,
         "latest_match": latest_match,
+        "latest_request": latest_request,
+        "latest_grant": latest_grant,
     }

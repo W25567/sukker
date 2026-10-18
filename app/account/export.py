@@ -11,7 +11,7 @@ from ..core.timeutil import now_utc
 from ..extensions import db
 from ..location.services import kommune_name
 from ..matches.models import Like, Match
-from ..media.models import ProfileImage
+from ..media.models import PrivateAccess, ProfileImage
 from ..messaging.admin_threads import messages as admin_messages
 from ..messaging.models import Message, MessageDeletion
 from ..profiles.fields import FIELDS, display_value
@@ -39,8 +39,12 @@ def export_user_data(user):
     hides = db.session.scalars(select(UserHide).where(UserHide.hider_id == user.id)).all()
     messages = db.session.scalars(select(Message).where(Message.sender_id == user.id).order_by(Message.created_at)).all()
     deleted = set(db.session.scalars(select(MessageDeletion.message_id).where(MessageDeletion.user_id == user.id)))
+    access = db.session.scalars(select(PrivateAccess).where(
+        or_(PrivateAccess.owner_id == user.id, PrivateAccess.viewer_id == user.id))).all()
     names = _names([l.likee_id for l in likes] + [m.other_id(user.id) for m in matches]
-                   + [b.blocked_id for b in blocks] + [h.hidden_id for h in hides])
+                   + [b.blocked_id for b in blocks] + [h.hidden_id for h in hides]
+                   + [a.viewer_id for a in access if a.owner_id == user.id]
+                   + [a.owner_id for a in access if a.viewer_id == user.id and a.status == "approved"])
 
     return {
         "udtrukket": _iso(now_utc()),
@@ -91,6 +95,16 @@ def export_user_data(user):
         "beskeder_med_administrator": [
             {"fra": "Administrator" if m.from_admin else "dig", "tidspunkt": _iso(m.created_at), "tekst": m.body}
             for m in admin_messages(user.id)
+        ],
+        # Den, der bad om adgang, ser kun godkendte adgange: en afvisning afsløres ikke ud over det, brugeren ser.
+        "adgang_til_dine_private_billeder": [
+            {"bruger": names.get(a.viewer_id), "status": a.status, "omfang": a.scope,
+             "anmodet": _iso(a.requested_at), "afgjort": _iso(a.decided_at)}
+            for a in access if a.owner_id == user.id
+        ],
+        "din_adgang_til_andres_private_billeder": [
+            {"bruger": names.get(a.owner_id), "omfang": a.scope, "fra": _iso(a.decided_at)}
+            for a in access if a.viewer_id == user.id and a.status == "approved"
         ],
         "blokeringer": [{"bruger": names.get(b.blocked_id), "tidspunkt": _iso(b.created_at)} for b in blocks],
         "skjulte_profiler": [{"bruger": names.get(h.hidden_id), "tidspunkt": _iso(h.created_at)} for h in hides],
