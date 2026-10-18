@@ -14,6 +14,7 @@ from ..matches.models import Like, Match
 from ..media.models import PrivateAccess, ProfileImage
 from ..messaging.admin_threads import messages as admin_messages
 from ..messaging.models import Message, MessageDeletion
+from ..notify import prefs as notification_prefs
 from ..profiles.fields import FIELDS, display_value
 from ..profiles.models import Profile
 from ..safety.models import UserBlock, UserHide
@@ -59,6 +60,7 @@ def export_user_data(user):
             "vilkaar_accepteret": _iso(user.terms_accepted_at),
             "vilkaarsversion": user.terms_version,
             "status": user.status,
+            "notifikationer": notification_prefs.current(user),
         },
         "profil": {
             "felter": {f.label: display_value(profile, f) for f in FIELDS if display_value(profile, f)},

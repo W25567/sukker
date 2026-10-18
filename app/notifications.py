@@ -15,6 +15,7 @@ from .messaging.admin_threads import SENDER_NAME, visible_to_user
 from .messaging.models import AdminMessage, Conversation, ConversationMember, Message, MessageDeletion
 from .messaging.services import total_unread
 from .media.models import PrivateAccess
+from .notify.prefs import wants
 
 
 def _new_matches_query(user):
@@ -144,6 +145,19 @@ def summary(user, url_for):
     staff_threads, latest_staff = 0, None
     if user.role == "admin":
         staff_threads, latest_staff = _admin_replies(url_for)
+    # Slås beskeder på siden fra, sendes den nyeste ikke med. Tallene i menuen vises altid (app/notify/prefs.py).
+    if not wants(user, "message", "app"):
+        latest_message = None
+    if not wants(user, "admin", "app"):
+        latest_admin = None
+    if not wants(user, "match", "app"):
+        latest_match = None
+    if not wants(user, "request", "app"):
+        latest_request = None
+    if not wants(user, "grant", "app"):
+        latest_grant = None
+    if not wants(user, "staff", "app"):
+        latest_staff = None
     return {
         "messages": total_unread(user),
         "matches": len(matches),

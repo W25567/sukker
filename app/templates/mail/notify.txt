@@ -1,0 +1,16 @@
+Hej {{ name }}
+
+Der er nyt til dig på Sukker.nu:
+{% for line in lines %}
+- {{ line }}{% endfor %}
+
+Log ind for at se det:
+
+{{ login_url }}
+
+Du får denne mail, fordi du har slået notifikationer pr. e-mail til. Vi sender højst én mail af hver slags, indtil du har været inde igen. Du kan vælge, hvad du vil have besked om, under Konto:
+
+{{ settings_url }}
+
+Venlig hilsen
+Sukker.nu

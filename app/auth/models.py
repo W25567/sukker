@@ -2,6 +2,7 @@ import secrets
 from datetime import date, datetime
 
 from sqlalchemy import BigInteger, Boolean, CheckConstraint, Date, DateTime, ForeignKey, Identity, Index, String, func, text
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from ..extensions import db
@@ -54,6 +55,9 @@ class User(db.Model):
     deleted_email: Mapped[str | None] = mapped_column(String(254))
     # Sat, når en administrator har slettet et upassende visningsnavn. Nulstilles, når brugeren vælger et nyt.
     name_removed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Valg af notifikationer på siden og pr. e-mail, kun afvigelser fra standarden. NULL = standard
+    # (app/notify/prefs.py).
+    notification_prefs: Mapped[dict | None] = mapped_column(JSONB)
 
     __table_args__ = (
         CheckConstraint("role IN ('user', 'moderator', 'admin')", name="role"),

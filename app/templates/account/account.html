@@ -30,6 +30,34 @@
     {% endif %}
   </section>
 
+  <section class="card" id="notifikationer">
+    <h2>Notifikationer</h2>
+    <p class="muted"><strong>På siden</strong> er en kort besked nederst på skærmen. <strong>E-mail</strong> sendes kun, når du ikke er på siden,
+      og siger aldrig hvem eller hvad, kun at der er nyt. Tallene i menuen vises altid.</p>
+    <form method="post" action="{{ url_for('account.notification_settings') }}" class="notify-form">
+      {{ action_form.hidden_tag() }}
+      <table class="notify-table">
+        <thead><tr><th scope="col"><span class="visually-hidden">Notifikation</span></th><th scope="col">På siden</th><th scope="col">E-mail</th></tr></thead>
+        <tbody>
+          {% for kind in notification_kinds %}
+            {% set choice = notification_choices[kind.key] %}
+            <tr>
+              <th scope="row">{{ kind.label }}<span class="muted">{{ kind.hint }}</span></th>
+              {% for channel in ['app', 'mail'] %}
+                <td>
+                  {% if choice[channel] is none %}<span class="muted" aria-label="Findes ikke">–</span>
+                  {% else %}<input type="checkbox" name="{{ channel }}_{{ kind.key }}" value="1"{% if choice[channel] %} checked{% endif %}
+                    aria-label="{{ kind.label }}: {{ 'på siden' if channel == 'app' else 'e-mail' }}">{% endif %}
+                </td>
+              {% endfor %}
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <button type="submit" class="button secondary">Gem notifikationer</button>
+    </form>
+  </section>
+
   <section class="card">
     <h2>Enheder, hvor du er logget ind</h2>
     <ul class="sessions">

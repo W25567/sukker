@@ -1,12 +1,13 @@
 import json
 
-from flask import Blueprint, Response, flash, g, redirect, render_template, session, url_for
+from flask import Blueprint, Response, flash, g, redirect, render_template, request, session, url_for
 
 from ..auth import services
 from ..auth.forms import ActionForm, ChangePasswordForm, DeleteAccountForm, DisplayNameForm
 from ..auth.passwords import verify_password
 from ..auth.sessions import active_sessions, end_current_session, login_required, revoke_sessions
 from ..extensions import db, limiter
+from ..notify import prefs as notification_prefs
 from ..subscriptions.services import TIER_LABELS, active_subscription, effective_tier
 from ..core.settings import get_setting
 from ..core.timeutil import today_local
@@ -31,6 +32,8 @@ def _render_account(password_form=None, status=200, name_form=None):
             current_session_id=g.user_session.id,
             tier_label=TIER_LABELS[effective_tier(g.user.id)],
             subscription=active_subscription(g.user.id),
+            notification_kinds=notification_prefs.kinds_for(g.user),
+            notification_choices=notification_prefs.current(g.user),
         ),
         status,
     )
@@ -55,6 +58,16 @@ def change_display_name():
         db.session.commit()
         flash("Dit viste navn er ændret.", "success")
     return redirect(url_for("account.overview"))
+
+
+@bp.route("/notifikationer", methods=["POST"])
+@login_required
+def notification_settings():
+    if ActionForm().validate_on_submit():
+        notification_prefs.update_from_form(g.user, request.form)
+        db.session.commit()
+        flash("Dine valg af notifikationer er gemt.", "success")
+    return redirect(url_for("account.overview") + "#notifikationer")
 
 
 @bp.route("/password", methods=["POST"])

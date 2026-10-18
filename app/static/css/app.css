@@ -284,6 +284,16 @@ body:has(.bottomnav) .page { padding-bottom: 88px; }
 .radio-list label { display: flex; gap: 10px; align-items: center; font-weight: 400; }
 .bubble-meta a { color: var(--muted); }
 
+/* Notifikationsvalg på Konto */
+.notify-table { width: 100%; border-collapse: collapse; margin: 12px 0 16px; }
+.notify-table th, .notify-table td { padding: 10px 6px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.notify-table thead th { font-size: 0.82rem; font-weight: 600; color: var(--muted); text-align: center; width: 76px; }
+.notify-table thead th:first-child { width: auto; }
+.notify-table tbody th { text-align: left; font-weight: 600; }
+.notify-table tbody th .muted { display: block; font-weight: 400; font-size: 0.85rem; }
+.notify-table td { text-align: center; }
+.notify-table input[type=checkbox] { width: 22px; height: 22px; }
+
 /* Moderation (M6) */
 .mod-nav { display: flex; gap: 16px; margin-bottom: 8px; font-size: 0.92rem; }
 .mod-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; margin-bottom: 16px; }

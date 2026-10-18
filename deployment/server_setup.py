@@ -64,6 +64,8 @@ TASKS = {
                "calendar": "*-*-* 02:30:00", "delay": "10min", "timeout": "3h"},
     "monitor": {"description": "overvågning", "command": "monitor",
                 "calendar": "*:0/15", "delay": "1min", "timeout": "5min"},
+    "notify": {"description": "notifikationer pr. e-mail", "command": "notify",
+               "calendar": "*:0/5", "delay": "30s", "timeout": "4min"},
 }
 
 

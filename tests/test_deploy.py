@@ -131,7 +131,9 @@ def test_all_templates_render_completely(env_name):
     assert "ProtectSystem=strict" in service and f"User={cfg['user']}" in service
     assert f"OnFailure={cfg['service']}-alert@%n.service" in service
     timers = sorted(n for n in units if n.endswith(".timer"))
-    expected = ["backup", "maintenance", "monitor"] if env_name == "production" else ["maintenance", "monitor"]
+    expected = ["maintenance", "monitor", "notify"]
+    if env_name == "production":
+        expected = ["backup"] + expected
     assert timers == [f"{cfg['service']}-{t}.timer" for t in expected]
     assert all(name.startswith(cfg["service"]) for name in units)
 

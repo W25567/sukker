@@ -144,6 +144,15 @@ def backup_command(label, db_only):
                f"uden for serveren: {result['offsite']}, billeder i databasen: {result['images_in_database']})")
 
 
+@sukker_cli.command("notify")
+def notify_command():
+    """Sender notifikationer pr. e-mail og påmindelser om udløb af Premium (app/notify/mail.py)."""
+    from .notify import mail
+
+    counts = mail.run()
+    click.echo(f"Notifikationer: {counts['nyt']} mail(s) om nyt, {counts['premium']} påmindelse(r) om Premium.")
+
+
 @sukker_cli.command("monitor")
 def monitor_command():
     """Tjekker backup, certifikat, diskplads, fejlrate og systemd-enheder og sender alarmer."""
