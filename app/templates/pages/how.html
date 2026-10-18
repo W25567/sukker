@@ -12,8 +12,13 @@
     <h2>2. Gør profilen til din egen</h2>
     <p>Tilføj billeder og en kort præsentation, og fortæl, hvad du søger. Alt er frivilligt, og du kan skjule de felter, du ikke vil vise. Du kan også sætte profilen på pause eller kun være synlig for dine matches.</p>
 
-    <h2>3. Udforsk profiler i nærheden</h2>
-    <p>Under Udforsk ser du andre profiler sorteret efter omtrentlig afstand. Afstanden beregnes fra kommune til kommune og vises som "I nærheden" eller fx "ca. 40 km". Med Premium kan du filtrere på alder, afstand, køn og relationstype.</p>
+    {% if distance_visible() %}
+      <h2>3. Udforsk profiler i nærheden</h2>
+      <p>Under Udforsk ser du andre profiler sorteret efter omtrentlig afstand og derefter nyeste profil. Afstanden beregnes fra kommune til kommune og vises som "I nærheden" eller fx "ca. 40 km". Med Premium kan du filtrere på alder, afstand, køn og relationstype og se de nyeste profiler først.</p>
+    {% else %}
+      <h2>3. Udforsk profiler</h2>
+      <p>Under Udforsk ser du andre profiler med de nyeste først. Ingen algoritme bestemmer, hvem du ser. Med Premium kan du filtrere på alder, køn og relationstype.</p>
+    {% endif %}
 
     <h2>4. Like og få et match</h2>
     <p>Synes du om en profil, så giv den et like. Liker den anden dig også, har I et match. Et match kan altid fjernes igen, og så skjules jeres samtale for jer begge.</p>

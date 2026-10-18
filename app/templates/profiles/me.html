@@ -155,7 +155,9 @@
     <form method="post" action="{{ url_for('profiles.visibility') }}" class="form">
       {{ visibility_form.hidden_tag() }}
       {% for field in [visibility_form.hidden_from_search, visibility_form.matches_only, visibility_form.show_kommune, visibility_form.show_activity] %}
-        <div class="field checkbox"><label>{{ field() }} {{ field.label.text }}</label></div>
+        {% if field.name != 'show_kommune' or kommune_visible() %}
+          <div class="field checkbox"><label>{{ field() }} {{ field.label.text }}</label></div>
+        {% endif %}
       {% endfor %}
       <button type="submit" class="button secondary">Gem synlighed</button>
     </form>

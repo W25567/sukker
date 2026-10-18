@@ -13,11 +13,16 @@
       <li>Skjul de felter på din profil, du ikke vil vise.</li>
       <li>Sæt profilen på pause, når du har brug for en pause.</li>
       <li>Vær kun synlig for dine matches, eller hold dig ude af søgningen.</li>
-      <li>Vælg selv, om din kommune og din seneste aktivitet vises.</li>
+      <li>Vælg selv, om {% if kommune_visible() %}din kommune og {% endif %}din seneste aktivitet vises.</li>
     </ul>
 
-    <h2>Ingen adresse, kun omtrentlig afstand</h2>
-    <p>Dit postnummer bruges kun til at finde din kommune og vises aldrig. Andre ser en omtrentlig afstand beregnet fra kommune til kommune, fx "I nærheden" eller "ca. 40 km" – aldrig præcise kilometertal.</p>
+    {% if distance_visible() %}
+      <h2>Ingen adresse, kun omtrentlig afstand</h2>
+      <p>Dit postnummer bruges kun til at finde din kommune og vises aldrig. Andre ser en omtrentlig afstand beregnet fra kommune til kommune, fx "I nærheden" eller "ca. 40 km" – aldrig præcise kilometertal.</p>
+    {% else %}
+      <h2>Ingen adresse og ingen afstand</h2>
+      <p>Dit postnummer vises aldrig, og andre kan ikke se, hvor langt der er til dig.</p>
+    {% endif %}
 
     <h2>Skjul, blokér og anmeld</h2>
     <dl>

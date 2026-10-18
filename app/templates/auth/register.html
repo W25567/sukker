@@ -18,7 +18,7 @@
     {{ field(form.birthdate, autocomplete="bday", hint="Bruges til at vise din alder. Datoen vises ikke.") }}
     {{ field(form.gender, autocomplete="sex", hint="Vises på din profil og bruges til at vise dig for dem, der søger dit køn.") }}
     {% include "profiles/_seeking_field.html" %}
-    {{ field(form.postcode, autocomplete="postal-code", hint="Bruges til omtrentlig afstand. Postnummeret vises aldrig.") }}
+    {{ field(form.postcode, autocomplete="postal-code", hint=("Bruges til omtrentlig afstand. " if distance_visible() else "Bruges til at finde din kommune. ") ~ "Postnummeret vises aldrig.") }}
     {% if form.kommune.choices %}{{ field(form.kommune) }}{% endif %}
     {% call checkbox(form.accept_terms) %}Jeg er fyldt 18 år og accepterer <a href="{{ url_for('pages.terms') }}" target="_blank" rel="noopener">brugervilkårene</a> og <a href="{{ url_for('pages.privacy') }}" target="_blank" rel="noopener">privatlivspolitikken</a>{% endcall %}
     <button type="submit" class="button wide">Opret profil</button>

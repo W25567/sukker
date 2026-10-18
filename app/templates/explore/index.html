@@ -29,7 +29,7 @@
     {% if filters_allowed %}
       <form method="get" action="{{ url_for('explore.index') }}" class="form">
         {{ sort_field() }}
-        <div class="field">{{ form.afstand.label }}{{ form.afstand() }}</div>
+        {% if show_distance %}<div class="field">{{ form.afstand.label }}{{ form.afstand() }}</div>{% endif %}
         <div class="row">
           <div class="field">{{ form.alder_fra.label }}{{ form.alder_fra(min=18, max=99) }}</div>
           <div class="field">{{ form.alder_til.label }}{{ form.alder_til(min=18, max=99) }}</div>
@@ -53,7 +53,7 @@
         {{ hide_liked_field() }}
         <div class="actions"><button type="submit" class="button">Vis profiler</button></div>
       </form>
-      <p>Filtrering på afstand, alder, køn, hvad folk søger og billeder{% if not newest_allowed %} og at se de nyeste profiler først{% endif %} kræver Premium eller Premium+.</p>
+      <p>Filtrering på {% if show_distance %}afstand, {% endif %}alder, køn, hvad folk søger og billeder{% if show_distance and not newest_allowed %} og at se de nyeste profiler først{% endif %} kræver Premium eller Premium+.</p>
       <p class="muted">Du kan stadig se alle profiler.</p>
     {% endif %}
   </details>
@@ -67,11 +67,11 @@
     <a href="{{ url_for('profiles.edit') }}">Ret på din profil</a>
   </p>
   <p class="muted sort-note">
-    {% if newest_first %}Rækkefølge: nyeste profiler først.{% else %}Rækkefølge: efter afstand og derefter nyeste profil.{% endif %}
+    {% if newest_first or not show_distance %}Rækkefølge: nyeste profiler først.{% else %}Rækkefølge: efter afstand og derefter nyeste profil.{% endif %}
     Ingen algoritme bestemmer, hvem du ser. <a href="{{ url_for('pages.purpose') }}#raekkefoelge">Læs hvorfor</a>
   </p>
 
-  {% if not has_kommune %}
+  {% if show_distance and not has_kommune %}
     <p class="muted">Afstande vises, når kommunedata er indlæst.</p>
   {% endif %}
 

@@ -10,6 +10,17 @@ from sqlalchemy import case, func
 from ..core.settings import get_setting
 
 
+def distance_visible():
+    """Administrator bestemmer, om brugerne kan se afstanden til hinanden (indstillingen show_distance)."""
+    return bool(get_setting("show_distance"))
+
+
+def kommune_visible():
+    """Administrator bestemmer, om brugerne kan vise deres kommune (indstillingen show_kommune). Er den slået fra,
+    vises ingen kommuner, uanset brugerens eget valg, som bevares til, hvis den slås til igen."""
+    return bool(get_setting("show_kommune"))
+
+
 def _limits():
     return float(get_setting("distance_nearby_km")), float(get_setting("distance_rounding_km"))
 

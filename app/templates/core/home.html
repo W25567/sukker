@@ -24,7 +24,11 @@
     <h2>Sådan kommer du i gang</h2>
     <ol class="steps">
       <li><strong>Opret en profil</strong><span>Et navn, fødselsdato, postnummer og e-mail er nok. Resten kan vente.</span></li>
-      <li><strong>Find nogen i nærheden</strong><span>Profiler sorteres efter omtrentlig afstand. Ingen ser din adresse.</span></li>
+      {% if distance_visible() %}
+        <li><strong>Find nogen i nærheden</strong><span>Profiler sorteres efter omtrentlig afstand. Ingen ser din adresse.</span></li>
+      {% else %}
+        <li><strong>Udforsk profiler</strong><span>De nyeste profiler først – ingen algoritme bestemmer, hvem du ser.</span></li>
+      {% endif %}
       <li><strong>Like og match</strong><span>Når I har liket hinanden, er der et match, og I kan skrive sammen.</span></li>
     </ol>
     <p><a href="{{ url_for('pages.how') }}">Læs mere om, hvordan det virker</a></p>
@@ -42,7 +46,11 @@
     <ul class="points">
       <li><strong>Kun for medlemmer.</strong> Besøgende og søgemaskiner kan hverken se profiler eller billeder.</li>
       <li><strong>Du styrer synligheden.</strong> Skjul felter, hold pause, eller vær kun synlig for dine matches.</li>
-      <li><strong>Omtrentlig afstand.</strong> Andre ser fx "I nærheden" eller "ca. 40 km" – aldrig dit postnummer.</li>
+      {% if distance_visible() %}
+        <li><strong>Omtrentlig afstand.</strong> Andre ser fx "I nærheden" eller "ca. 40 km" – aldrig dit postnummer.</li>
+      {% else %}
+        <li><strong>Ingen afstand eller adresse.</strong> Andre ser aldrig dit postnummer eller, hvor langt der er til dig.</li>
+      {% endif %}
       <li><strong>Blokér og anmeld.</strong> Sikkerhedsfunktioner er altid gratis, og anmeldelser behandles af mennesker.</li>
     </ul>
     <p><a href="{{ url_for('pages.safety') }}">Om tryghed og sikkerhed</a></p>

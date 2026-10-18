@@ -8,7 +8,7 @@ from ..auth.models import User, UserSession
 from ..core.settings import get_setting
 from ..core.timeutil import now_utc, today_local
 from ..extensions import db
-from ..location.distance import bucket_expression, label_for_bucket
+from ..location.distance import bucket_expression, distance_visible, kommune_visible, label_for_bucket
 from ..location.models import Kommune, KommuneDistance
 from ..matches.models import Like, Match
 from ..media.models import ProfileImage
@@ -81,7 +81,12 @@ def search(viewer, criteria=None, page=1, hide_liked=False, newest_first=False):
     `hide_liked` skjuler profiler, brugeren har liket, men som ikke har liket tilbage (et match vises stadig).
 
     Rækkefølgen er fast og forklares for brugeren: efter afstand og derefter nyeste profil. Med `newest_first`
-    (Premium) kommer de nyeste profiler først uanset afstand. Intet andet afgør, hvem man ser."""
+    (Premium) kommer de nyeste profiler først uanset afstand. Intet andet afgør, hvem man ser.
+
+    Har administrator slået afstand fra, sorteres altid efter nyeste profil, og afstand kan hverken ses eller
+    bruges som filter, så rækkefølgen ikke afslører den. Kommunen vises kun, når både administrator og
+    brugeren selv tillader det."""
+    show_distance, show_kommune = distance_visible(), kommune_visible()
     # Har brugeren vist usædvanlig interesse for en profil, vises afstanden til den altid som "I nærheden",
     # også når der sorteres og filtreres (moderation/signals.py).
     masked = select(DistanceMask.viewer_id).where(DistanceMask.viewer_id == viewer.id,
@@ -125,13 +130,13 @@ def search(viewer, criteria=None, page=1, hide_liked=False, newest_first=False):
         )
     )
 
-    # "Interesseret i" gælder altid og i begge retninger, også for Free. Det er brugerens grundvalg, ikke et
-    # Premium-filter: man ser kun de køn, man søger, og kun profiler, der søger ens eget køn (eller ikke har
-    # valgt), ser en. Så får ingen henvendelser fra et køn, de ikke søger. Køn er påkrævet og kan ikke skjules.
     hide_before = inactive_before()
     if hide_before is not None:
         query = query.where(User.last_active_at >= hide_before)
 
+    # "Interesseret i" gælder altid og i begge retninger, også for Free. Det er brugerens grundvalg, ikke et
+    # Premium-filter: man ser kun de køn, man søger, og kun profiler, der søger ens eget køn (eller ikke har
+    # valgt), ser en. Så får ingen henvendelser fra et køn, de ikke søger. Køn er påkrævet og kan ikke skjules.
     seeking = seeking_genders(viewer)
     if seeking:
         query = query.where(Profile.gender.in_(seeking))
@@ -141,7 +146,7 @@ def search(viewer, criteria=None, page=1, hide_liked=False, newest_first=False):
         query = query.where(or_(~liked, matched))
 
     if criteria:
-        if criteria["max_km"] is not None:
+        if criteria["max_km"] is not None and show_distance:
             query = query.where(bucket <= criteria["max_km"])
         if criteria["age_min"]:
             query = query.where(User.birthdate <= _years_ago(criteria["age_min"]))
@@ -157,7 +162,7 @@ def search(viewer, criteria=None, page=1, hide_liked=False, newest_first=False):
         if criteria["photos_only"]:
             query = query.where(primary_image.isnot(None))
 
-    order = ((User.created_at.desc(), User.id.desc()) if newest_first
+    order = ((User.created_at.desc(), User.id.desc()) if newest_first or not show_distance
              else (bucket.asc().nulls_last(), User.created_at.desc(), User.id.desc()))
     query = (
         query.order_by(*order)
@@ -171,8 +176,8 @@ def search(viewer, criteria=None, page=1, hide_liked=False, newest_first=False):
             handle=user.handle,
             display_name=user.display_name,
             age=age_of(user),
-            distance_label=label_for_bucket(row_bucket),
-            kommune=kommune_name if profile.show_kommune else None,
+            distance_label=label_for_bucket(row_bucket) if show_distance else None,
+            kommune=kommune_name if show_kommune and profile.show_kommune else None,
             presentation=_preview(profile.presentation) if "presentation" not in profile.hidden_fields else None,
             image_id=image_id,
             recently_active=bool(profile.show_activity and seen and seen >= recent_after),

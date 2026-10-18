@@ -92,8 +92,10 @@ class VisibilityForm(FlaskForm):
         for name in ("hidden_from_search", "matches_only", "show_kommune", "show_activity"):
             getattr(self, name).data = getattr(profile, name)
 
-    def save(self, profile):
+    def save(self, profile, include_kommune=True):
         for name in ("hidden_from_search", "matches_only", "show_kommune", "show_activity"):
+            if name == "show_kommune" and not include_kommune:
+                continue
             setattr(profile, name, bool(getattr(self, name).data))
 
 

@@ -16,7 +16,7 @@
           <tr><th scope="row">Oprette profil, se profiler og like</th><td>{{ mark(true) }}</td><td>{{ mark(true) }}</td><td>{{ mark(true) }}</td></tr>
           <tr><th scope="row">Få matches</th>
             <td>{% if match_limit %}Op til {{ match_limit }} ad gangen{% else %}{{ mark(true) }}{% endif %}</td><td>{{ mark(true) }}</td><td>{{ mark(true) }}</td></tr>
-          <tr><th scope="row">Sortere efter afstand</th><td>{{ mark(true) }}</td><td>{{ mark(true) }}</td><td>{{ mark(true) }}</td></tr>
+          {% if distance_visible() %}<tr><th scope="row">Sortere efter afstand</th><td>{{ mark(true) }}</td><td>{{ mark(true) }}</td><td>{{ mark(true) }}</td></tr>{% endif %}
           {% for feature, label, marks in rows %}
             <tr><th scope="row">{{ label }}</th>
               {% for value in marks %}

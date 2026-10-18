@@ -21,7 +21,7 @@
 
     <section class="card">
       <h2>Rettigheder pr. niveau</h2>
-      <table class="mod-table">
+      <div class="table-scroll"><table class="mod-table">
         <thead><tr><th>Funktion</th>{% for tier in tiers %}<th>{{ tier_labels[tier] }}</th>{% endfor %}<th>Slået fra</th></tr></thead>
         <tbody>
           {% for key, label in features.items() %}
@@ -34,7 +34,7 @@
             </tr>
           {% endfor %}
         </tbody>
-      </table>
+      </table></div>
       <p class="muted">"Slået fra" gælder for alle, også individuelle regler.</p>
     </section>
 

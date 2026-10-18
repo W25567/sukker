@@ -84,7 +84,7 @@ h2 { font-size: 1.15rem; margin: 0 0 0.75rem; }
 }
 .field input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
 .field.checkbox label { display: flex; gap: 10px; align-items: flex-start; font-weight: 400; }
-.field.checkbox input { width: 22px; height: 22px; margin-top: 1px; }
+.field.checkbox input { width: 22px; height: 22px; margin-top: 1px; flex-shrink: 0; }
 .hint { color: var(--muted); }
 .error { color: var(--error); font-weight: 600; }
 .has-error input { border-color: var(--error); }

@@ -156,6 +156,44 @@ def test_kommune_only_shown_when_allowed(app, outbox, geo):
     assert re.search(r"\bCby\b", html) and not re.search(r"\bDby\b", html)  # ordgrænser: ikke inde i tokens
 
 
+def test_admin_can_hide_distance(app, outbox, geo):
+    viewer = make_user(app, outbox, "Viewer", "1000")
+    make_user(app, outbox, "Nabo", "2000")
+    make_user(app, outbox, "Fjern", "4000")
+    make_user(app, outbox, "Midt", "3000", show_kommune=True)
+    set_setting("show_distance", False)
+    db.session.commit()
+
+    response = viewer.get("/udforsk?afstand=10")
+    html = response.get_data(as_text=True)
+    assert usernames(response) == ["Midt", "Fjern", "Nabo"]  # nyeste først, afstandsfilteret ignoreres
+    assert "I nærheden" not in html and " km" not in html and 'name="afstand"' not in html
+    assert 'name="sortering"' not in html and "Rækkefølge: nyeste profiler først." in html
+    assert re.search(r"\bCby\b", html)  # kommunen vises stadig
+    profile = viewer.get(f"/bruger/{h('Nabo')}").get_data(as_text=True)
+    assert "I nærheden" not in profile
+    assert "Omtrentlig afstand." not in app.test_client().get("/").get_data(as_text=True)
+
+
+def test_admin_can_hide_kommune(app, outbox, geo):
+    viewer = make_user(app, outbox, "Viewer", "1000")
+    midt = make_user(app, outbox, "Midt", "3000", show_kommune=True)
+    set_setting("show_kommune", False)
+    db.session.commit()
+
+    html = viewer.get("/udforsk").get_data(as_text=True)
+    assert not re.search(r"\bCby\b", html) and "ca. 40 km" in html  # afstanden vises stadig
+    assert not re.search(r"\bCby\b", viewer.get(f"/bruger/{h('Midt')}").get_data(as_text=True))
+    assert 'name="show_kommune"' not in midt.get("/profil").get_data(as_text=True)
+
+    midt.post("/profil/synlighed", data={"show_activity": "y"})  # brugerens eget valg bevares
+    user = db.session.scalar(select(User).where(User.display_name == "Midt"))
+    assert db.session.get(Profile, user.id).show_kommune is True
+    set_setting("show_kommune", True)
+    db.session.commit()
+    assert re.search(r"\bCby\b", viewer.get("/udforsk").get_data(as_text=True))
+
+
 def test_free_users_cannot_filter(app, outbox, geo):
     viewer = make_user(app, outbox, "Viewer", "1000")
     make_user(app, outbox, "Nabo", "2000")

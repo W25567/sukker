@@ -18,6 +18,10 @@ DEFAULTS = {
     "premium_match_limit": None,
     "premium_plus_match_limit": None,
     "premium_plus_daily_contacts": 20,
+    # Om brugerne kan se den omtrentlige afstand til hinanden, og om de kan vise deres kommune. Uden afstand
+    # sorteres Udforsk efter nyeste profil, og der kan ikke filtreres på afstand.
+    "show_distance": True,
+    "show_kommune": True,
     "distance_nearby_km": 10,
     "distance_rounding_km": 10,
     "data_retention_months": 12,
@@ -47,6 +51,8 @@ SETTING_META = [
     ("premium_match_limit", "Match-loft for Premium (tom = ubegrænset)", "optional_int"),
     ("premium_plus_match_limit", "Match-loft for Premium+ (tom = ubegrænset)", "optional_int"),
     ("premium_plus_daily_contacts", "Nye modtagere uden match pr. dag (Premium+)", "int"),
+    ("show_distance", "Brugerne kan se den omtrentlige afstand til hinanden (ellers sorteres efter nyeste)", "bool"),
+    ("show_kommune", "Brugerne kan vise deres kommune på profilen", "bool"),
     ("distance_nearby_km", "Afstand, der vises som \"I nærheden\" (km)", "int"),
     ("distance_rounding_km", "Afrunding af viste afstande (km)", "int"),
     ("data_retention_months", "Opbevaring af skjulte og slettede data (måneder)", "int"),

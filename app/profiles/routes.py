@@ -11,7 +11,7 @@ from ..auth.sessions import login_required, safe_next_url
 from ..core.timeutil import now_utc
 from ..extensions import PROFILE_VIEW_LIMIT, db, limiter, user_or_ip
 from ..moderation.signals import is_masked, record_visit, scraping_breach
-from ..location.distance import distance_label
+from ..location.distance import distance_label, distance_visible, kommune_visible
 from ..location.services import km_between, kommune_name
 from ..matches.queries import has_active_match
 from ..matches.services import has_liked
@@ -55,9 +55,10 @@ def _render_profile_view(user, *, preview):
         groups=visible_fields(profile, as_owner=False),
         zodiac=visible_zodiac(user, profile),
         preview=preview,
-        distance=None if preview else ("I nærheden" if is_masked(g.user.id, user.id)
-                                       else distance_label(km_between(g.user.kommune_code, user.kommune_code))),
-        kommune=kommune_name(user.kommune_code) if profile.show_kommune else None,
+        distance=None if preview or not distance_visible() else (
+            "I nærheden" if is_masked(g.user.id, user.id)
+            else distance_label(km_between(g.user.kommune_code, user.kommune_code))),
+        kommune=kommune_name(user.kommune_code) if kommune_visible() and profile.show_kommune else None,
         back_url=safe_next_url(request.args.get("fra")),
         liked=False if preview else has_liked(g.user.id, user.id),
         # Søger profilen et andet køn end den besøgendes, kan den besøgende ikke like (gensidig præference).
@@ -133,7 +134,8 @@ def edit():
 def visibility():
     form = VisibilityForm()
     if form.validate_on_submit():
-        form.save(get_or_create_profile(g.user))
+        # Er kommuner slået fra af administrator, vises feltet ikke, og brugerens tidligere valg bevares.
+        form.save(get_or_create_profile(g.user), include_kommune=kommune_visible())
         db.session.commit()
         flash("Dine synlighedsindstillinger er gemt.", "success")
     return redirect(url_for("profiles.me"))

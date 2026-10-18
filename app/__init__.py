@@ -137,9 +137,12 @@ def create_app(config_name=None):
         from .messaging.admin_threads import total_unread_for_admins
         from .support.services import open_count as open_bug_reports
         from .subscriptions.services import early_bird_open
+        from .location.distance import distance_visible, kommune_visible
 
         return {"footer_pages": lambda: visible_pages()[1:], "current_year": datetime.now(DANISH_TZ).year,
                 "early_bird_open": early_bird_open, "admin_unread_threads": total_unread_for_admins,
-                "admin_open_bug_reports": open_bug_reports}
+                "admin_open_bug_reports": open_bug_reports,
+                # Administrators valg af, om afstand og kommune vises (core/settings.py)
+                "distance_visible": distance_visible, "kommune_visible": kommune_visible}
 
     return app

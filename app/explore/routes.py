@@ -3,6 +3,7 @@ from flask import Blueprint, g, render_template, request
 from ..auth.sessions import login_required
 from ..core.features import has_feature
 from ..extensions import EXPLORE_LIMIT, db, limiter, user_or_ip
+from ..location.distance import distance_visible
 from ..moderation.signals import scraping_breach
 from ..profiles import choices
 from ..profiles.models import Profile
@@ -37,7 +38,11 @@ def index():
     criteria = form.criteria() if filters_allowed else None
     hide_liked = hide_liked_choice(g.user)
     # De nyeste profiler først er en Premium-funktion. Ellers er rækkefølgen altid afstand og derefter nyeste.
-    newest_allowed = has_feature(g.user, "search.newest_first")
+    # Har administrator slået afstand fra, er rækkefølgen altid nyeste først, og der er intet at vælge.
+    show_distance = distance_visible()
+    if criteria and not show_distance:
+        criteria["max_km"] = None
+    newest_allowed = show_distance and has_feature(g.user, "search.newest_first")
     newest_first = newest_allowed and request.args.get(SORT_PARAM) == NEWEST
     cards, has_more = search(g.user, criteria, page, hide_liked=hide_liked, newest_first=newest_first)
     seeking = choices.labels(choices.GENDERS_PLURAL, seeking_genders(g.user))
@@ -52,7 +57,8 @@ def index():
         cards=cards,
         form=form,
         filters_allowed=filters_allowed,
-        filters_active=filters_allowed and form.active or newest_first,
+        filters_active=bool(criteria and any(criteria.values())) or newest_first,
+        show_distance=show_distance,
         newest_allowed=newest_allowed,
         newest_first=newest_first,
         has_more=has_more,

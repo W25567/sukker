@@ -17,10 +17,10 @@
       <h2>Ingen algoritme bestemmer, hvem du ser</h2>
       <p>Mange datingapps lader en algoritme vurdere, hvor "attraktiv" du er, og bestemme, hvem du får lov at se – og hvem
         der får lov at se dig. Det gør vi ikke.</p>
-      <p>I Udforsk ser du profilerne efter afstand og derefter den nyeste profil. Intet andet afgør rækkefølgen: ikke hvor
-        mange likes en profil har fået, ikke hvor meget du har betalt, og ikke en skjult score. Med Premium kan du vælge at
-        se de nyeste profiler først. Du ser kun de køn, du er interesseret i, og kun profiler, der også er interesseret i
-        dit køn.</p>
+      <p>I Udforsk ser du profilerne {% if distance_visible() %}efter afstand og derefter den nyeste profil{% else %}med de
+        nyeste først{% endif %}. Intet andet afgør rækkefølgen: ikke hvor mange likes en profil har fået, ikke hvor meget du
+        har betalt, og ikke en skjult score.{% if distance_visible() %} Med Premium kan du vælge at se de nyeste profiler
+        først.{% endif %} Du ser kun de køn, du er interesseret i, og kun profiler, der også er interesseret i dit køn.</p>
       {% if inactive_months %}
       <p>Profiler, der ikke har været i brug i {{ inactive_months }} måneder, bliver skjult fra Udforsk, så du ikke bruger tid
         på at skrive til nogen, der for længst er gået. De kommer frem igen, så snart personen logger ind.</p>
@@ -66,8 +66,8 @@
     <section>
       <h2>Dit privatliv er ikke til salg</h2>
       <p>Vi tjener ikke penge på dine oplysninger, og vi bruger ingen sporings- eller markedsføringscookies. Profiler og
-        billeder kan kun ses af medlemmer, der er logget ind – aldrig af besøgende eller søgemaskiner. Andre ser kun en
-        omtrentlig afstand, aldrig din adresse, og du bestemmer selv, hvor meget du deler.
+        billeder kan kun ses af medlemmer, der er logget ind – aldrig af besøgende eller søgemaskiner. Andre ser
+        {% if distance_visible() %}kun en omtrentlig afstand, {% endif %}aldrig din adresse, og du bestemmer selv, hvor meget du deler.
         <a href="{{ url_for('pages.safety') }}">Læs om tryghed og sikkerhed</a>.</p>
     </section>
 

@@ -39,7 +39,7 @@
       <li><strong>For at beskytte brugerne</strong> mod misbrug, svindel, phishing og spam, behandle anmeldelser og sikre siden. Grundlaget er vores og brugernes legitime interesse i en tryg tjeneste (artikel 6, stk. 1, litra f) og de pligter, vi har efter lovgivningen (artikel 6, stk. 1, litra c).</li>
       <li><strong>Nødvendige e-mails</strong>, fx bekræftelse af e-mail og nulstilling af password, som en del af aftalen med dig.</li>
       <li><strong>Notifikationer</strong> om nyt på siden, fx en ny besked eller et nyt match, og en påmindelse, før en Premium-periode udløber. De er en del af tjenesten og ikke markedsføring. En notifikation pr. e-mail siger aldrig hvem eller hvad, kun at der er nyt, og du vælger selv under Konto, hvilke notifikationer du vil have på siden og pr. e-mail. Alle notifikationsmails kan afmeldes med ét klik.</li>
-      <li><strong>Udforsk</strong> viser profiler efter afstand og derefter den nyeste profil. Vi bruger ingen algoritme, der vurderer eller rangerer dig.{% if inactive_months %} Har du ikke været logget ind i {{ inactive_months }} måneder, skjules din profil fra Udforsk, indtil du logger ind igen. Du får en e-mail en uge før.{% endif %}</li>
+      <li><strong>Udforsk</strong> viser profiler {% if distance_visible() %}efter afstand og derefter den nyeste profil{% else %}med de nyeste først{% endif %}. Vi bruger ingen algoritme, der vurderer eller rangerer dig.{% if inactive_months %} Har du ikke været logget ind i {{ inactive_months }} måneder, skjules din profil fra Udforsk, indtil du logger ind igen. Du får en e-mail en uge før.{% endif %}</li>
       <li><strong>Statistik</strong> laves kun som samlede optællinger, fx antal nye profiler. Vi bruger ikke sporing eller profilering til markedsføring.</li>
     </ul>
 
@@ -48,7 +48,7 @@
 
     <h2>5. Hvem kan se dine oplysninger</h2>
     <ul>
-      <li><strong>Andre brugere</strong>, der er logget ind, kan se din profil efter dine egne synlighedsindstillinger. De ser aldrig din e-mail, din fødselsdato eller dit postnummer – kun din alder og en omtrentlig afstand. Besøgende uden login og søgemaskiner kan ikke se profiler eller billeder.</li>
+      <li><strong>Andre brugere</strong>, der er logget ind, kan se din profil efter dine egne synlighedsindstillinger. De ser aldrig din e-mail, din fødselsdato eller dit postnummer – kun din alder{% if distance_visible() %} og en omtrentlig afstand{% endif %}{% if kommune_visible() %} og, hvis du selv vælger det, din kommune{% endif %}. Besøgende uden login og søgemaskiner kan ikke se profiler eller billeder.</li>
       <li><strong>Leverandører</strong>, der hjælper os med drift, fx hosting og afsendelse af e-mails, behandler oplysninger på vores vegne efter en databehandleraftale. Behandler en leverandør oplysninger uden for EU/EØS, sker det kun med et gyldigt overførselsgrundlag, fx EU-Kommissionens standardkontraktbestemmelser.</li>
       <li><strong>Myndigheder</strong>, fx politiet, når vi har pligt til det, eller når det er nødvendigt for at anmelde et strafbart forhold.</li>
     </ul>
