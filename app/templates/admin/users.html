@@ -28,7 +28,7 @@
     <a class="chip" href="{{ url_for('admin.deleted_users') }}">Slettede profiler</a>
   </p>
 
-  {% set highlight = {'anmeldelser': 'reports', 'blokeringer': 'blocked_by', 'skjult': 'hidden_by', 'likes': 'likes_7', 'beskeder': 'messages_7'}.get(sort) %}
+  {% set highlight = {'signaler': 'signals', 'anmeldelser': 'reports', 'blokeringer': 'blocked_by', 'skjult': 'hidden_by', 'likes': 'likes_7', 'beskeder': 'messages_7'}.get(sort) %}
   {{ user_table(rows, highlight) }}
 
   <p class="pager">

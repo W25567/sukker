@@ -6,6 +6,7 @@ from ..matches.models import Like
 from ..matches.queries import has_active_match
 from ..matches.services import remove_match
 from ..media.access import remove_between as remove_private_access
+from ..moderation.signals import check_block_wave
 from .models import UserBlock, UserHide
 
 
@@ -22,6 +23,8 @@ def block(user, target):
         and_(Like.liker_id == target.id, Like.likee_id == user.id),
     )))
     remove_private_access(user.id, target.id)  # al adgang til private billeder fjernes i begge retninger
+    db.session.flush()
+    check_block_wave(target)  # blokeret af mange på kort tid giver et signal til moderatorerne (afsnit 8.4)
 
 
 def unblock(user, target_id):

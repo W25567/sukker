@@ -29,6 +29,7 @@
     <h2>Overblik</h2>
     <div class="stats">
       <div class="stat{% if signals.reports %} warn{% endif %}"><span class="stat-label">Anmeldt</span><span class="stat-value">{{ signals.reports }}</span></div>
+      <div class="stat{% if signals.signals %} warn{% endif %}"><span class="stat-label">Signaler (spam og misbrug)</span><span class="stat-value">{{ signals.signals }}</span></div>
       <div class="stat{% if signals.blocked_by %} warn{% endif %}"><span class="stat-label">Blokeret af</span><span class="stat-value">{{ signals.blocked_by }}</span></div>
       <div class="stat"><span class="stat-label">Skjult af</span><span class="stat-value">{{ signals.hidden_by }}</span></div>
       <div class="stat"><span class="stat-label">Likes, 7 dage</span><span class="stat-value">{{ signals.likes_7 }}</span></div>

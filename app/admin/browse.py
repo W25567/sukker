@@ -41,6 +41,8 @@ def signal_columns():
         "hidden_by": _count(UserHide.hider_id, UserHide.hidden_id == User.id),
         "likes_7": _count(Like.id, Like.liker_id == User.id, Like.created_at > week),
         "messages_7": _count(Message.id, Message.sender_id == User.id, Message.created_at > week),
+        # Den særskilte tæller for spam og misbrug (specifikation 8.4): automatiske signaler pr. konto.
+        "signals": _count(ModerationCase.id, ModerationCase.subject_user_id == User.id, ModerationCase.source == "signal"),
         "images": _count(ProfileImage.id, ProfileImage.user_id == User.id, ProfileImage.collection == "public", ProfileImage.deleted_at.is_(None), ProfileImage.moderated_at.is_(None)),
         "last_seen": select(func.max(UserSession.last_seen_at)).where(UserSession.user_id == User.id)
         .correlate(User).scalar_subquery(),
@@ -90,6 +92,7 @@ SORTS = {
     "skjult": "Skjult af flest",
     "likes": "Flest likes, 7 dage",
     "beskeder": "Flest beskeder, 7 dage",
+    "signaler": "Flest signaler",
 }
 
 
@@ -106,6 +109,7 @@ class Row:
     hidden_by: int
     likes_7: int
     messages_7: int
+    signals: int
     images: int
     last_seen: object
 
@@ -136,6 +140,7 @@ def user_list(filter_key="alle", q="", sort="nyeste", page=1):
         "skjult": [signals["hidden_by"].desc()],
         "likes": [signals["likes_7"].desc()],
         "beskeder": [signals["messages_7"].desc()],
+        "signaler": [signals["signals"].desc()],
     }[sort] + [User.id.desc()]
     total = db.session.scalar(select(func.count(User.id)).where(*conditions))
     query = (
@@ -189,6 +194,8 @@ def user_signals(user):
 
 # Tilsyn: hvem skiller sig ud? (titel, forklaring, sortering, signal)
 OVERSIGHT = [
+    ("Flest signaler", "Automatiske signaler om spam og misbrug: samme besked til mange, blokeret af mange, ny konto efter "
+                       "sletning eller mange profilvisninger.", "signaler", "signals"),
     ("Mest anmeldt", "Antal sager, hvor brugeren er den anmeldte.", "anmeldelser", "reports"),
     ("Blokeret af flest", "Mange blokeringer kan tyde på chikane eller spam.", "blokeringer", "blocked_by"),
     ("Skjult af flest", "Mange skjulninger kan tyde på upassende profil eller indhold.", "skjult", "hidden_by"),

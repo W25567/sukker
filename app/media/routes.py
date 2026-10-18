@@ -1,7 +1,8 @@
 from flask import Blueprint, abort, current_app, g, make_response, send_file
 
 from ..auth.models import User
-from ..extensions import db
+from ..extensions import IMAGE_LIMIT, db, limiter, user_or_ip
+from ..moderation.signals import scraping_breach
 from . import storage
 from .models import ProfileImage
 from .services import can_view_image
@@ -10,6 +11,7 @@ bp = Blueprint("media", __name__)
 
 
 @bp.route("/billede/<public_id>/<variant>.webp")
+@limiter.limit(IMAGE_LIMIT, key_func=user_or_ip, on_breach=scraping_breach)
 def image(public_id, variant):
     """Leverer et billede efter adgangskontrol (specifikation 4.3).
 

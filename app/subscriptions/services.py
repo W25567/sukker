@@ -94,6 +94,18 @@ def has_public_image(user_id):
     ) is not None
 
 
+def bonus_used_before(user, source):
+    """Har en tidligere, slettet konto med samme e-mail allerede fået denne bonus? Så kan man ikke slette sin
+    profil og oprette sig igen for at få ny Premium (specifikation 8.4)."""
+    from ..account.services import previous_accounts
+
+    previous = [u.id for u in previous_accounts(user.email, exclude_id=user.id)]
+    if not previous:
+        return False
+    return db.session.scalar(select(Subscription.id).where(
+        Subscription.user_id.in_(previous), Subscription.source == source).limit(1)) is not None
+
+
 def has_early_bird(user):
     return db.session.scalar(
         select(Subscription.id).where(Subscription.user_id == user.id, Subscription.source == "early_bird").limit(1)
@@ -104,7 +116,7 @@ def grant_early_bird(user):
     """Premium for livstid til en bekræftet bruger med mindst ét billede, mens kampagnen er åben.
     Gives højst én gang. Kaldes ved bekræftelse, ved upload af billede og på velkomstsiden."""
     if (user.is_test or not user.is_verified or has_early_bird(user) or not has_public_image(user.id)
-            or not early_bird_open()):
+            or not early_bird_open() or bonus_used_before(user, "early_bird")):
         return None
     subscription = Subscription(user_id=user.id, tier="premium", source="early_bird", starts_at=now_utc(),
                                 expires_at=LIFETIME_END, note="Tidlig fugl")
@@ -121,6 +133,6 @@ def grant_signup_bonus(user):
     already_granted = db.session.scalar(
         select(Subscription.id).where(Subscription.user_id == user.id, Subscription.source == "signup_bonus").limit(1)
     )
-    if already_granted:
+    if already_granted or bonus_used_before(user, "signup_bonus"):
         return None
     return grant_period(user, months, source="signup_bonus")

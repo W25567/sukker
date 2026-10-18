@@ -15,7 +15,12 @@ REASONS = [
     ("mindreaarig", "Mistanke om mindreårig bruger"),
     ("andet", "Andet"),
 ]
-REASON_LABELS = dict(REASONS) | {"klage": "Klage over afgørelse", "mistanke": "Moderators egen mistanke"}
+REASON_LABELS = dict(REASONS) | {"klage": "Klage over afgørelse", "mistanke": "Moderators egen mistanke",
+                                 # Automatiske signaler (moderation/signals.py)
+                                 "signal_konto": "Signal: ny konto med e-mail fra slettet konto",
+                                 "signal_spam": "Signal: samme besked til mange",
+                                 "signal_blokering": "Signal: blokeret af mange",
+                                 "signal_scraping": "Signal: mange profilvisninger"}
 HIGH_PRIORITY = {"falsk", "svindel", "mindreaarig"}
 
 STATUSES = [("open", "Åben"), ("in_progress", "Under behandling"), ("closed", "Afsluttet")]

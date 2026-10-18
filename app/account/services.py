@@ -28,6 +28,29 @@ from ..moderation.models import CaseEvent, ModerationCase
 SYSTEM = (0, "System")
 
 
+GMAIL_DOMAINS = {"gmail.com", "googlemail.com"}
+
+
+def normalize_email(email):
+    """Sammenligningsform af en e-mail, så varianter af samme postkasse genkendes: små bogstaver, uden +tilføjelse
+    og (for Gmail) uden punktummer i navnet. Bruges kun til at genkende tidligere konti, aldrig til login."""
+    local, _, domain = (email or "").strip().lower().partition("@")
+    local = local.split("+", 1)[0]
+    if domain in GMAIL_DOMAINS:
+        local, domain = local.replace(".", ""), "gmail.com"
+    return f"{local}@{domain}"
+
+
+def previous_accounts(email, exclude_id=None):
+    """Slettede konti, hvis e-mail er den samme postkasse som `email` (se normalize_email)."""
+    wanted = normalize_email(email)
+    domain = wanted.partition("@")[2]
+    domains = list(GMAIL_DOMAINS) if domain == "gmail.com" else [domain]
+    candidates = db.session.scalars(select(User).where(
+        User.status == "deleted", or_(*[User.deleted_email.ilike(f"%@{d}") for d in domains]))).all()
+    return [u for u in candidates if u.id != exclude_id and normalize_email(u.deleted_email) == wanted]
+
+
 def tombstone_email(user):
     return f"slettet-{user.id}@slettet.invalid"
 

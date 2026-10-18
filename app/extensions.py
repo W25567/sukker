@@ -20,3 +20,20 @@ db = SQLAlchemy(metadata=MetaData(schema=SCHEMA, naming_convention=NAMING_CONVEN
 migrate = Migrate(render_as_batch=False)  # batch-tilstand er kun nødvendig for SQLite
 csrf = CSRFProtect()
 limiter = Limiter(key_func=get_remote_address)
+
+
+def user_or_ip():
+    """Nøgle til hastighedsgrænser: den indloggede bruger, ellers IP-adressen. Så rammer en grænse den, der henter
+    meget, og ikke alle bag samme netværk."""
+    from flask import g
+
+    user = g.get("user")
+    return f"user:{user.id}" if user is not None else get_remote_address()
+
+
+# Beskyttelse mod scraping og masseindsamling af profiler (specifikation 13.1). Grænserne gælder pr. Gunicorn-
+# proces, fordi tællerne ligger i hukommelsen (RATELIMIT_STORAGE_URI); med flere processer er den reelle grænse
+# derfor nogle gange højere. Rammer en bruger grænsen, oprettes et signal til moderatorerne (moderation/signals.py).
+PROFILE_VIEW_LIMIT = "120 per hour;500 per day"
+EXPLORE_LIMIT = "240 per hour"
+IMAGE_LIMIT = "2000 per hour"

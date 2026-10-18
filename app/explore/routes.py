@@ -2,7 +2,8 @@ from flask import Blueprint, g, render_template, request
 
 from ..auth.sessions import login_required
 from ..core.features import has_feature
-from ..extensions import db
+from ..extensions import EXPLORE_LIMIT, db, limiter, user_or_ip
+from ..moderation.signals import scraping_breach
 from ..profiles import choices
 from ..profiles.models import Profile
 from .forms import FilterForm
@@ -25,6 +26,7 @@ def hide_liked_choice(user):
 
 @bp.route("/udforsk")
 @login_required
+@limiter.limit(EXPLORE_LIMIT, key_func=user_or_ip, on_breach=scraping_breach)
 def index():
     page = max(1, request.args.get("side", 1, type=int) or 1)
     form = FilterForm(request.args)

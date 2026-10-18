@@ -85,6 +85,11 @@ def verify_email(raw_token):
         return None
     if user.email_verified_at is None:
         user.email_verified_at = now_utc()
+        # En ny konto med en e-mail fra en slettet konto giver et signal til moderatorerne (specifikation 8.4).
+        from ..account.services import previous_accounts
+        from ..moderation.signals import check_new_account
+
+        check_new_account(user, previous_accounts(user.email, exclude_id=user.id))
         # Tidlige fugle får Premium for livstid. Er kampagnen lukket, gælder den almindelige Premium-periode.
         if grant_early_bird(user) is None:
             grant_signup_bonus(user)

@@ -20,6 +20,7 @@ from ..matches.services import active_matches
 from ..profiles.models import Profile
 from ..safety.queries import is_blocked_between
 from ..core.features import has_feature
+from ..moderation.signals import check_mass_message
 from .models import Conversation, ConversationMember, Message, MessageDeletion
 
 MAX_LENGTH = 2000
@@ -173,6 +174,8 @@ def send_message(user, conversation, body):
         member.archived = False  # en ny besked henter samtalen frem fra arkivet
         if member.user_id == user.id:
             member.last_read_at = now
+    db.session.flush()
+    check_mass_message(user, body)  # samme besked til mange giver et signal til moderatorerne (afsnit 8.4)
     return message
 
 

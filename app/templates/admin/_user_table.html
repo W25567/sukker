@@ -7,6 +7,7 @@
           <th>Bruger</th><th>Oprettet</th><th>Senest aktiv</th>
           <th class="num{% if highlight == 'images' %} hl{% endif %}" title="Offentlige billeder">Billeder</th>
           <th class="num{% if highlight == 'reports' %} hl{% endif %}">Anmeldt</th>
+          <th class="num{% if highlight == 'signals' %} hl{% endif %}" title="Automatiske signaler om spam og misbrug">Signaler</th>
           <th class="num{% if highlight == 'blocked_by' %} hl{% endif %}">Blokeret af</th>
           <th class="num{% if highlight == 'hidden_by' %} hl{% endif %}">Skjult af</th>
           <th class="num{% if highlight == 'likes_7' %} hl{% endif %}">Likes 7 d</th>
@@ -29,13 +30,14 @@
             <td>{{ r.last_seen | local_datetime if r.last_seen else '–' }}</td>
             <td class="num{% if not r.images %} warn{% endif %}">{{ r.images }}</td>
             <td class="num{% if r.reports %} warn{% endif %}">{{ r.reports }}</td>
+            <td class="num{% if r.signals %} warn{% endif %}">{{ r.signals }}</td>
             <td class="num{% if r.blocked_by %} warn{% endif %}">{{ r.blocked_by }}</td>
             <td class="num">{{ r.hidden_by }}</td>
             <td class="num">{{ r.likes_7 }}</td>
             <td class="num">{{ r.messages_7 }}</td>
           </tr>
         {% else %}
-          <tr><td colspan="9" class="muted">Ingen brugere.</td></tr>
+          <tr><td colspan="10" class="muted">Ingen brugere.</td></tr>
         {% endfor %}
       </tbody>
     </table>

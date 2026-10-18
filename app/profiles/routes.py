@@ -9,7 +9,8 @@ from ..auth.models import User, UserSession
 from ..explore.services import RECENTLY_ACTIVE
 from ..auth.sessions import login_required, safe_next_url
 from ..core.timeutil import now_utc
-from ..extensions import db, limiter
+from ..extensions import PROFILE_VIEW_LIMIT, db, limiter, user_or_ip
+from ..moderation.signals import scraping_breach
 from ..location.distance import distance_label
 from ..location.services import km_between, kommune_name
 from ..matches.queries import has_active_match
@@ -171,6 +172,7 @@ def preview():
 
 @bp.route("/bruger/<handle>")
 @login_required
+@limiter.limit(PROFILE_VIEW_LIMIT, key_func=user_or_ip, on_breach=scraping_breach)
 def view(handle):
     user = find_user_by_handle(handle)
     if user is None or not can_view_profile(g.user, user):
