@@ -114,6 +114,8 @@
     {# Midlertidige beskeder om nye beskeder og matches, nederst til højre. #}
     <div class="toasts" id="toasts" aria-live="polite" data-url="{{ url_for('core.notifications') }}"></div>
     <script src="{{ url_for('static', filename='js/notifications.js') }}" defer></script>
+    {# Bekræftelse før handlinger, der ikke kan fortrydes (formularer med data-confirm). #}
+    <script src="{{ url_for('static', filename='js/confirm.js') }}" defer></script>
   {% endif %}
 </body>
 </html>

@@ -97,8 +97,13 @@ def verify_email(token):
     db.session.commit()
     if user is None:
         return render_template("auth/link_invalid.html", purpose=tokens.VERIFY_EMAIL), 400
-    if g.user is not None:
+    if g.user is not None and g.user.id == user.id:
         flash("Din e-mail er bekræftet. Velkommen til Sukker.nu.", "success")
+        return redirect(url_for("explore.index"))
+    if g.user is not None:
+        # Linket hørte til en anden profil end den, der er logget ind her. Sig det, så banneret om at bekræfte
+        # e-mailen ikke ser ud til at være en fejl.
+        flash(f"E-mailen {user.email} er bekræftet. Du er logget ind som en anden profil ({g.user.email}).", "info")
         return redirect(url_for("explore.index"))
     # Linket logger ikke ind af sig selv, så et videresendt link ikke giver adgang til kontoen.
     # Brugeren sendes i stedet til login med e-mailen udfyldt.

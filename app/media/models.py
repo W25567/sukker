@@ -33,10 +33,19 @@ class ProfileImage(db.Model):
     # Slettede billeder skjules for alle, også ejeren, men filerne bevares til administration og moderation
     # i opbevaringsperioden (app/maintenance/retention.py). Kun administration og moderation kan se dem.
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Fjernet af en moderator eller administrator, fordi billedet er upassende (app/moderation/content.py).
+    # Ingen kan se billedet, heller ikke ejeren, som i stedet ser en markering og kan slette det.
+    moderated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    moderated_by_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+    moderation_reason: Mapped[str | None] = mapped_column(String(200))
 
     @property
     def is_deleted(self):
         return self.deleted_at is not None
+
+    @property
+    def is_removed(self):
+        return self.moderated_at is not None
 
 
 class PrivateAccess(db.Model):

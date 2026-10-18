@@ -18,8 +18,9 @@ def forget_image(image_id):
 from .processing import ImageRejected, process_upload, rotate
 
 MB = 1024 * 1024
-# Billeder, der ikke er slettet. Slettede billeder bevares til sporbarhed, men bruges ingen steder for brugerne.
-LIVE = ProfileImage.deleted_at.is_(None)
+# Billeder, der hverken er slettet eller fjernet af en moderator. De andre bevares til sporbarhed, men bruges
+# ingen steder for brugerne (et fjernet billede vises kun som en markering for ejeren).
+LIVE = (ProfileImage.deleted_at.is_(None)) & (ProfileImage.moderated_at.is_(None))
 
 
 def list_images(user_id, collection="public"):
@@ -77,8 +78,19 @@ def upload_image(user, data, collection="public"):
     return image
 
 
-def owned_image(user, public_id):
-    return db.session.scalar(select(ProfileImage).where(ProfileImage.public_id == public_id, ProfileImage.user_id == user.id, LIVE))
+def owned_image(user, public_id, include_removed=False):
+    """Brugerens eget billede. Et billede, en moderator har fjernet, kan kun findes til sletning (include_removed)."""
+    alive = ProfileImage.deleted_at.is_(None) if include_removed else LIVE
+    return db.session.scalar(select(ProfileImage).where(ProfileImage.public_id == public_id, ProfileImage.user_id == user.id, alive))
+
+
+def removed_images(user_id, collection):
+    """Billeder, en moderator har fjernet, og som ejeren ikke selv har slettet endnu."""
+    return db.session.scalars(
+        select(ProfileImage).where(ProfileImage.user_id == user_id, ProfileImage.collection == collection,
+                                   ProfileImage.moderated_at.isnot(None), ProfileImage.deleted_at.is_(None))
+        .order_by(ProfileImage.moderated_at)
+    ).all()
 
 
 def rotate_image(image, clockwise=True):
@@ -141,7 +153,10 @@ def undo_move(public_id, moved_to, old_collection):
 
 
 def delete_refusal(image):
-    """Brugeren kan ikke slette sit sidste offentlige billede, så længe der er private billeder."""
+    """Brugeren kan ikke slette sit sidste offentlige billede, så længe der er private billeder.
+    Et billede, en moderator har fjernet, kan altid slettes."""
+    if image.is_removed:
+        return None
     if image.collection == "public" and _count(image.user_id, ProfileImage.collection == "public") <= 1 \
             and _count(image.user_id, ProfileImage.collection == "private") > 0:
         return ("Du skal have mindst ét offentligt billede for at have private billeder. "
@@ -178,8 +193,8 @@ def can_view_image(viewer, image, owner):
     """
     from .access import has_image_access
 
-    if viewer is None or image.is_deleted:
-        return False
+    if viewer is None or image.is_deleted or image.is_removed:
+        return False  # heller ikke ejeren ser et billede, en moderator har fjernet
     if viewer.id == owner.id:
         return True
     if not can_view_profile(viewer, owner):

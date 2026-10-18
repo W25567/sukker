@@ -9,7 +9,7 @@ from ..auth.models import User
 from ..media import storage
 from ..media.models import ProfileImage
 from ..messaging import admin_threads
-from ..moderation import userdata
+from ..moderation import content, userdata
 from ..moderation.models import DECISIONS, REASON_LABELS, STATUSES
 from ..profiles.zodiac import zodiac_for
 from ..auth.roles import admin_required
@@ -157,6 +157,8 @@ def user(user_id):
                 expires = _parse_date(form["expires"]) if form.get("expires") else None
                 expires_at = datetime.combine(expires, time(23, 59, 59), tzinfo=DANISH_TZ) if expires else None
                 services.add_grant(g.user, target, form.get("feature"), form.get("granted") == "1", expires_at, note)
+            elif action == "remove_name":
+                content.remove_display_name(g.user, target, note)
             elif action == "remove_grant":
                 grant = db.session.get(UserFeatureGrant, int(form.get("grant_id") or 0))
                 if grant is None or grant.user_id != target.id:
@@ -166,9 +168,9 @@ def user(user_id):
                 abort(400)
             db.session.commit()
             flash("Ændringen er gemt og registreret i revisionsloggen.", "success")
-        except (services.AdminError, ValueError) as error:
+        except (services.AdminError, content.ContentError, ValueError) as error:
             db.session.rollback()
-            flash(str(error) if isinstance(error, services.AdminError) else "Ugyldig værdi.", "error")
+            flash(str(error) if isinstance(error, (services.AdminError, content.ContentError)) else "Ugyldig værdi.", "error")
         return redirect(url_for("admin.user", user_id=target.id))
 
     # Administratorer ser alle oplysninger om brugeren. Hver visning registreres i administrationsloggen.
@@ -199,7 +201,30 @@ def user(user_id):
         feature_labels=features.FEATURES,
         tier_labels=TIER_LABELS,
         form=FlaskForm(),
+        image_reasons=content.IMAGE_REASONS,
+        removed_name=content.REMOVED_NAME,
     )
+
+
+@bp.route("/bruger/<int:user_id>/billede/<public_id>/fjern", methods=["POST"])
+@admin_required
+def remove_image(user_id, public_id):
+    """Fjern et upassende billede (specifikation 11: moderere profilbilleder). Registreres i loggen og som sag."""
+    owner = db.session.get(User, user_id)
+    image = db.session.scalar(select(ProfileImage).where(ProfileImage.public_id == public_id, ProfileImage.user_id == user_id))
+    if owner is None or image is None:
+        abort(404)
+    if FlaskForm().validate_on_submit():
+        try:
+            case = content.remove_image(g.user, image, owner, request.form.get("reason"))
+            services.audit(g.user, "image_removed", owner, image=image.public_id, reason=image.moderation_reason,
+                           case_id=case.id)
+            db.session.commit()
+            flash(f"Billedet er fjernet og registreret i loggen (sag {case.id}).", "success")
+        except content.ContentError as error:
+            db.session.rollback()
+            flash(str(error), "error")
+    return redirect(url_for("admin.user", user_id=user_id) + "#billeder")
 
 
 @bp.route("/samtaler")

@@ -106,6 +106,13 @@ def _new_password_field(label="Password"):
     )
 
 
+def not_removed_marker(form, field):
+    from ..moderation.content import REMOVED_NAME
+
+    if (field.data or "").strip().lower() == REMOVED_NAME.lower():
+        raise ValidationError("Vælg et andet navn.")
+
+
 def _display_name_field():
     return StringField(
         "Vist navn",
@@ -114,6 +121,7 @@ def _display_name_field():
             DataRequired("Skriv det navn, andre skal se."),
             Regexp(DISPLAY_NAME_PATTERN, message="2-30 tegn: bogstaver, tal, mellemrum, punktum, bindestreg eller apostrof."),
             contact_info.validator,
+            not_removed_marker,
         ],
     )
 

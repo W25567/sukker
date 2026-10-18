@@ -20,7 +20,7 @@ from .models import PrivateAccess, PrivateAccessImage, ProfileImage
 
 REQUEST_COOLDOWN = timedelta(days=30)
 DAILY_REQUESTS = 20
-LIVE_PRIVATE = (ProfileImage.collection == "private", ProfileImage.deleted_at.is_(None))
+LIVE_PRIVATE = (ProfileImage.collection == "private", ProfileImage.deleted_at.is_(None), ProfileImage.moderated_at.is_(None))
 
 
 class AccessRefused(ValueError):

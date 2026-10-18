@@ -5,8 +5,12 @@
   <h1>Konto</h1>
   <div class="panels">
 
-  <section class="card">
+  <section class="card{% if current_user.name_removed_at %} notice-card{% endif %}">
     <h2>Dig</h2>
+    {% if current_user.name_removed_at %}
+      <p><strong>Dit visningsnavn er slettet af en moderator,</strong> fordi det ikke overholder
+        <a href="{{ url_for('pages.terms') }}">reglerne</a>. Andre ser nu "{{ current_user.display_name }}". Vælg et nyt navn herunder.</p>
+    {% endif %}
     <p>Logget ind som <strong>{{ current_user.email }}</strong>. <span class="muted">E-mailen vises aldrig for andre.</span></p>
     <form method="post" action="{{ url_for('account.change_display_name') }}" novalidate class="form">
       {{ name_form.hidden_tag() }}

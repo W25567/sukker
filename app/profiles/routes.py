@@ -78,6 +78,8 @@ def me():
         profile=profile,
         images=images,
         private_images=media.list_images(g.user.id, "private"),
+        removed_public=media.removed_images(g.user.id, "public"),
+        removed_private=media.removed_images(g.user.id, "private"),
         completeness=completeness(profile, len(images)),
         upload_form=UploadForm(),
         visibility_form=visibility_form,
@@ -215,7 +217,7 @@ def upload():
 def delete_image(public_id):
     """Sletning skal bekræftes, så et billede ikke slettes ved et uheld. Med JavaScript spørger browseren og
     sender bekraeft=1 (static/js/confirm.js). Ellers vises en side, hvor sletningen bekræftes."""
-    image = media.owned_image(g.user, public_id)
+    image = media.owned_image(g.user, public_id, include_removed=True)  # også et billede, en moderator har fjernet
     if image is None:
         abort(404)
     form = ActionForm()

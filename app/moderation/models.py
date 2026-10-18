@@ -25,6 +25,7 @@ DECISIONS = [
     ("restricted", "Kontoen begrænses"),
     ("suspended", "Kontoen suspenderes"),
     ("lifted", "Begrænsning eller suspendering ophæves"),
+    ("content_removed", "Indhold fjernet"),
 ]
 
 

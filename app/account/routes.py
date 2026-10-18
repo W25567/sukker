@@ -51,6 +51,7 @@ def change_display_name():
         return _render_account(status=400, name_form=form)
     if form.display_name.data != g.user.display_name:
         g.user.display_name = form.display_name.data
+        g.user.name_removed_at = None  # et nyt navn erstatter markeringen fra moderator
         db.session.commit()
         flash("Dit viste navn er ændret.", "success")
     return redirect(url_for("account.overview"))

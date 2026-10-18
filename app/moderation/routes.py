@@ -11,7 +11,7 @@ from ..extensions import db, limiter
 from ..media import storage
 from ..media.models import ProfileImage
 from .userdata import staff_label
-from . import services, userdata
+from . import content, services, userdata
 from .models import DECISIONS, REASON_LABELS, STATUSES, ModerationCase
 
 bp = Blueprint("moderation", __name__)
@@ -143,7 +143,7 @@ def user(user_id):
                                                       if c.subject_user_id == target.id]
         return render_template("moderation/access.html", target=target, form=form, new_case_form=NewCaseForm(prefix="ny"))
     return render_template("moderation/user.html", data=userdata.collect(target), reasons=REASON_LABELS,
-                           statuses=dict(STATUSES))
+                           statuses=dict(STATUSES), image_reasons=content.IMAGE_REASONS, form=FlaskForm())
 
 
 @bp.route("/moderation/bruger/<int:user_id>/adgang", methods=["POST"])
@@ -189,6 +189,25 @@ def user_image(user_id, public_id, variant):
     response = send_file(storage.file_path(image, variant), mimetype="image/webp")
     response.headers["Cache-Control"] = "private, no-store"
     return response
+
+
+@bp.route("/moderation/bruger/<int:user_id>/billede/<public_id>/fjern", methods=["POST"])
+@moderator_required
+def remove_image(user_id, public_id):
+    """Fjern et upassende billede, også uden en anmeldelse. Opretter en afsluttet sag med en kopi af billedet."""
+    owner = db.session.get(User, user_id)
+    image = db.session.scalar(select(ProfileImage).where(ProfileImage.public_id == public_id, ProfileImage.user_id == user_id))
+    if owner is None or image is None or not services.has_recent_access(g.user, user_id):
+        abort(404)
+    if FlaskForm().validate_on_submit():
+        try:
+            case = content.remove_image(g.user, image, owner, request.form.get("reason"))
+            db.session.commit()
+            flash(f"Billedet er fjernet. Sag {case.id} er oprettet og afsluttet.", "success")
+        except content.ContentError as error:
+            db.session.rollback()
+            flash(str(error), "error")
+    return redirect(url_for("moderation.user", user_id=user_id) + "#billeder")
 
 
 @bp.route("/moderation/log")

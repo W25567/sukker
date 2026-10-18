@@ -211,3 +211,37 @@ def test_account_shows_email_and_can_change_display_name(app, outbox, ctx):
     response = anna.post("/konto/navn", data={"display_name": "!"})
     assert response.status_code == 400 and "2-30 tegn" in response.get_data(as_text=True)
     assert user("Anna Sofie") is not None
+
+
+
+def test_verification_link_works_before_welcome_terms_and_gender(app, outbox, ctx):
+    """Bekræftelseslinket må ikke blive fanget af velkomstsiden, nye vilkår eller valg af køn."""
+    from app.auth.models import User
+    from app.profiles.models import Profile
+    from sqlalchemy import select
+
+    app.config["SHOW_WELCOME"] = True
+    try:
+        client = app.test_client()
+        register(client, email="spam@example.com")
+        login(client, email="spam@example.com")
+        account = db.session.scalar(select(User).where(User.email == "spam@example.com"))
+        account.terms_version = "gammel"
+        db.session.get(Profile, account.id).gender = None
+        db.session.commit()
+        response = client.get(link_from(outbox[-1], "/bekraeft-email/"))
+        assert response.status_code == 302 and "/velkommen" not in response.headers["Location"]
+        db.session.refresh(account)
+        assert account.email_verified_at is not None
+    finally:
+        app.config["SHOW_WELCOME"] = False
+
+
+def test_verification_while_logged_in_as_someone_else(app, outbox, ctx):
+    other = app.test_client()
+    register(other, display_name="Anden", email="anden@example.com")
+    other.get(link_from(outbox[-1], "/bekraeft-email/"))
+    login(other, email="anden@example.com")
+    register(app.test_client(), display_name="Ny", email="ny@example.com")
+    response = other.get(link_from(outbox[-1], "/bekraeft-email/"), follow_redirects=True)
+    assert "E-mailen ny@example.com er bekræftet. Du er logget ind som en anden profil" in response.get_data(as_text=True)

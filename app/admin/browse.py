@@ -41,7 +41,7 @@ def signal_columns():
         "hidden_by": _count(UserHide.hider_id, UserHide.hidden_id == User.id),
         "likes_7": _count(Like.id, Like.liker_id == User.id, Like.created_at > week),
         "messages_7": _count(Message.id, Message.sender_id == User.id, Message.created_at > week),
-        "images": _count(ProfileImage.id, ProfileImage.user_id == User.id, ProfileImage.collection == "public", ProfileImage.deleted_at.is_(None)),
+        "images": _count(ProfileImage.id, ProfileImage.user_id == User.id, ProfileImage.collection == "public", ProfileImage.deleted_at.is_(None), ProfileImage.moderated_at.is_(None)),
         "last_seen": select(func.max(UserSession.last_seen_at)).where(UserSession.user_id == User.id)
         .correlate(User).scalar_subquery(),
     }
@@ -55,7 +55,7 @@ def _active_tier(*conditions):
 
 def _filters():
     week, month = _since(7), _since(30)
-    no_image = ~exists().where(ProfileImage.user_id == User.id, ProfileImage.collection == "public", ProfileImage.deleted_at.is_(None))
+    no_image = ~exists().where(ProfileImage.user_id == User.id, ProfileImage.collection == "public", ProfileImage.deleted_at.is_(None), ProfileImage.moderated_at.is_(None))
     return {
         "alle": ("Alle", []),
         "nye7": ("Nye, 7 dage", [User.created_at > week]),

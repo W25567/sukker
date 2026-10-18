@@ -90,7 +90,7 @@ def has_public_image(user_id):
 
     return db.session.scalar(
         select(ProfileImage.id).where(ProfileImage.user_id == user_id, ProfileImage.collection == "public",
-                                    ProfileImage.deleted_at.is_(None)).limit(1)
+                                    ProfileImage.deleted_at.is_(None), ProfileImage.moderated_at.is_(None)).limit(1)
     ) is not None
 
 

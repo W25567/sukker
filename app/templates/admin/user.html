@@ -62,6 +62,18 @@
       </select>
       <button type="submit" class="button small">Skift rolle</button>
     </form>
+    {% if not target.is_deleted %}
+      {# Upassende visningsnavn: erstattes med en markering, indtil brugeren vælger et nyt. Det gamle navn står i loggen. #}
+      <form method="post" class="inline-form" data-confirm="Slet visningsnavnet &quot;{{ target.display_name }}&quot;? Brugeren skal vælge et nyt.">
+        {{ csrf() }}<input type="hidden" name="action" value="remove_name">
+        {% if target.display_name == removed_name %}
+          <span class="muted">Visningsnavnet er slettet{% if target.name_removed_at %} {{ target.name_removed_at | local_datetime }}{% endif %}. Brugeren har ikke valgt et nyt endnu.</span>
+        {% else %}
+          <input name="note" type="text" placeholder="Hvorfor er navnet upassende?" aria-label="Begrundelse">
+          <button type="submit" class="button small secondary danger">Slet visningsnavn</button>
+        {% endif %}
+      </form>
+    {% endif %}
   </section>
 
   <section class="card" id="profil">
@@ -81,14 +93,30 @@
   <section class="card" id="billeder">
     <h2>Billeder</h2>
     {% for collection, images in data.images.items() %}
-      <h3>{{ {'public': 'Offentlige', 'private': 'Privat arkiv', 'deleted': 'Slettet af brugeren'}[collection] }} ({{ images | length }})</h3>
+      <h3>{{ {'public': 'Offentlige', 'private': 'Privat arkiv', 'removed': 'Fjernet af moderator', 'deleted': 'Slettet af brugeren'}[collection] }} ({{ images | length }})</h3>
       {% if collection == 'deleted' and images %}<p class="muted">Bevares til sporbarhed og slettes endeligt efter opbevaringsperioden. Brugeren og andre kan ikke se dem.</p>{% endif %}
+      {% if collection == 'removed' and images %}<p class="muted">Kan ikke ses af nogen. Brugeren ser en markering og kan slette den.</p>{% endif %}
       <div class="image-grid">
         {% for image in images %}
-          <a class="admin-image{% if image.is_deleted %} is-deleted{% endif %}" href="{{ url_for('admin.user_image', user_id=target.id, public_id=image.public_id, variant='stor') }}" target="_blank" rel="noopener">
-            <img src="{{ url_for('admin.user_image', user_id=target.id, public_id=image.public_id, variant='lille') }}" alt="Billede {{ loop.index }}" loading="lazy">
-            {% if image.is_deleted %}<span class="badge">Slettet {{ image.deleted_at | local_datetime }}{{ ' · privat' if image.collection == 'private' }}</span>{% endif %}
-          </a>
+          <div>
+            <a class="admin-image{% if image.is_deleted or image.is_removed %} is-deleted{% endif %}" href="{{ url_for('admin.user_image', user_id=target.id, public_id=image.public_id, variant='stor') }}" target="_blank" rel="noopener">
+              <img src="{{ url_for('admin.user_image', user_id=target.id, public_id=image.public_id, variant='lille') }}" alt="Billede {{ loop.index }}" loading="lazy">
+              {% if image.is_deleted %}<span class="badge">Slettet {{ image.deleted_at | local_datetime }}{{ ' · privat' if image.collection == 'private' }}</span>
+              {% elif image.is_removed %}<span class="badge">Fjernet {{ image.moderated_at | local_datetime }}</span>{% endif %}
+            </a>
+            {% if image.is_removed %}<small class="muted">{{ image.moderation_reason }}</small>{% endif %}
+            {% if collection in ('public', 'private') %}
+              <form method="post" action="{{ url_for('admin.remove_image', user_id=target.id, public_id=image.public_id) }}" class="moderate-form"
+                    data-confirm="Fjerne billedet? Brugeren får besked, og ingen kan se det længere.">
+                {{ csrf() }}
+                <select name="reason" aria-label="Begrundelse" required>
+                  <option value="">Fjern som upassende …</option>
+                  {% for key, label in image_reasons %}<option value="{{ key }}">{{ label }}</option>{% endfor %}
+                </select>
+                <button type="submit" class="button small secondary danger">Fjern</button>
+              </form>
+            {% endif %}
+          </div>
         {% else %}<p class="muted">Ingen.</p>{% endfor %}
       </div>
     {% endfor %}

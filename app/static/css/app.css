@@ -170,6 +170,18 @@ fieldset.field legend { font-weight: 600; margin-bottom: 6px; }
 .upload-input:focus-visible + .upload-pick { outline: 3px solid var(--accent); outline-offset: 2px; }
 .upload-status:empty { display: none; }
 .badge-private { background: var(--text); color: var(--surface); }
+/* Billede fjernet af moderator: samme format som et billede, men uden billedet */
+.removed-image {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 10px;
+  aspect-ratio: 3 / 4; border-radius: 10px; text-align: center; font-size: 0.85rem; color: var(--error);
+  background: repeating-linear-gradient(135deg, var(--info-bg) 0 10px, var(--surface) 10px 20px); border: 2px dashed var(--error);
+}
+.removed-image svg { width: 34px; height: 34px; fill: currentColor; opacity: 0.8; }
+.removed-image span { color: var(--text); }
+.removed-image small { color: var(--muted); }
+.removed-note { margin: 0 0 12px; }
+.moderate-form { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.moderate-form select { min-width: 0; flex: 1; font: inherit; font-size: 0.8rem; padding: 4px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); }
 /* Drej billede: to runde knapper øverst til højre på billedet (animationer kan ikke drejes og har mærket der). */
 .image-rotate { position: absolute; right: 8px; top: 8px; display: flex; gap: 6px; }
 .icon-button {

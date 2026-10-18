@@ -12,6 +12,25 @@
     </div>
   {% endif %}
 {% endmacro %}
+{# Et billede, en moderator har fjernet: ligner et billede i oversigten, men selve billedet vises ikke – heller
+   ikke for ejeren. Ingen andre kan se det. Markeringen kan slettes. #}
+{% macro removed_tile(image) %}
+  <li>
+    <div class="removed-image" role="img" aria-label="Billede fjernet af moderator">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 2a8 8 0 0 1 6.32 12.9L7.1 5.68A7.96 7.96 0 0 1 12 4zM4 12c0-1.85.63-3.55 1.68-4.9l11.22 11.22A8 8 0 0 1 4 12z"/></svg>
+      <strong>Fjernet af moderator</strong>
+      <span>{{ image.moderation_reason or 'Brud på reglerne' }}</span>
+      <small>Kan ikke ses af andre</small>
+    </div>
+    <div class="image-actions">
+      <form method="post" action="{{ url_for('profiles.delete_image', public_id=image.public_id) }}"
+            data-confirm="Vil du slette billedet? Det kan ikke fortrydes.">
+        {{ action_form.hidden_tag() }}
+        <button type="submit" class="link danger">Slet</button>
+      </form>
+    </div>
+  </li>
+{% endmacro %}
 {% block content %}
   <div class="heading-row page-heading">
     <h1>Min profil</h1>
@@ -38,7 +57,12 @@
     {% elif is_early_bird and images | length == 1 %}
       <p class="muted">Du er tidlig fugl. Premium for livstid gælder, så længe du har mindst ét billede.</p>
     {% endif %}
-    {% if images %}
+    {% if removed_public or removed_private %}
+      <p class="notice-card card removed-note">Et eller flere af dine billeder er fjernet af en moderator, fordi de ikke overholder
+        <a href="{{ url_for('pages.terms') }}">reglerne</a>. Ingen andre kan se dem. Du kan slette markeringerne, og du kan
+        <a href="{{ url_for('messaging.admin_conversation') }}">skrive til Administrator</a>, hvis du er uenig.</p>
+    {% endif %}
+    {% if images or removed_public %}
       <ul class="image-grid">
         {% for image in images %}
           <li>
@@ -71,8 +95,10 @@
             </div>
           </li>
         {% endfor %}
+        {% for image in removed_public %}{{ removed_tile(image) }}{% endfor %}
       </ul>
-    {% else %}
+    {% endif %}
+    {% if not images %}
       <p class="muted">Du har ingen billeder endnu. Profiler med billeder får flere likes.</p>
     {% endif %}
 
@@ -80,7 +106,7 @@
       <h3 class="subheading">Privat album</h3>
       <a class="small-link" href="{{ url_for('profiles.private_access') }}">Styr adgang{% if access_requests %} <span class="nav-badge">{{ access_requests }}</span>{% endif %}</a>
     </div>
-    {% if private_images %}
+    {% if private_images or removed_private %}
       <ul class="image-grid">
         {% for image in private_images %}
           <li>
@@ -102,6 +128,7 @@
             </div>
           </li>
         {% endfor %}
+        {% for image in removed_private %}{{ removed_tile(image) }}{% endfor %}
       </ul>
       <p class="muted">Private billeder kan kun ses af dig og af dem, du giver adgang. Andre kan se, at du har et privat album, og bede om adgang.</p>
     {% elif images | length > 1 %}
@@ -120,7 +147,6 @@
       <button type="submit" class="button secondary upload-submit">Upload valgte billeder</button>
     </form>
     <script src="{{ url_for('static', filename='js/upload.js') }}" defer></script>
-    <script src="{{ url_for('static', filename='js/confirm.js') }}" defer></script>
   </section>
 
   <div class="panels">

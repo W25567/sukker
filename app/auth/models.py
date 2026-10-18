@@ -52,6 +52,8 @@ class User(db.Model):
     # E-mailen flyttes hertil, så adressen bliver fri til en ny konto.
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     deleted_email: Mapped[str | None] = mapped_column(String(254))
+    # Sat, når en administrator har slettet et upassende visningsnavn. Nulstilles, når brugeren vælger et nyt.
+    name_removed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     __table_args__ = (
         CheckConstraint("role IN ('user', 'moderator', 'admin')", name="role"),

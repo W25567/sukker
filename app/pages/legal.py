@@ -14,7 +14,9 @@ TERMS_VERSION = "2026-10-18.2"
 TERMS_EFFECTIVE = date(2026, 10, 18)
 
 # Det, man kan gøre uden at have accepteret de gældende vilkår: læse dem, logge ud eller slette sin profil.
-ALLOWED_WITHOUT_TERMS = {"static", "auth.logout", "account.delete", "core.health", "core.ready"}
+# Links fra mails (bekræft e-mail, nulstil password) skal også virke, før nye vilkår er accepteret.
+ALLOWED_WITHOUT_TERMS = {"static", "auth.logout", "account.delete", "core.health", "core.ready",
+                         "auth.verify_email", "auth.reset_password"}
 
 
 def needs_terms(user):

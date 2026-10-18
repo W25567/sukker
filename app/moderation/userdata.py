@@ -77,6 +77,10 @@ def collect(user):
         "profile": profile,
         "fields": [(f.label, display_value(profile, f), f.name in profile.hidden_fields) for f in FIELDS] if profile else [],
         "images": {"public": list_images(user.id, "public"), "private": list_images(user.id, "private"),
+                   # Fjernet af en moderator eller administrator, men ikke slettet af brugeren endnu.
+                   "removed": db.session.scalars(select(ProfileImage).where(
+                       ProfileImage.user_id == user.id, ProfileImage.moderated_at.isnot(None),
+                       ProfileImage.deleted_at.is_(None)).order_by(ProfileImage.moderated_at.desc())).all(),
                    # Billeder, brugeren selv har slettet. De bevares i opbevaringsperioden til sporbarhed.
                    "deleted": db.session.scalars(select(ProfileImage).where(
                        ProfileImage.user_id == user.id, ProfileImage.deleted_at.isnot(None))

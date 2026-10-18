@@ -5,8 +5,11 @@ livstid, mens kampagnen er åben. Den viser aldrig antal brugere (specifikation 
 """
 from flask import g, redirect, request, url_for
 
+# Links fra mails (bekræft e-mail, nulstil password) skal altid virke. Ellers kan fx velkomstsiden fange
+# bekræftelseslinket, så e-mailen aldrig bliver bekræftet. Bruges også af vilkårs-kontrollen (pages/legal.py).
+MAIL_LINKS = {"auth.verify_email", "auth.reset_password"}
 # Det, man kan uden at have set velkomsten: læse sider, logge ud, slette profilen og hente billeder.
-ALLOWED = {"static", "auth.logout", "account.delete", "core.health", "core.ready", "media.image"}
+ALLOWED = {"static", "auth.logout", "account.delete", "core.health", "core.ready", "media.image"} | MAIL_LINKS
 # Det, man kan uden at have valgt køn. Administration og moderation virker altid.
 GENDER_ALLOWED = {"profiles.choose_gender", "core.notifications", "account.overview", "auth.logout"}
 
