@@ -43,7 +43,12 @@
     <nav class="topnav">
       {% if current_user %}
         {% if current_user.is_moderator %}<a href="{{ url_for('moderation.queue') }}">Moderation</a>{% endif %}
-        {% if current_user.role == 'admin' %}<a href="{{ url_for('admin.dashboard') }}">Administration</a>{% endif %}
+        {% if current_user.role == 'admin' %}
+          {# Tallet viser samtaler med ulæste svar til Administrator og opdateres automatisk (notifications.js). #}
+          {% set staff_threads = admin_unread_threads() %}
+          <a href="{{ url_for('admin.threads') if staff_threads else url_for('admin.dashboard') }}">Administration<span class="nav-badge" data-badge="staff" data-label="ulæste svar til Administrator"{% if not staff_threads %} hidden{% endif %}
+             aria-label="{{ staff_threads }} ulæste svar til Administrator">{{ staff_threads }}</span></a>
+        {% endif %}
         <a href="{{ url_for('account.overview') }}">Konto</a>
         <form method="post" action="{{ url_for('auth.logout') }}" class="inline">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

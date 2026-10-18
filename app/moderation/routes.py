@@ -210,6 +210,25 @@ def remove_image(user_id, public_id):
     return redirect(url_for("moderation.user", user_id=user_id) + "#billeder")
 
 
+@bp.route("/moderation/bruger/<int:user_id>/billede/<public_id>/genskab", methods=["POST"])
+@moderator_required
+def restore_image(user_id, public_id):
+    """Genskab et fjernet billede, fx når brugeren har klaget og fået medhold."""
+    owner = db.session.get(User, user_id)
+    image = db.session.scalar(select(ProfileImage).where(ProfileImage.public_id == public_id, ProfileImage.user_id == user_id))
+    if owner is None or image is None or not services.has_recent_access(g.user, user_id):
+        abort(404)
+    if FlaskForm().validate_on_submit():
+        try:
+            content.restore_image(g.user, image, owner, request.form.get("note"))
+            db.session.commit()
+            flash("Billedet er genskabt, og brugeren har fået besked.", "success")
+        except content.ContentError as error:
+            db.session.rollback()
+            flash(str(error), "error")
+    return redirect(url_for("moderation.user", user_id=user_id) + "#billeder")
+
+
 @bp.route("/moderation/log")
 @admin_required
 def log():

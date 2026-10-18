@@ -62,12 +62,14 @@
     setBadge("messages", data.messages);
     setBadge("matches", data.matches);
     setBadge("requests", data.requests);
+    setBadge("staff", data.staff_threads || 0);
     var latest = {
       message: idOf(data.latest_message),
       admin: idOf(data.latest_admin),
       match: idOf(data.latest_match),
       request: idOf(data.latest_request),
-      grant: idOf(data.latest_grant)
+      grant: idOf(data.latest_grant),
+      staff: idOf(data.latest_staff)
     };
     if (known !== null && !inChat) {
       if (latest.match > known.match) {
@@ -85,6 +87,9 @@
       if (latest.grant > known.grant) {
         toast("Du har fået adgang til private billeder hos", data.latest_grant.name, data.latest_grant.url);
       }
+      if (latest.staff > known.staff) {
+        toast("Nyt svar til Administrator fra", data.latest_staff.name, data.latest_staff.url);
+      }
     }
     // Det højeste id huskes, så en ældre ulæst besked ikke vises igen, når en nyere bliver læst.
     known = known === null ? latest : {
@@ -92,7 +97,8 @@
       admin: Math.max(known.admin, latest.admin),
       match: Math.max(known.match, latest.match),
       request: Math.max(known.request, latest.request),
-      grant: Math.max(known.grant, latest.grant)
+      grant: Math.max(known.grant, latest.grant),
+      staff: Math.max(known.staff, latest.staff)
     };
   }
 

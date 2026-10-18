@@ -127,3 +127,60 @@ def test_admin_deletes_display_name(app, outbox, ctx):
     db.session.refresh(account)
     assert account.display_name == "Pænt navn" and account.name_removed_at is None
     assert make_user(app, outbox, "Bodil").post(f"/admin/bruger/{target_id}", data={"action": "remove_name"}).status_code == 404
+
+
+
+def test_restore_removed_image_after_appeal(app, outbox, ctx):
+    from app.moderation.models import CaseEvent
+
+    anna, bodil = make_user(app, outbox, "Anna"), make_user(app, outbox, "Bodil")
+    upload(anna, "red")
+    upload(anna, "blue")
+    first, second = images("Anna")
+    mod = moderator_with_access(app, outbox, "Anna")
+    mod.post(f"/moderation/bruger/{user('Anna').id}/billede/{second.public_id}/fjern", data={"reason": "upassende"})
+    page = mod.get(f"/moderation/bruger/{user('Anna').id}").get_data(as_text=True)
+    assert f"/moderation/bruger/{user('Anna').id}/billede/{second.public_id}/genskab" in page
+
+    mod.post(f"/moderation/bruger/{user('Anna').id}/billede/{second.public_id}/genskab", data={"note": "Medhold i klage"})
+    db.session.refresh(second)
+    assert not second.is_removed and second.position == 1
+    assert bodil.get(f"/billede/{second.public_id}/lille.webp").status_code == 200
+    assert "Fjernet af moderator" not in anna.get("/profil").get_data(as_text=True)
+    events = db.session.scalars(select(CaseEvent.text).where(CaseEvent.kind == "restored")).all()
+    assert events == ["Billedet er genskabt: Medhold i klage"]
+    assert "genskabt" in db.session.scalars(select(AdminMessage.body).order_by(AdminMessage.id.desc())).first()
+
+
+def test_admin_restores_but_not_after_user_deleted(app, outbox, ctx):
+    admin = make_user(app, outbox, "Hanne", role="admin")
+    anna = make_user(app, outbox, "Anna")
+    upload(anna, "red")
+    upload(anna, "blue")
+    first, second = images("Anna")
+    base = f"/admin/bruger/{user('Anna').id}/billede"
+    admin.post(f"{base}/{first.public_id}/fjern", data={"reason": "andet"})
+    admin.post(f"{base}/{first.public_id}/genskab", data={})
+    db.session.refresh(first)
+    assert not first.is_removed
+    assert db.session.scalar(select(AdminAuditLog).where(AdminAuditLog.action == "image_restored")) is not None
+
+    admin.post(f"{base}/{second.public_id}/fjern", data={"reason": "andet"})
+    anna.post(f"/profil/billeder/{second.public_id}/slet", data={"bekraeft": "1"})  # brugeren sletter markeringen
+    response = admin.post(f"{base}/{second.public_id}/genskab", data={}, follow_redirects=True)
+    assert "kan ikke genskabes" in response.get_data(as_text=True)
+
+
+def test_admin_is_notified_about_replies(app, outbox, ctx):
+    admin = make_user(app, outbox, "Hanne", role="admin")
+    anna = make_user(app, outbox, "Anna")
+    admin.post(f"/admin/bruger/{user('Anna').id}/samtale", data={"body": "Hej Anna"})
+    assert admin.get("/notifikationer").get_json()["staff_threads"] == 0
+    anna.post("/beskeder/administrator", data={"body": "Hej igen"})
+    data = admin.get("/notifikationer").get_json()
+    assert data["staff_threads"] == 1 and data["latest_staff"]["name"] == "Anna"
+    assert data["latest_staff"]["url"] == f"/admin/bruger/{user('Anna').id}/samtale"
+    assert 'data-badge="staff"' in admin.get("/udforsk").get_data(as_text=True)
+    assert anna.get("/notifikationer").get_json()["latest_staff"] is None  # kun for administratorer
+    admin.get(f"/admin/bruger/{user('Anna').id}/samtale")  # læst
+    assert admin.get("/notifikationer").get_json()["staff_threads"] == 0

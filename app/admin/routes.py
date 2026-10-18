@@ -226,6 +226,28 @@ def remove_image(user_id, public_id):
     return redirect(url_for("admin.user", user_id=user_id) + "#billeder")
 
 
+@bp.route("/bruger/<int:user_id>/billede/<public_id>/genskab", methods=["POST"])
+@admin_required
+def restore_image(user_id, public_id):
+    """Genskab et fjernet billede, fx når brugeren har klaget og fået medhold. Registreres i loggen."""
+    owner = db.session.get(User, user_id)
+    image = db.session.scalar(select(ProfileImage).where(ProfileImage.public_id == public_id, ProfileImage.user_id == user_id))
+    if owner is None or image is None:
+        abort(404)
+    if FlaskForm().validate_on_submit():
+        try:
+            note = request.form.get("note")
+            case = content.restore_image(g.user, image, owner, note)
+            services.audit(g.user, "image_restored", owner, image=image.public_id, case_id=case.id if case else None,
+                           note=(note or "").strip() or None)
+            db.session.commit()
+            flash("Billedet er genskabt og registreret i loggen. Brugeren har fået besked.", "success")
+        except content.ContentError as error:
+            db.session.rollback()
+            flash(str(error), "error")
+    return redirect(url_for("admin.user", user_id=user_id) + "#billeder")
+
+
 @bp.route("/samtaler")
 @admin_required
 def threads():

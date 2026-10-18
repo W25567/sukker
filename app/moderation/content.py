@@ -69,6 +69,43 @@ def remove_image(actor, image, owner, reason):
     return case
 
 
+def removal_case(image):
+    """Sagen, hvor billedet blev fjernet (afgørelsen content_removed med billedet som bevis)."""
+    from sqlalchemy import select
+
+    from .models import ModerationCase
+
+    cases = db.session.scalars(select(ModerationCase).where(
+        ModerationCase.subject_user_id == image.user_id, ModerationCase.decision == "content_removed")
+        .order_by(ModerationCase.created_at.desc())).all()
+    return next((c for c in cases if image.public_id in (c.evidence or {}).get("images", [])), None)
+
+
+def restore_image(actor, image, owner, note=None):
+    """Genskaber et billede, en moderator har fjernet, fx når brugeren har klaget og fået medhold. Billedet lægges
+    sidst i sin samling. Et billede, brugeren selv har slettet, kan ikke genskabes."""
+    from sqlalchemy import func, select
+
+    from ..media.models import ProfileImage
+
+    if not image.is_removed:
+        raise ContentError("Billedet er ikke fjernet.")
+    if image.is_deleted:
+        raise ContentError("Brugeren har selv slettet billedet, så det kan ikke genskabes.")
+    image.moderated_at, image.moderated_by_id, image.moderation_reason = None, None, None
+    image.position = db.session.scalar(
+        select(func.coalesce(func.max(ProfileImage.position) + 1, 0)).where(
+            ProfileImage.user_id == owner.id, ProfileImage.collection == image.collection,
+            ProfileImage.deleted_at.is_(None), ProfileImage.moderated_at.is_(None), ProfileImage.id != image.id))
+    note = (note or "").strip()
+    case = removal_case(image)
+    if case is not None:
+        services.add_event(case, actor, "restored", "Billedet er genskabt" + (f": {note}" if note else ""))
+    _notify(actor, owner, "Et billede, der var fjernet fra din profil, er genskabt efter en ny vurdering. Det kan igen "
+                          "ses på din profil. Vi beklager.")
+    return case
+
+
 def remove_display_name(admin, user, note=None):
     """Sletter et upassende visningsnavn. Det oprindelige navn står i administrationsloggen."""
     from ..admin.services import audit

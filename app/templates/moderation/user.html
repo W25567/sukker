@@ -45,6 +45,14 @@
               {% if image.is_removed %}<span class="badge">Fjernet {{ image.moderated_at | local_datetime }}</span>{% endif %}
             </a>
             {% if image.is_removed %}<small class="muted">{{ image.moderation_reason }}</small>{% endif %}
+            {% if collection == 'removed' %}
+              <form method="post" action="{{ url_for('moderation.restore_image', user_id=u.id, public_id=image.public_id) }}" class="moderate-form"
+                    data-confirm="Genskabe billedet? Det bliver synligt igen, og brugeren får besked.">
+                {{ form.hidden_tag() }}
+                <input name="note" type="text" placeholder="Fx: medhold i klage" aria-label="Begrundelse">
+                <button type="submit" class="button small secondary">Genskab</button>
+              </form>
+            {% endif %}
             {% if collection in ('public', 'private') %}
               <form method="post" action="{{ url_for('moderation.remove_image', user_id=u.id, public_id=image.public_id) }}" class="moderate-form"
                     data-confirm="Fjerne billedet? Brugeren får besked, og ingen kan se det længere.">

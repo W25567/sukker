@@ -137,7 +137,7 @@ AUDIT_LABELS = {
     "feature_grant_removed": "Fjernede regel", "setting": "Ændrede indstilling", "tier_features": "Ændrede rettigheder",
     "disabled_features": "Slog funktioner fra", "test_account": "Testkonto",
     "account_deleted": "Brugeren slettede sin profil", "account_purged": "Data slettet endeligt",
-    "image_removed": "Fjernede billede", "name_removed": "Slettede visningsnavn",
+    "image_removed": "Fjernede billede", "image_restored": "Genskabte billede", "name_removed": "Slettede visningsnavn",
 }
 
 

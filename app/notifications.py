@@ -76,6 +76,28 @@ def _latest_unread_admin_message(user):
     return db.session.scalar(query.order_by(AdminMessage.id.desc()).limit(1))
 
 
+def _admin_replies(url_for):
+    """(antal samtaler med ulæste svar til Administrator, det nyeste svar) til administratorerne."""
+    from .messaging.admin_threads import total_unread_for_admins
+    from .messaging.models import AdminThread
+    from .moderation.userdata import staff_label
+
+    row = db.session.execute(
+        select(AdminMessage, User)
+        .join(AdminThread, AdminThread.user_id == AdminMessage.user_id)
+        .join(User, User.id == AdminMessage.user_id)
+        .where(AdminMessage.from_admin.is_(False),
+               or_(AdminThread.admin_last_read_at.is_(None), AdminMessage.created_at > AdminThread.admin_last_read_at))
+        .order_by(AdminMessage.id.desc()).limit(1)
+    ).first()
+    latest = None
+    if row is not None:
+        message, sender = row
+        latest = {"key": f"s{message.id}", "id": message.id, "name": staff_label(sender),
+                  "url": url_for("admin.user_thread", user_id=sender.id)}
+    return total_unread_for_admins(), latest
+
+
 def summary(user, url_for):
     """Tallene til menuen og den nyeste ulæste besked og det nyeste nye match. Navne og links vises kun i
     brugerens egen browser. Beskedteksten sendes ikke med, så den ikke dukker op på en delt skærm."""
@@ -119,10 +141,16 @@ def summary(user, url_for):
         # Tidspunktet bruges som id, så også en ændret adgang (fx flere billeder) giver en ny besked.
         latest_grant = {"id": int(decided_at.timestamp() * 1000), "name": owner.display_name,
                         "url": url_for("profiles.view", handle=owner.handle) + "#privat"}
+    staff_threads, latest_staff = 0, None
+    if user.role == "admin":
+        staff_threads, latest_staff = _admin_replies(url_for)
     return {
         "messages": total_unread(user),
         "matches": len(matches),
         "requests": len(requests),
+        # Kun for administratorer: ulæste svar fra brugere i samtaler med "Administrator".
+        "staff_threads": staff_threads,
+        "latest_staff": latest_staff,
         "latest_message": latest_message,
         "latest_admin": latest_admin,
         "latest_match": latest_match,
