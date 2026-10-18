@@ -47,7 +47,7 @@ def test_request_and_approve_whole_album(app, outbox, ctx):
     anna, public, private = owner_with_private(app, outbox)
     bodil = make_user(app, outbox, "Bodil")
     page = bodil.get(f"/bruger/{h('Anna')}").get_data(as_text=True)
-    assert "Privat album" in page and "2 private billeder" in page and "Anmod om adgang" in page
+    assert "2 private" in page and "Anmod om adgang" in page
     assert all(image.public_id not in page for image in private)  # intet afsløres om de private billeder
     assert all(status(bodil, image) == 404 for image in private)
 
@@ -63,7 +63,7 @@ def test_request_and_approve_whole_album(app, outbox, ctx):
     assert access().status == "approved" and access().scope == "all"
     assert all(status(bodil, image) == 200 for image in private)
     page = bodil.get(f"/bruger/{h('Anna')}").get_data(as_text=True)
-    assert all(image.public_id in page for image in private) and "Privat" in page
+    assert all(image.public_id in page for image in private) and 'class="pv-badge"' in page  # låsemærke
     assert bodil.get("/notifikationer").get_json()["latest_grant"]["name"] == "Anna"
 
     upload(anna, "black")  # nye billeder i albummet er også omfattet af "hele albummet"
@@ -84,7 +84,7 @@ def test_selected_images_only(app, outbox, ctx):
     anna.post(f"/profil/privat-adgang/{access().id}", data={"scope": "selected", "image": [str(private[0].id)]})
     assert access().scope == "selected"
     assert status(bodil, private[0]) == 200 and status(bodil, private[1]) == 404
-    assert "1 af 2 private billeder" in bodil.get(f"/bruger/{h('Anna')}").get_data(as_text=True)
+    assert "Adgang til 1 af 2 private billeder" in bodil.get(f"/bruger/{h('Anna')}").get_data(as_text=True)
 
     # Et billede, der bliver offentligt, forsvinder fra udvalget; gøres det privat igen, er det ikke med
     anna.post(f"/profil/billeder/{private[0].public_id}/offentlig")
@@ -101,7 +101,7 @@ def test_revoke_and_cooldown(app, outbox, ctx):
     assert access().status == "revoked" and status(bodil, private[0]) == 404
 
     page = bodil.get(f"/bruger/{h('Anna')}").get_data(as_text=True)
-    assert "Du kan anmode igen efter" in page and "Anmod om adgang" not in page
+    assert "Du kan anmode om adgang igen efter" in page and "Anmod om adgang</button>" not in page
     response = bodil.post(f"/bruger/{h('Anna')}/privat/anmod", follow_redirects=True)
     assert "Du kan anmode igen efter" in response.get_data(as_text=True)
     assert access().status == "revoked"
@@ -144,18 +144,20 @@ def test_no_album_no_button_and_preview(app, outbox, ctx):
     anna = make_user(app, outbox, "Anna")
     upload(anna, "red")
     bodil = make_user(app, outbox, "Bodil")
-    assert "Privat album" not in bodil.get(f"/bruger/{h('Anna')}").get_data(as_text=True)
+    page = bodil.get(f"/bruger/{h('Anna')}").get_data(as_text=True)
+    assert "Anmod om adgang" not in page and "pv-locked" not in page
     response = bodil.post(f"/bruger/{h('Anna')}/privat/anmod", follow_redirects=True)
     assert "ingen private billeder" in response.get_data(as_text=True)
 
 
-def test_mosaic_layout(app, outbox, ctx):
+def test_gallery_layout(app, outbox, ctx):
     anna = make_user(app, outbox, "Anna")
     bodil = make_user(app, outbox, "Bodil")
     upload(anna, "red")
-    assert 'class="mosaic count-1"' in bodil.get(f"/bruger/{h('Anna')}").get_data(as_text=True)
+    page = bodil.get(f"/bruger/{h('Anna')}").get_data(as_text=True)
+    assert 'class="pv-hero"' in page and 'class="pv-thumbs"' not in page  # ét billede: kun hovedbilledet
     for color in ("green", "blue", "yellow"):
         upload(anna, color)
     page = bodil.get(f"/bruger/{h('Anna')}").get_data(as_text=True)
-    assert 'class="mosaic count-3"' in page and '<span class="tile-more">+1</span>' in page
+    assert page.count('class="pv-thumb"') == 3 and "1 / 4" in page
     assert page.count("<li data-src=") == 4 and 'class="lightbox"' in page

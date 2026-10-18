@@ -3,7 +3,7 @@
 (function () {
   "use strict";
 
-  var mosaic = document.querySelector("[data-gallery]");
+  var mosaic = document.querySelector(".pv-media");
   var dialog = document.querySelector("dialog.lightbox");
   if (!mosaic || !dialog || typeof dialog.showModal !== "function") {
     return;
@@ -28,7 +28,7 @@
   }
 
   mosaic.addEventListener("click", function (event) {
-    var tile = event.target.closest(".tile");
+    var tile = event.target.closest("a[data-index]");
     if (!tile) {
       return;
     }
