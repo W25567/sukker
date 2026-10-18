@@ -52,7 +52,7 @@ def test_zodiac_is_shown_by_default_and_can_be_hidden(app, outbox, ctx):
     assert "Løven" in bodil.get(f"/bruger/{h('Anna')}").get_data(as_text=True)
     assert "Løven" in anna.get("/profil/rediger").get_data(as_text=True)
 
-    anna.post("/profil/rediger", data={"hidden_fields": ["zodiac"]})
+    anna.post("/profil/rediger", data={"gender": "kvinde", "hidden_fields": ["zodiac"]})
     assert "zodiac" in db.session.get(Profile, user("Anna").id).hidden_fields
     assert "Løven" not in bodil.get(f"/bruger/{h('Anna')}").get_data(as_text=True)
     assert "Løven" not in anna.get("/profil/forhaandsvisning").get_data(as_text=True)
@@ -66,7 +66,7 @@ def test_admin_sees_everything_and_the_view_is_logged(app, outbox, ctx):
     admin = make_user(app, outbox, "Admin", role="admin")
     anna = make_user(app, outbox, "Anna", birthdate="1990-08-01")
     bodil = make_user(app, outbox, "Bodil")
-    anna.post("/profil/rediger", data={"presentation": "Hemmelig tekst", "hidden_fields": ["presentation"]})
+    anna.post("/profil/rediger", data={"gender": "kvinde", "presentation": "Hemmelig tekst", "hidden_fields": ["presentation"]})
     buffer = io.BytesIO()
     Image.new("RGB", (300, 300), "red").save(buffer, "JPEG")
     anna.post("/profil/billeder", data={"image": (io.BytesIO(buffer.getvalue()), "a.jpg")}, content_type="multipart/form-data")

@@ -7,6 +7,8 @@ from flask import g, redirect, request, url_for
 
 # Det, man kan uden at have set velkomsten: læse sider, logge ud, slette profilen og hente billeder.
 ALLOWED = {"static", "auth.logout", "account.delete", "core.health", "core.ready", "media.image"}
+# Det, man kan uden at have valgt køn. Administration og moderation virker altid.
+GENDER_ALLOWED = {"profiles.choose_gender", "core.notifications", "account.overview", "auth.logout"}
 
 
 def needs_welcome(user):
@@ -24,3 +26,19 @@ def init_app(app):
         if endpoint in ALLOWED or endpoint.startswith("pages."):
             return None
         return redirect(url_for("pages.welcome", next=request.full_path.rstrip("?")))
+
+    @app.before_request
+    def require_gender():
+        """Profiler fra før køn blev påkrævet skal vælge køn, før de bruger siden. Kønnet bruges til at
+        matche i begge retninger (explore.services og matches.services)."""
+        user = g.get("user")
+        if user is None or request.method != "GET":
+            return None
+        endpoint = request.endpoint or ""
+        if endpoint in ALLOWED | GENDER_ALLOWED or endpoint.startswith(("pages.", "admin.", "moderation.")):
+            return None
+        from ..profiles.services import needs_gender
+
+        if needs_gender(user):
+            return redirect(url_for("profiles.choose_gender", next=request.full_path.rstrip("?")))
+        return None

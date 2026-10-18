@@ -37,6 +37,8 @@ FIELDS = [
 ]
 
 FIELD_NAMES = {f.name for f in FIELDS}
+# Felter, der altid vises: kønnet bruges til at matche, så det giver ikke mening at skjule det.
+NOT_HIDEABLE = {"gender"}
 
 
 def display_value(profile, field):
@@ -67,7 +69,7 @@ def visible_fields(profile, *, as_owner):
     """Udfyldte felter grupperet til visning. Andre ser ikke felter, ejeren har skjult."""
     groups = {g: [] for g in GROUPS}
     for field in FIELDS:
-        if not as_owner and field.name in profile.hidden_fields:
+        if not as_owner and field.name in profile.hidden_fields and field.name not in NOT_HIDEABLE:
             continue
         value = display_value(profile, field)
         if value:

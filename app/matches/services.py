@@ -10,7 +10,7 @@ from ..core.timeutil import now_utc
 from ..extensions import db
 from ..messaging.models import Conversation
 from ..profiles.models import Profile
-from ..profiles.services import can_view_profile
+from ..profiles.services import can_view_profile, is_interested_in
 from ..safety.queries import blocked_either_way
 from ..subscriptions.services import effective_tier
 from .models import Like, Match, MatchEvent
@@ -57,6 +57,10 @@ def like(liker, target):
         raise LikeRefused("Din profil er på pause. Aktivér den for at give likes.")
     if not can_view_profile(liker, target):
         raise LikeRefused("Profilen findes ikke.")
+    # Søger profilen kun bestemte køn, kan kun de køn like den (gensidig præference). Et like tilbage til
+    # en, der allerede har liket en, er altid muligt, så et match aldrig blokeres af ens egne valg.
+    if not is_interested_in(target, liker) and not has_liked(target.id, liker.id):
+        raise LikeRefused("Profilen søger ikke kontakt med dit køn.")
 
     _lock_pair(liker.id, target.id)
     if has_liked(liker.id, target.id):
@@ -140,12 +144,19 @@ def active_matches(user):
 
 
 def received_likes(user):
-    """Likes til brugeren, som brugeren ikke selv har gengældt endnu, nyeste først."""
+    """Likes til brugeren, som brugeren ikke selv har gengældt endnu, nyeste først. Likes fra et køn, brugeren
+    ikke søger (fx givet før valget under "Interesseret i"), vises ikke, så de ikke giver støj."""
     own_like = aliased(Like)
     returned = select(own_like.id).where(own_like.liker_id == user.id, own_like.likee_id == Like.liker_id).exists()
-    return db.session.execute(
+    query = (
         select(Like, User)
         .join(User, User.id == Like.liker_id)
         .where(Like.likee_id == user.id, ~returned, User.status == "active", ~blocked_either_way(user.id, User.id))
         .order_by(Like.created_at.desc())
-    ).all()
+    )
+    profile = db.session.get(Profile, user.id)
+    if profile is not None and profile.seeking_genders:
+        liker_profile = aliased(Profile)
+        query = query.join(liker_profile, liker_profile.user_id == User.id).where(
+            liker_profile.gender.in_(list(profile.seeking_genders)))
+    return db.session.execute(query).all()

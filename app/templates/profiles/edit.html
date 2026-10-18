@@ -24,7 +24,7 @@
     {# Ekstra gemmeknap øverst på desktop. Den hører til formularen nedenfor (form="profile-form"). #}
     <button type="submit" form="profile-form" class="button small desktop-only">Gem profil</button>
   </div>
-  <p class="muted">Alt er valgfrit. Udfyld det, du har lyst til at dele. Skriv ikke e-mail, links eller telefonnummer –
+  <p class="muted">Alt undtagen køn er valgfrit. Udfyld det, du har lyst til at dele. Skriv ikke e-mail, links eller telefonnummer –
     det er imod <a href="{{ url_for('pages.terms') }}">brugervilkårene</a>.</p>
   <form method="post" novalidate class="form" id="profile-form">
     {{ form.hidden_tag() }}
@@ -38,7 +38,7 @@
       </div>
       {{ hide_toggle('zodiac') }}
       {{ field(form.presentation) }}{{ hide_toggle('presentation') }}
-      {{ field(form.gender) }}{{ hide_toggle('gender') }}
+      {{ field(form.gender) }}
       {{ checkboxes(form.seeking_genders) }}{{ hide_toggle('seeking_genders') }}
       {{ field(form.height_cm) }}{{ hide_toggle('height_cm') }}
       {{ field(form.occupation) }}{{ hide_toggle('occupation') }}

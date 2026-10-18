@@ -42,6 +42,26 @@ def can_view_profile(viewer, owner):
     return True
 
 
+def needs_gender(user):
+    """Profiler fra før køn blev påkrævet ved oprettelse."""
+    profile = db.session.get(Profile, user.id)
+    return profile is None or not profile.gender
+
+
+def welcomes_gender(profile, gender):
+    """Vil profilen kontaktes af nogen med dette køn? Uden valg under "Interesseret i" er alle velkomne.
+    Et ukendt køn passer ikke til et valg."""
+    if profile is None or not profile.seeking_genders:
+        return True
+    return gender in profile.seeking_genders
+
+
+def is_interested_in(owner, viewer):
+    """Søger `owner` det køn, `viewer` har? Bruges til, hvem der kan se og like `owner` (gensidig præference)."""
+    viewer_profile = db.session.get(Profile, viewer.id)
+    return welcomes_gender(db.session.get(Profile, owner.id), viewer_profile.gender if viewer_profile else None)
+
+
 def find_user_by_handle(handle):
     """Brugere findes via deres tilfældige handle i URL'en, aldrig via det viste navn (som ikke er unikt)."""
     return db.session.scalar(db.select(User).where(User.handle == handle))

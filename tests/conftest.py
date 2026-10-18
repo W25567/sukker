@@ -69,6 +69,7 @@ def registration_data(**overrides):
         "password_confirm": "et-langt-password",
         "birthdate": "1990-05-17",
         "postcode": "8000",
+        "gender": "kvinde",
         "accept_terms": "y",
     }
     data.update(overrides)

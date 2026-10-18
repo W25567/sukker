@@ -69,7 +69,7 @@ def test_profile_pages_layout(app, outbox, ctx):
     assert re.search(r'<button type="submit" class="button secondary upload-submit">', me)  # skjules af upload.js
     edit = anna.get("/profil/rediger").get_data(as_text=True)
     assert 'form="profile-form"' in edit and 'id="profile-form"' in edit and "desktop-only" in edit
-    response = anna.post("/profil/rediger", data={"presentation": "Hej"})
+    response = anna.post("/profil/rediger", data={"gender": "kvinde", "presentation": "Hej"})
     assert response.status_code == 302
 
 

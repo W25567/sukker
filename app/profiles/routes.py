@@ -4,7 +4,7 @@ from flask import Blueprint, abort, flash, g, jsonify, redirect, render_template
 from flask_wtf import FlaskForm
 from wtforms import MultipleFileField
 
-from ..auth.forms import ActionForm
+from ..auth.forms import ActionForm, GenderForm
 from ..auth.models import User, UserSession
 from ..explore.services import RECENTLY_ACTIVE
 from ..auth.sessions import login_required, safe_next_url
@@ -21,7 +21,7 @@ from ..media.processing import ACCEPT, ImageRejected
 from ..subscriptions.services import early_bird_open, grant_early_bird, has_early_bird
 from .fields import completeness, visible_fields
 from .forms import ExplorePreferenceForm, ProfileForm, VisibilityForm
-from .services import age_of, can_view_profile, find_user_by_handle, get_or_create_profile
+from .services import age_of, can_view_profile, find_user_by_handle, get_or_create_profile, is_interested_in
 from .zodiac import visible_zodiac, zodiac_for
 
 bp = Blueprint("profiles", __name__)
@@ -57,6 +57,8 @@ def _render_profile_view(user, *, preview):
         kommune=kommune_name(user.kommune_code) if profile.show_kommune else None,
         back_url=safe_next_url(request.args.get("fra")),
         liked=False if preview else has_liked(g.user.id, user.id),
+        # Søger profilen et andet køn end den besøgendes, kan den besøgende ikke like (gensidig præference).
+        can_like=preview or is_interested_in(user, g.user) or has_liked(user.id, g.user.id),
         matched=False if preview else has_active_match(g.user.id, user.id),
     )
 
@@ -85,6 +87,24 @@ def me():
         is_early_bird=has_early_bird(g.user),
         early_bird_open=early_bird_open(),
     )
+
+
+@bp.route("/profil/koen", methods=["GET", "POST"])
+@login_required
+def choose_gender():
+    """Vælg køn. Vises for profiler, der blev oprettet, før køn var påkrævet (pages/onboarding.py)."""
+    profile = get_or_create_profile(g.user)
+    form = GenderForm()
+    if form.validate_on_submit():
+        profile.gender = form.gender.data
+        profile.seeking_genders = list(form.seeking_genders.data or [])
+        db.session.commit()
+        flash("Tak! Dit køn er gemt.", "success")
+        return redirect(safe_next_url(request.args.get("next")) or url_for("explore.index"))
+    if not form.is_submitted():
+        form.gender.data = profile.gender
+        form.seeking_genders.data = list(profile.seeking_genders or [])
+    return render_template("profiles/choose_gender.html", form=form), 400 if form.errors else 200
 
 
 @bp.route("/profil/rediger", methods=["GET", "POST"])

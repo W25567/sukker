@@ -88,7 +88,7 @@ def test_logged_in_pages_are_noindex_and_have_no_seo_metadata(app, outbox, ctx):
 
 def test_public_pages_never_show_user_data(app, outbox, ctx, client):
     anna = make_user(app, outbox, "Annabella")
-    anna.post("/profil/rediger", data={"presentation": "Hemmelig præsentation"})
+    anna.post("/profil/rediger", data={"gender": "kvinde", "presentation": "Hemmelig præsentation"})
     for path in PUBLIC_PATHS:
         html = client.get(path).get_data(as_text=True)
         assert "Annabella" not in html and "Hemmelig" not in html

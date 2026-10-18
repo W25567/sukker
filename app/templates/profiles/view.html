@@ -106,7 +106,11 @@
         </p>
         {% if not preview %}
           <div class="pv-actions" id="handlinger">
-            {{ like_button(user.handle, liked, matched, request.full_path) }}
+            {% if can_like or liked or matched %}
+              {{ like_button(user.handle, liked, matched, request.full_path) }}
+            {% else %}
+              <span class="action-note muted">Profilen søger ikke kontakt med dit køn</span>
+            {% endif %}
             {% if matched %}<a class="button action-button" href="{{ url_for('messaging.start', handle=user.handle) }}">Skriv besked</a>{% endif %}
           </div>
         {% endif %}

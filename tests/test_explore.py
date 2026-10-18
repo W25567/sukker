@@ -181,10 +181,12 @@ def test_premium_distance_and_age_filters(app, outbox, geo):
 def test_filters_skip_profiles_that_hide_the_field(app, outbox, geo):
     viewer = make_user(app, outbox, "Viewer", "1000")
     make_user(app, outbox, "Aaben", "2000", gender="kvinde", relationship_types=["kaereste"])
-    make_user(app, outbox, "Lukket", "2000", gender="kvinde", hidden_fields=["gender"], relationship_types=["kaereste"])
+    make_user(app, outbox, "Lukket", "2000", gender="kvinde", hidden_fields=["relationship_types"], relationship_types=["kaereste"])
+    # Køn kan ikke skjules (det bruges til at matche), så et gammelt valg om at skjule køn ignoreres.
+    make_user(app, outbox, "GammelSkjult", "2000", gender="kvinde", hidden_fields=["gender"])
 
-    assert usernames(viewer.get("/udforsk?koen=kvinde")) == ["Aaben"]
-    assert sorted(usernames(viewer.get("/udforsk?soeger=kaereste"))) == ["Aaben", "Lukket"]
+    assert sorted(usernames(viewer.get("/udforsk?koen=kvinde"))) == ["Aaben", "GammelSkjult", "Lukket"]
+    assert usernames(viewer.get("/udforsk?soeger=kaereste")) == ["Aaben"]
 
 
 def test_interested_in_always_applies_also_for_free(app, outbox, geo):
@@ -192,17 +194,17 @@ def test_interested_in_always_applies_also_for_free(app, outbox, geo):
     make_user(app, outbox, "Kvinden", "2000", gender="kvinde")
     make_user(app, outbox, "Manden", "2000", gender="mand")
     make_user(app, outbox, "Skjult", "2000", gender="kvinde", hidden_fields=["gender"])
-    make_user(app, outbox, "Ukendt", "2000")
+    make_user(app, outbox, "Ukendt", "2000", gender=None)  # fra før køn var påkrævet
     make_free("Viewer")
 
     response = viewer.get("/udforsk")
-    assert usernames(response) == ["Kvinden"]
+    assert sorted(usernames(response)) == ["Kvinden", "Skjult"]
     assert "Viser kvinder" in response.get_data(as_text=True)
 
-    other = make_user(app, outbox, "Begge", "1000", seeking_genders=["kvinde", "mand"])
-    assert sorted(usernames(other.get("/udforsk"))) == ["Kvinden", "Manden"]
+    other = make_user(app, outbox, "Begge", "1000", seeking_genders=["kvinde", "mand"])  # selv kvinde
+    assert sorted(usernames(other.get("/udforsk"))) == ["Kvinden", "Manden", "Skjult", "Viewer"]
     alle = make_user(app, outbox, "Alle", "1000")
-    assert len(usernames(alle.get("/udforsk"))) == 6  # uden valg vises alle andre
+    assert len(usernames(alle.get("/udforsk"))) == 6  # uden valg vises alle andre, der er interesseret i en
 
 
 def test_photos_only_filter(app, outbox, geo):

@@ -143,14 +143,14 @@ AUDIT_LABELS = {
 # --- Testkonti -------------------------------------------------------------------------------------------------
 
 
-TEST_ACCOUNTS = [("Test_free", "free"), ("Test_premium", "premium"), ("Test_premiumplus", "premium_plus")]
+TEST_ACCOUNTS = [("Test_free", "free", "kvinde"), ("Test_premium", "premium", "mand"), ("Test_premiumplus", "premium_plus", "kvinde")]
 
 
 def create_test_accounts(admin=None, domain="example.com"):
     """Opretter (eller nulstiller) én testkonto pr. niveau. Testkonti kan kun se og kontakte andre testkonti.
     Returnerer [(vist navn, e-mail, password)]. Passwordet vises kun én gang."""
     created = []
-    for username, tier in TEST_ACCOUNTS:
+    for username, tier, gender in TEST_ACCOUNTS:
         email = f"{username.lower()}@{domain}"
         password = secrets.token_urlsafe(12)
         user = db.session.scalar(select(User).where(User.email == email))
@@ -162,7 +162,8 @@ def create_test_accounts(admin=None, domain="example.com"):
                         email_verified_at=now_utc(), is_test=True)
             db.session.add(user)
             db.session.flush()
-            get_or_create_profile(user)
+        profile = get_or_create_profile(user)
+        profile.gender = profile.gender or gender
         user.password_hash = hash_password(password)
         db.session.execute(delete(Subscription).where(Subscription.user_id == user.id))
         if tier != "free":

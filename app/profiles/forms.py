@@ -1,10 +1,10 @@
 from flask_wtf import FlaskForm
 from wtforms import BooleanField, IntegerField, SelectField, SelectMultipleField, StringField, TextAreaField, widgets
-from wtforms.validators import Length, NumberRange, Optional, ValidationError
+from wtforms.validators import DataRequired, Length, NumberRange, Optional, ValidationError
 
 from ..core import contact_info
 from . import choices
-from .fields import FIELDS
+from .fields import FIELDS, NOT_HIDEABLE
 
 
 class MultiCheckboxField(SelectMultipleField):
@@ -25,7 +25,8 @@ def _strip_or_none(value):
 class ProfileForm(FlaskForm):
     presentation = TextAreaField("Præsentation", filters=[_strip_or_none],
                                  validators=[Optional(), Length(max=1000), contact_info.validator])
-    gender = SelectField("Køn", choices=_blank(choices.GENDERS), validators=[Optional()])
+    # Påkrævet og kan ikke skjules: kønnet bruges til at matche i begge retninger.
+    gender = SelectField("Køn", choices=_blank(choices.GENDERS), validators=[DataRequired("Vælg dit køn.")])
     seeking_genders = MultiCheckboxField("Interesseret i", choices=choices.GENDERS, validators=[Optional()])
     height_cm = IntegerField("Højde i cm", validators=[Optional(), NumberRange(120, 230, "Skriv en højde mellem 120 og 230 cm.")])
     occupation = StringField("Beskæftigelse", filters=[_strip_or_none], validators=[Optional(), Length(max=80), contact_info.validator])
@@ -51,7 +52,8 @@ class ProfileForm(FlaskForm):
                                  validators=[Optional(), Length(max=500), contact_info.validator])
 
     # Stjernetegnet beregnes ud fra fødselsdatoen og kan ikke redigeres, kun skjules.
-    hidden_fields = MultiCheckboxField("Skjul for andre", choices=[(f.name, f.label) for f in FIELDS] + [("zodiac", "Stjernetegn")],
+    hidden_fields = MultiCheckboxField("Skjul for andre", choices=[(f.name, f.label) for f in FIELDS if f.name not in NOT_HIDEABLE]
+                                       + [("zodiac", "Stjernetegn")],
                                        validators=[Optional()])
 
     def validate_age_max(self, field):

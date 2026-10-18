@@ -46,6 +46,19 @@ def _not_hidden(field_name):
     return ~(literal(field_name) == any_(Profile.hidden_fields))
 
 
+def own_gender(viewer):
+    profile = db.session.get(Profile, viewer.id)
+    return profile.gender if profile else None
+
+
+def _welcomes(gender):
+    """Profilen har ikke valgt "Interesseret i", eller valget omfatter `gender`."""
+    no_choice = func.cardinality(Profile.seeking_genders) == 0
+    if not gender:
+        return no_choice
+    return or_(no_choice, literal(gender) == any_(Profile.seeking_genders))
+
+
 def seeking_genders(viewer):
     profile = db.session.get(Profile, viewer.id)
     return list(profile.seeking_genders) if profile and profile.seeking_genders else []
@@ -92,11 +105,13 @@ def search(viewer, criteria=None, page=1, hide_liked=False):
         )
     )
 
-    # "Interesseret i" fra brugerens egen profil gælder altid, også for Free. Det er brugerens grundvalg,
-    # ikke et Premium-filter. Profiler, der har skjult deres køn, kan ikke matches mod valget og vises ikke.
+    # "Interesseret i" gælder altid og i begge retninger, også for Free. Det er brugerens grundvalg, ikke et
+    # Premium-filter: man ser kun de køn, man søger, og kun profiler, der søger ens eget køn (eller ikke har
+    # valgt), ser en. Så får ingen henvendelser fra et køn, de ikke søger. Køn er påkrævet og kan ikke skjules.
     seeking = seeking_genders(viewer)
     if seeking:
-        query = query.where(Profile.gender.in_(seeking), _not_hidden("gender"))
+        query = query.where(Profile.gender.in_(seeking))
+    query = query.where(_welcomes(own_gender(viewer)))
 
     if hide_liked:
         query = query.where(or_(~liked, matched))
@@ -111,7 +126,7 @@ def search(viewer, criteria=None, page=1, hide_liked=False):
         # Profiler, der har skjult et felt, kommer ikke med, når der filtreres på feltet.
         # Ellers kunne et filter afsløre den skjulte værdi.
         if criteria["genders"]:
-            query = query.where(Profile.gender.in_(criteria["genders"]), _not_hidden("gender"))
+            query = query.where(Profile.gender.in_(criteria["genders"]))
         if criteria["relationship_types"]:
             query = query.where(Profile.relationship_types.overlap(criteria["relationship_types"]),
                                 _not_hidden("relationship_types"))

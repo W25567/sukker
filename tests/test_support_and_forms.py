@@ -91,10 +91,10 @@ def test_birthdate_errors(app, ctx):
 def test_contact_info_is_refused_in_profile_and_name(app, outbox, ctx):
     anna = make_user(app, outbox, "Anna")
     for text in ("Skriv på anna@example.com", "Ring 12 34 56 78", "Se www.annas-side.dk"):
-        response = anna.post("/profil/rediger", data={"presentation": text})
+        response = anna.post("/profil/rediger", data={"gender": "kvinde", "presentation": text})
         assert response.status_code == 400 and "ikke tilladt på profilen" in response.get_data(as_text=True)
     assert db.session.get(Profile, user("Anna").id).presentation is None
-    anna.post("/profil/rediger", data={"presentation": "Jeg boede i Aarhus 1998-2005 og er 182 cm"})
+    anna.post("/profil/rediger", data={"gender": "kvinde", "presentation": "Jeg boede i Aarhus 1998-2005 og er 182 cm"})
     assert db.session.get(Profile, user("Anna").id).presentation.startswith("Jeg boede")
     anna.post("/konto/navn", data={"display_name": "Anna 12345678"})
     assert user("Anna") is not None  # navnet blev ikke ændret

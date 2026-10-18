@@ -52,7 +52,9 @@ def register_user(form, kommune_code=None):
     )
     db.session.add(user)
     db.session.flush()
-    get_or_create_profile(user)
+    profile = get_or_create_profile(user)
+    profile.gender = form.gender.data
+    profile.seeking_genders = list(form.seeking_genders.data or [])
     send_verification_mail(user)
     return user
 

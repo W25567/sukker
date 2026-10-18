@@ -106,7 +106,7 @@ def test_blocked_user_cannot_unblock_themselves(app, outbox, ctx):
 
 def test_report_profile_creates_case_with_evidence_copy(app, outbox, ctx):
     anna, bodil = make_user(app, outbox, "Anna"), make_user(app, outbox, "Bodil")
-    bodil.post("/profil/rediger", data={"presentation": "Falsk tekst"})
+    bodil.post("/profil/rediger", data={"gender": "kvinde", "presentation": "Falsk tekst"})
     buffer = io.BytesIO()
     Image.new("RGB", (300, 300), "blue").save(buffer, "JPEG")
     bodil.post("/profil/billeder", data={"image": (io.BytesIO(buffer.getvalue()), "a.jpg")}, content_type="multipart/form-data")
@@ -121,7 +121,7 @@ def test_report_profile_creates_case_with_evidence_copy(app, outbox, ctx):
     assert len(case.evidence["copied_images"]) == 1
 
     # Kopien bevares, selvom brugeren ændrer profilen bagefter.
-    bodil.post("/profil/rediger", data={"presentation": "Ny tekst"})
+    bodil.post("/profil/rediger", data={"gender": "kvinde", "presentation": "Ny tekst"})
     db.session.refresh(case)
     assert case.evidence["fields"]["Præsentation"] == "Falsk tekst"
 

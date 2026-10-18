@@ -99,14 +99,14 @@ def test_edit_profile_saves_fields(client, ctx):
 def test_age_range_must_be_increasing(client, ctx):
     register(client)
     login(client)
-    response = client.post("/profil/rediger", data={"age_min": "45", "age_max": "30"})
+    response = client.post("/profil/rediger", data={"gender": "kvinde", "age_min": "45", "age_max": "30"})
     assert response.status_code == 400
     assert db.session.scalar(select(Profile.age_min)) is None
 
 
 def test_hidden_fields_are_not_shown_to_others(app, ctx):
     anna, bo = setup_two_users(app)
-    anna.post("/profil/rediger", data={"occupation": "Tømrer", "interests": "Klatring", "hidden_fields": ["occupation"]})
+    anna.post("/profil/rediger", data={"gender": "kvinde", "occupation": "Tømrer", "interests": "Klatring", "hidden_fields": ["occupation"]})
 
     seen_by_bo = bo.get(f"/bruger/{h('Anna_K')}").get_data(as_text=True)
     assert "Klatring" in seen_by_bo
@@ -132,8 +132,8 @@ def test_paused_or_matches_only_profiles_are_hidden_from_others(app, ctx):
 def test_completeness_grows_as_profile_is_filled(client, ctx):
     register(client)
     login(client)
-    assert "Profilen er 0 % udfyldt" in client.get("/profil").get_data(as_text=True)
-    client.post("/profil/rediger", data={"presentation": "Hej", "gender": "kvinde"})
+    assert "Profilen er 5 % udfyldt" in client.get("/profil").get_data(as_text=True)  # køn udfyldes ved oprettelsen
+    client.post("/profil/rediger", data={"gender": "kvinde", "presentation": "Hej"})
     upload(client, jpeg_with_gps((400, 300)))
     assert "Profilen er 16 % udfyldt" in client.get("/profil").get_data(as_text=True)
 

@@ -2,11 +2,12 @@ from datetime import date
 
 from flask_wtf import FlaskForm
 from markupsafe import Markup, escape
-from wtforms import BooleanField, EmailField, Field, PasswordField, SelectField, StringField
+from wtforms import BooleanField, EmailField, Field, PasswordField, SelectField, SelectMultipleField, StringField, widgets
 from wtforms.validators import DataRequired, Email, EqualTo, Length, Regexp, StopValidation, ValidationError
 
 from ..core import contact_info
 from ..core.timeutil import age_on, today_local
+from ..profiles import choices
 
 # Vist navn: behøver ikke være unikt. Bogstaver (også æøå og accenter), tal og enkelte skilletegn.
 DISPLAY_NAME_PATTERN = r"^[^\W_][\w .'\-]{0,28}[^\W_]$"  # starter og slutter med bogstav eller tal
@@ -117,6 +118,28 @@ def _display_name_field():
     )
 
 
+class _Checkboxes(SelectMultipleField):
+    widget = widgets.ListWidget(prefix_label=False)
+    option_widget = widgets.CheckboxInput()
+
+
+def gender_field():
+    # Køn er påkrævet, fordi det bruges til at matche: hvem man vises for, og hvem der kan like en.
+    return SelectField("Køn", choices=[("", "Vælg")] + choices.GENDERS,
+                       validators=[DataRequired("Vælg dit køn. Det bruges til at vise dig for de rigtige.")])
+
+
+def seeking_field():
+    return _Checkboxes("Interesseret i", choices=choices.GENDERS, validate_choice=True)
+
+
+class GenderForm(FlaskForm):
+    """Til eksisterende profiler uden køn (fra før køn blev påkrævet)."""
+
+    gender = gender_field()
+    seeking_genders = seeking_field()
+
+
 class DisplayNameForm(FlaskForm):
     """Ret det viste navn under Konto. Samme regler som ved oprettelsen."""
 
@@ -135,6 +158,8 @@ class RegistrationForm(FlaskForm):
         "Gentag password", validators=[DataRequired("Gentag passwordet."), EqualTo("password", "Passwordene er ikke ens.")]
     )
     birthdate = BirthdateField("Fødselsdato", validators=[birthdate_required])
+    gender = gender_field()
+    seeking_genders = seeking_field()
     postcode = StringField(
         "Postnummer",
         filters=[_strip],
