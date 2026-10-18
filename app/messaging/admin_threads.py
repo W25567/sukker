@@ -45,6 +45,8 @@ def send_from_admin(admin, user, body):
     """Administratoren skriver til brugeren. Registreres i administrationsloggen af kalderen (admin.services.audit)."""
     if admin.id == user.id:
         raise AdminMessageRefused("Du kan ikke skrive til dig selv.")
+    if user.is_deleted:
+        raise AdminMessageRefused("Brugeren har slettet sin profil og kan ikke læse beskeder. Samtalen er bevaret.")
     body = _clean(body)
     now = now_utc()
     thread = thread_for(user.id)
@@ -146,12 +148,15 @@ def admin_overview():
     """Alle administrator-samtaler til administrationen, nyeste aktivitet først, ulæste svar øverst."""
     from ..auth.models import User
 
+    from ..moderation.userdata import staff_label
+
     rows = db.session.execute(
-        select(AdminThread, User.display_name).join(User, User.id == AdminThread.user_id)
+        select(AdminThread, User).join(User, User.id == AdminThread.user_id)
         .order_by(AdminThread.last_message_at.desc().nulls_last())
     ).all()
     summaries = []
-    for thread, name in rows:
+    for thread, user in rows:
+        name = staff_label(user)
         last = db.session.scalar(select(AdminMessage).where(AdminMessage.user_id == thread.user_id)
                                  .order_by(AdminMessage.created_at.desc(), AdminMessage.id.desc()).limit(1))
         summaries.append(ThreadSummary(thread.user_id, name, last, unread_for_admin(thread.user_id), thread.last_message_at))

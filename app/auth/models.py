@@ -47,10 +47,15 @@ class User(db.Model):
     status_changed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     # Testkonti til at afprøve adgangsregler. De vises aldrig for rigtige brugere og tæller ikke med i målinger.
     is_test: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
+    # Slettede konti (status "deleted") lukkes og skjules for alle andre, men data bevares til administration og
+    # moderation i opbevaringsperioden, så sletning ikke kan bruges til at skjule spor (app/account/services.py).
+    # E-mailen flyttes hertil, så adressen bliver fri til en ny konto.
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    deleted_email: Mapped[str | None] = mapped_column(String(254))
 
     __table_args__ = (
         CheckConstraint("role IN ('user', 'moderator', 'admin')", name="role"),
-        CheckConstraint("status IN ('active', 'restricted', 'suspended')", name="status"),
+        CheckConstraint("status IN ('active', 'restricted', 'suspended', 'deleted')", name="status"),
     )
 
     @property
@@ -64,6 +69,15 @@ class User(db.Model):
     @property
     def is_active_account(self):
         return self.status == "active"
+
+    @property
+    def is_deleted(self):
+        return self.status == "deleted"
+
+    @property
+    def admin_email(self):
+        """E-mailen til administration og moderation, også efter at brugeren har slettet sin profil."""
+        return self.deleted_email if self.is_deleted else self.email
 
 
 Index("uq_users_email", User.email, unique=True)

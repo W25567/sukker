@@ -11,9 +11,9 @@
       <div><dt>Status</dt><dd>{{ statuses[case.status] }}{% if case.decision %} · {{ decisions[case.decision] }}{% endif %}</dd></div>
       <div><dt>Kilde</dt><dd>{{ case.source }}</dd></div>
       <div><dt>Bruger</dt><dd>
-        {% if subject %}<a href="{{ url_for('moderation.user', user_id=subject.id) }}">{{ subject.display_name }}</a> · konto: {{ subject.status }}{% else %}–{% endif %}
+        {% if subject %}<a href="{{ url_for('moderation.user', user_id=subject.id) }}">{{ subject | staff_name }}</a> · konto: {{ subject.status }}{% else %}–{% endif %}
       </dd></div>
-      <div><dt>Anmeldt af</dt><dd>{{ reporter.display_name if reporter else '–' }}</dd></div>
+      <div><dt>Anmeldt af</dt><dd>{{ reporter | staff_name if reporter else '–' }}</dd></div>
       <div><dt>Oprettet</dt><dd>{{ case.created_at | local_datetime }}</dd></div>
       {% if case.description %}<div><dt>Beskrivelse</dt><dd>{{ case.description }}</dd></div>{% endif %}
     </dl>

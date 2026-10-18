@@ -11,6 +11,7 @@ from datetime import timedelta
 from flask import current_app
 from sqlalchemy import and_, delete, exists, not_, or_, select
 
+from ..account.services import delete_files, purge_deleted_accounts, purge_deleted_images
 from ..auth.models import EmailToken, UserSession
 from ..core.settings import get_setting
 from ..core.timeutil import add_months, now_utc, today_local
@@ -138,14 +139,22 @@ def purge_orphan_files():
 def run():
     """Kører alle trin og returnerer, hvor meget der blev slettet."""
     before = cutoff()
-    counts = {
+    counts = {}
+    # Slettede konti og billeder bevares i perioden til sporbarhed og slettes derefter endeligt
+    # (app/account/services.py). Ikke mens brugeren er part i en sag, der holder data tilbage.
+    # Først, så samtaler, der derved står uden deltagere, ryddes i samme kørsel.
+    counts["slettede_konti"], account_files = purge_deleted_accounts(before)
+    image_files = purge_deleted_images(before)
+    counts["slettede_billeder"] = len(image_files)
+    counts.update({
         "skjulte_samtaler": purge_hidden_conversations(before),
         "samtaler_uden_deltagere": purge_orphaned_conversations(),
         "slettede_beskeder": purge_deleted_messages(before),
         "beviser": purge_case_evidence(before),
-    }
+    })
     counts["sessioner"], counts["engangslinks"] = purge_sessions_and_tokens()
     db.session.commit()
     # Filer ryddes efter commit, så de kun forsvinder, når databasen er opdateret.
+    delete_files(account_files + image_files)
     counts["filer"] = purge_orphan_files()
     return counts

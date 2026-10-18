@@ -89,7 +89,9 @@ def _handle_report(form, target, evidence, back_url, what):
             source="report", category=form.reason.data, subject=target, reporter=g.user,
             description=(form.description.data or "").strip() or None, evidence=evidence,
         )
-        if target is not None and form.also_block.data:
+        if target is not None and target.is_deleted:
+            pass  # en slettet profil kan hverken blokeres eller skjules; den vises ikke længere
+        elif target is not None and form.also_block.data:
             services.block(g.user, target)
         elif target is not None and form.also_hide.data:
             services.hide(g.user, target)
@@ -122,7 +124,10 @@ def report_conversation(conversation_id):
     ids = {m.sender_id for m in messages if m.sender_id}
     usernames = {u.id: u.display_name for u in db.session.scalars(select(User).where(User.id.in_(ids)))}
     evidence = moderation.conversation_evidence(conversation, messages, usernames)
-    return _handle_report(ReportForm(), current.other, evidence,
+    # Har modparten slettet sin profil, knyttes sagen alligevel til kontoen, som er bevaret til moderationen.
+    other_id = conversation.other_id(g.user.id)
+    subject = current.other or (db.session.get(User, other_id) if other_id else None)
+    return _handle_report(ReportForm(), subject, evidence,
                           url_for("messaging.conversation", conversation_id=conversation.id), "samtalen")
 
 

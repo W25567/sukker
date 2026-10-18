@@ -8,6 +8,7 @@ from ..auth.models import User, UserSession
 from ..extensions import db
 from ..location.services import kommune_name
 from ..matches.models import Like, Match
+from ..media.models import ProfileImage
 from ..media.services import list_images
 from ..messaging.models import Conversation, ConversationMember, Message, MessageDeletion
 from ..profiles.fields import FIELDS, display_value
@@ -18,9 +19,18 @@ from ..subscriptions.models import Subscription
 from .models import ModerationCase
 
 
+def staff_label(user):
+    """Navnet til administration og moderation. En slettet bruger beholder navnet og markeres med e-mail i parentes."""
+    if user is None:
+        return "Slettet bruger"
+    if user.is_deleted:
+        return f"{user.display_name} · slettet bruger ({user.deleted_email})"
+    return user.display_name
+
+
 def _usernames(ids):
     ids = {i for i in ids if i}
-    return {u.id: u.display_name for u in db.session.scalars(select(User).where(User.id.in_(ids)))} if ids else {}
+    return {u.id: staff_label(u) for u in db.session.scalars(select(User).where(User.id.in_(ids)))} if ids else {}
 
 
 def collect(user):
@@ -60,7 +70,11 @@ def collect(user):
         "kommune": kommune_name(user.kommune_code),
         "profile": profile,
         "fields": [(f.label, display_value(profile, f), f.name in profile.hidden_fields) for f in FIELDS] if profile else [],
-        "images": {"public": list_images(user.id, "public"), "private": list_images(user.id, "private")},
+        "images": {"public": list_images(user.id, "public"), "private": list_images(user.id, "private"),
+                   # Billeder, brugeren selv har slettet. De bevares i opbevaringsperioden til sporbarhed.
+                   "deleted": db.session.scalars(select(ProfileImage).where(
+                       ProfileImage.user_id == user.id, ProfileImage.deleted_at.isnot(None))
+                       .order_by(ProfileImage.deleted_at.desc())).all()},
         "subscriptions": db.session.scalars(select(Subscription).where(Subscription.user_id == user.id).order_by(Subscription.starts_at)).all(),
         "likes_given": likes_given,
         "likes_received": likes_received,

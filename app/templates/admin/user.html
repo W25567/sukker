@@ -5,8 +5,19 @@
 {% block content %}
   {% include "admin/_nav.html" %}
   {% set names = data.names %}
-  <h1>{{ target.display_name }}, {{ data.age }}{% if target.is_test %} <span class="lock-badge">Testkonto</span>{% endif %}</h1>
+  <h1>{{ target.display_name }}, {{ data.age }}{% if target.is_test %} <span class="lock-badge">Testkonto</span>{% endif %}{% if target.is_deleted %} <span class="tag warn">Slettet bruger</span>{% endif %}</h1>
   {% include "admin/_user_tabs.html" %}
+  {% if previous_accounts %}
+    <p class="card notice-card">Samme e-mail har tidligere tilhørt slettede konti:
+      {% for p in previous_accounts %}<a href="{{ url_for('admin.user', user_id=p.id) }}">{{ p.display_name }}</a> (slettet {{ p.deleted_at | local_datetime }}){% if not loop.last %}, {% endif %}{% endfor %}</p>
+  {% endif %}
+  {% if target.is_deleted %}
+    <div class="card notice-card deleted-notice">
+      <p><strong>Brugeren slettede sin profil {{ target.deleted_at | local_datetime }}.</strong>
+        Kontoen er lukket og vises ikke for andre brugere. Alle data er bevaret til sporbarhed og slettes endeligt
+        {{ purge_after.strftime('%d-%m-%Y') if purge_after else 'efter opbevaringsperioden' }}{% if on_hold %}, men først når brugerens sager er afsluttet, og forlænget opbevaring er udløbet{% endif %}.</p>
+    </div>
+  {% endif %}
   <p class="muted">Du ser alle oplysninger om brugeren. Visningen er registreret i administrationsloggen og ændrer intet for brugeren.</p>
 
   <nav class="section-nav" aria-label="Afsnit">
@@ -25,7 +36,7 @@
       <div class="stat{% if not signals.images %} warn{% endif %}"><span class="stat-label">Offentlige billeder</span><span class="stat-value">{{ signals.images }}</span></div>
     </div>
     <dl class="facts">
-      <div><dt>E-mail</dt><dd>{{ target.email }}{% if not target.is_verified %} (ubekræftet){% endif %}</dd></div>
+      <div><dt>E-mail</dt><dd>{{ target.admin_email }}{% if not target.is_verified %} (ubekræftet){% endif %}{% if target.is_deleted %} <span class="tag warn">slettet bruger</span>{% endif %}</dd></div>
       <div><dt>Fødselsdato</dt><dd>{{ target.birthdate.strftime('%d-%m-%Y') }} · {{ data.age }} år · {{ zodiac.symbol }} {{ zodiac.name }}</dd></div>
       <div><dt>Postnummer og kommune</dt><dd>{{ target.postcode }} · {{ data.kommune or 'ukendt' }}</dd></div>
       <div><dt>Oprettet</dt><dd>{{ target.created_at | local_datetime }}</dd></div>
@@ -34,6 +45,7 @@
       <div><dt>Status og rolle</dt><dd>{{ target.status }} · {{ target.role }}</dd></div>
       <div><dt>Vilkår</dt><dd>version {{ target.terms_version }} · accepteret {{ target.terms_accepted_at | local_datetime }}</dd></div>
     </dl>
+    {% if not target.is_deleted %}
     <form method="post" class="inline-form">
       {{ csrf() }}<input type="hidden" name="action" value="status">
       <select name="status" aria-label="Status">
@@ -42,6 +54,7 @@
       <input name="note" type="text" placeholder="Begrundelse" aria-label="Begrundelse">
       <button type="submit" class="button small">Skift status</button>
     </form>
+    {% endif %}
     <form method="post" class="inline-form">
       {{ csrf() }}<input type="hidden" name="action" value="role">
       <select name="role" aria-label="Rolle">
@@ -68,11 +81,13 @@
   <section class="card" id="billeder">
     <h2>Billeder</h2>
     {% for collection, images in data.images.items() %}
-      <h3>{{ 'Offentlige' if collection == 'public' else 'Privat arkiv' }} ({{ images | length }})</h3>
+      <h3>{{ {'public': 'Offentlige', 'private': 'Privat arkiv', 'deleted': 'Slettet af brugeren'}[collection] }} ({{ images | length }})</h3>
+      {% if collection == 'deleted' and images %}<p class="muted">Bevares til sporbarhed og slettes endeligt efter opbevaringsperioden. Brugeren og andre kan ikke se dem.</p>{% endif %}
       <div class="image-grid">
         {% for image in images %}
-          <a href="{{ url_for('admin.user_image', user_id=target.id, public_id=image.public_id, variant='stor') }}" target="_blank" rel="noopener">
+          <a class="admin-image{% if image.is_deleted %} is-deleted{% endif %}" href="{{ url_for('admin.user_image', user_id=target.id, public_id=image.public_id, variant='stor') }}" target="_blank" rel="noopener">
             <img src="{{ url_for('admin.user_image', user_id=target.id, public_id=image.public_id, variant='lille') }}" alt="Billede {{ loop.index }}" loading="lazy">
+            {% if image.is_deleted %}<span class="badge">Slettet {{ image.deleted_at | local_datetime }}{{ ' · privat' if image.collection == 'private' }}</span>{% endif %}
           </a>
         {% else %}<p class="muted">Ingen.</p>{% endfor %}
       </div>

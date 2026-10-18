@@ -6,10 +6,13 @@
   <div class="card">
     <p>Når du sletter din profil:</p>
     <ul>
-      <li>slettes din profil, dine billeder, likes, matches og dit abonnement med det samme</li>
+      <li>lukkes din konto med det samme, og din profil, dine billeder, likes og matches kan ikke længere ses af andre</li>
       <li>bliver beskeder, du har sendt, stående hos modtagerne, men du vises som <strong>Slettet bruger</strong>
         uden navn, billede eller link til din profil</li>
-      <li>kan sletningen ikke fortrydes</li>
+      <li>gemmer vi dine oplysninger skjult i {{ retention_months }} måneder af hensyn til sikkerhed, anmeldelser og
+        eventuelle henvendelser fra politiet. Kun vores administration og moderatorer har adgang. Derefter slettes alt
+        endeligt, medmindre en sag om dig endnu ikke er afsluttet. <a href="{{ url_for('pages.privacy') }}">Læs mere</a></li>
+      <li>kan sletningen ikke fortrydes, men du kan oprette en ny profil med samme e-mail</li>
     </ul>
   </div>
   <form method="post" novalidate class="form">

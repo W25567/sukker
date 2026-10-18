@@ -41,7 +41,7 @@ def signal_columns():
         "hidden_by": _count(UserHide.hider_id, UserHide.hidden_id == User.id),
         "likes_7": _count(Like.id, Like.liker_id == User.id, Like.created_at > week),
         "messages_7": _count(Message.id, Message.sender_id == User.id, Message.created_at > week),
-        "images": _count(ProfileImage.id, ProfileImage.user_id == User.id, ProfileImage.collection == "public"),
+        "images": _count(ProfileImage.id, ProfileImage.user_id == User.id, ProfileImage.collection == "public", ProfileImage.deleted_at.is_(None)),
         "last_seen": select(func.max(UserSession.last_seen_at)).where(UserSession.user_id == User.id)
         .correlate(User).scalar_subquery(),
     }
@@ -55,7 +55,7 @@ def _active_tier(*conditions):
 
 def _filters():
     week, month = _since(7), _since(30)
-    no_image = ~exists().where(ProfileImage.user_id == User.id, ProfileImage.collection == "public")
+    no_image = ~exists().where(ProfileImage.user_id == User.id, ProfileImage.collection == "public", ProfileImage.deleted_at.is_(None))
     return {
         "alle": ("Alle", []),
         "nye7": ("Nye, 7 dage", [User.created_at > week]),
@@ -66,6 +66,7 @@ def _filters():
         "pause": ("På pause", [exists().where(Profile.user_id == User.id, Profile.paused_at.isnot(None))]),
         "begraenset": ("Begrænsede", [User.status == "restricted"]),
         "suspenderet": ("Suspenderede", [User.status == "suspended"]),
+        "slettede": ("Slettede", [User.status == "deleted"]),
         "premium": ("Premium", [_active_tier(Subscription.tier == "premium")]),
         "premium_plus": ("Premium+", [_active_tier(Subscription.tier == "premium_plus")]),
         "tidlige_fugle": ("Tidlige fugle", [exists().where(Subscription.user_id == User.id, Subscription.source == "early_bird")]),
@@ -120,7 +121,9 @@ def user_list(filter_key="alle", q="", sort="nyeste", page=1):
     conditions = list(filters[filter_key][1]) + [User.is_test.is_(filter_key == "test")]
     q = (q or "").strip()
     if q:
-        conditions.append(or_(User.display_name.ilike(f"%{q}%"), User.email == q.lower(), User.handle == q))
+        # Også den oprindelige e-mail for slettede konti, så de kan findes, fx ved en henvendelse fra politiet.
+        conditions.append(or_(User.display_name.ilike(f"%{q}%"), User.email == q.lower(), User.deleted_email == q.lower(),
+                              User.handle == q))
     order = {
         "nyeste": [User.created_at.desc()],
         "aeldste": [User.created_at.asc()],
@@ -161,6 +164,7 @@ def oversight(limit=10):
     sections = []
     for title, explanation, sort, signal in OVERSIGHT:
         rows, _, _ = user_list("alle", "", sort, 1)
+        rows = [r for r in rows if not r.user.is_deleted]
         sections.append((title, explanation, sort, signal, [r for r in rows[:limit] if getattr(r, signal)]))
     new_without_image, total, _ = user_list("nye_uden_billede", "", "nyeste", 1)
     return sections, new_without_image[:limit], total

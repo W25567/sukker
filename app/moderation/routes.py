@@ -10,6 +10,7 @@ from ..core.settings import get_setting
 from ..extensions import db, limiter
 from ..media import storage
 from ..media.models import ProfileImage
+from .userdata import staff_label
 from . import services, userdata
 from .models import DECISIONS, REASON_LABELS, STATUSES, ModerationCase
 
@@ -59,7 +60,7 @@ def _case_or_404(case_id):
 def queue():
     closed = request.args.get("lukkede") == "1"
     cases = services.queue(("closed",) if closed else ("open", "in_progress"))
-    users = {u.id: u.display_name for u in db.session.scalars(
+    users = {u.id: staff_label(u) for u in db.session.scalars(
         select(User).where(User.id.in_({c.subject_user_id for c in cases if c.subject_user_id})))}
     return render_template("moderation/queue.html", cases=cases, users=users, closed=closed,
                            reasons=REASON_LABELS, statuses=dict(STATUSES))

@@ -161,6 +161,7 @@ def conversation(conversation_id):
         action_form=ActionForm(),
         archived=services.membership(conversation, g.user.id).archived,
         deleted_user=services.DELETED_USER,
+        other_deleted=current.other is None,
     )
 
 
@@ -169,7 +170,7 @@ def conversation(conversation_id):
 def updates(conversation_id):
     """Automatisk opdatering af en åben samtale. Svarer 204, når intet er ændret, ellers tråden som HTML.
     Adgangen kontrolleres ved hver forespørgsel, så en blokering eller et fjernet match slår igennem med det samme."""
-    conversation, _ = _conversation_or_404(conversation_id)
+    conversation, current = _conversation_or_404(conversation_id)
     version = services.thread_version(g.user, conversation)
     if request.args.get("version") == version:
         response = Response(status=204)
@@ -177,7 +178,8 @@ def updates(conversation_id):
         services.mark_read(g.user, conversation)  # brugeren har samtalen åben og ser beskeden
         db.session.commit()
         html = render_template("messaging/_thread.html", conversation=conversation, action_form=ActionForm(),
-                               items=services.timeline(g.user, conversation), deleted_user=services.DELETED_USER)
+                               items=services.timeline(g.user, conversation), deleted_user=services.DELETED_USER,
+                               other_deleted=current.other is None)
         response = jsonify(version=version, html=html)
     response.headers["Cache-Control"] = "no-store"
     return response

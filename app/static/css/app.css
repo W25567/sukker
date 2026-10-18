@@ -367,6 +367,9 @@ a.stat .stat-value { color: var(--accent); }
 .avatar-letter { display: inline-flex; align-items: center; justify-content: center; background: var(--info-bg); color: var(--accent); font-weight: 700; }
 .avatar-admin { background: var(--accent); color: var(--accent-ink); }
 .removed-item .avatar { opacity: 0.6; }
+.admin-image { position: relative; display: block; }
+.admin-image.is-deleted img { opacity: 0.55; outline: 2px dashed var(--error); outline-offset: -2px; }
+.admin-image.is-deleted .badge { background: var(--error); color: #fff; }
 .inbox-item { display: flex; align-items: center; gap: 12px; }
 .inbox-text { display: grid; gap: 2px; min-width: 0; flex: 1; }
 .person { display: inline-flex; align-items: center; gap: 10px; min-width: 0; }

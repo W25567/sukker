@@ -85,6 +85,11 @@ def create_app(config_name=None):
     from .core.timeutil import DANISH_TZ
     from .messaging.services import total_unread
 
+    from .moderation.userdata import staff_label
+
+    # Navn til administration og moderation: slettede brugere markeres og vises med e-mail i parentes.
+    app.template_filter("staff_name")(staff_label)
+
     @app.template_filter("local_datetime")
     def local_datetime(moment):
         if isinstance(moment, str):  # ISO-tidspunkter fra gemte kopier i moderationssager

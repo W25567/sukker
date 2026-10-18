@@ -4,6 +4,7 @@ from flask import Blueprint, abort, current_app, flash, g, jsonify, redirect, re
 from flask_wtf import FlaskForm
 from sqlalchemy import select
 
+from ..account.services import retention_status
 from ..auth.models import User
 from ..media import storage
 from ..media.models import ProfileImage
@@ -115,9 +116,15 @@ def user(user_id):
     services.audit(g.user, "view_user", target)
     db.session.commit()
     subscription = active_subscription(target.id)
+    purge_after, on_hold = retention_status(target)
     return render_template(
         "admin/user.html",
         target=target,
+        purge_after=purge_after,
+        on_hold=on_hold,
+        # Tidligere, slettede konti med samme e-mail, fx en bruger, der sletter sig og opretter sig igen.
+        previous_accounts=db.session.scalars(select(User).where(
+            User.deleted_email == target.admin_email, User.id != target.id)).all(),
         data=userdata.collect(target),
         signals=browse.user_signals(target),
         zodiac=zodiac_for(target.birthdate),

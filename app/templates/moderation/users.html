@@ -10,7 +10,7 @@
   {% if query %}
     <ul class="person-list">
       {% for user in results %}
-        <li><a href="{{ url_for('moderation.user', user_id=user.id) }}">{{ user.display_name }}</a> <span class="muted">{{ user.status }}</span></li>
+        <li><a href="{{ url_for('moderation.user', user_id=user.id) }}">{{ user | staff_name }}</a> <span class="muted">{{ user.status }}</span></li>
       {% else %}
         <li class="muted">Ingen brugere fundet.</li>
       {% endfor %}

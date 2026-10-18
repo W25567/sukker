@@ -20,7 +20,8 @@
             <td><a href="{{ url_for('admin.user', user_id=u.id) }}">{{ u.display_name }}</a>
               <span class="tags">
                 {% if not u.is_verified %}<span class="tag">ubekræftet</span>{% endif %}
-                {% if u.status != 'active' %}<span class="tag warn">{{ 'begrænset' if u.status == 'restricted' else 'suspenderet' }}</span>{% endif %}
+                {% if u.status != 'active' %}<span class="tag warn">{{ {'restricted': 'begrænset', 'suspended': 'suspenderet', 'deleted': 'slettet bruger'}[u.status] }}</span>{% endif %}
+                {% if u.is_deleted %}<span class="muted">({{ u.deleted_email }})</span>{% endif %}
                 {% if u.role != 'user' %}<span class="tag">{{ u.role }}</span>{% endif %}
               </span>
             </td>

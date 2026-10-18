@@ -18,7 +18,8 @@ from ..profiles.models import Profile
 from ..subscriptions.models import Subscription
 from ..subscriptions.services import early_bird_count
 
-REAL = User.is_test.is_(False)
+# Rigtige, ikke slettede brugere. Slettede konti tælles for sig.
+REAL = (User.is_test.is_(False)) & (User.status != "deleted")
 
 
 def _count(query):
@@ -40,6 +41,7 @@ def collect():
         "paused": _count(select(Profile.user_id).where(Profile.paused_at.isnot(None), Profile.user_id.in_(real_ids))),
         "restricted": _count(select(User.id).where(REAL, User.status == "restricted")),
         "suspended": _count(select(User.id).where(REAL, User.status == "suspended")),
+        "deleted": _count(select(User.id).where(User.is_test.is_(False), User.status == "deleted")),
     }
 
     paying = {

@@ -100,7 +100,9 @@ def access(user, conversation):
         return None
     other_id = conversation.other_id(user.id)
     other = db.session.get(User, other_id) if other_id else None
-    if other is None:
+    if other is None or other.is_deleted:
+        # Modparten har slettet sin profil. Samtalen kan læses, men ikke besvares, og modparten vises som
+        # "Slettet bruger" uden navn, billede eller link (kontoen er bevaret til administrationen).
         return Access(can_write=False, lock_reason=f"{DELETED_USER} har slettet sin profil.", other=None)
     if is_blocked_between(user.id, other.id) or not has_active_match(user.id, other.id):
         return None
@@ -256,7 +258,7 @@ def removed_match_items(user):
     ).all()
     for conversation, member in rows:
         other = db.session.get(User, conversation.other_id(user.id))
-        if other is None or is_blocked_between(user.id, other.id):
+        if other is None or other.is_deleted or is_blocked_between(user.id, other.id):
             continue
         if db.session.scalar(_visible_messages_query(user.id, member).limit(1)) is None:
             continue  # brugeren har selv fjernet markeringen, eller der blev aldrig skrevet
@@ -278,12 +280,15 @@ def inbox(user, archived=False):
         conversation = find_conversation(user.id, other.id)
         items.append(_inbox_item(user, other, conversation, fallback_at=match.matched_at))
 
+    # Samtaler med en, der har slettet sin profil. De kan stadig læses, hvis der er beskeder.
+    deleted_ids = select(User.id).where(User.status == "deleted")
     orphaned = db.session.scalars(
         select(Conversation)
         .join(ConversationMember, and_(ConversationMember.conversation_id == Conversation.id,
                                        ConversationMember.user_id == user.id))
         .where(Conversation.hidden_at.is_(None),
-               or_(Conversation.user_low_id.is_(None), Conversation.user_high_id.is_(None)))
+               or_(Conversation.user_low_id.is_(None), Conversation.user_high_id.is_(None),
+                   Conversation.user_low_id.in_(deleted_ids), Conversation.user_high_id.in_(deleted_ids)))
     ).all()
     for conversation in orphaned:
         item = _inbox_item(user, None, conversation, fallback_at=conversation.created_at)

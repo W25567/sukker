@@ -4,7 +4,7 @@
 {% block content %}
   <a class="back-link" href="{{ back_url }}">← Tilbage</a>
   <h1>Anmeld {{ what }}</h1>
-  <p class="muted">Anmeldelsen sendes til vores moderatorer. {{ target.display_name if target else 'Personen' }} får ikke at vide, hvem der har anmeldt.</p>
+  <p class="muted">Anmeldelsen sendes til vores moderatorer. {{ target.display_name if target and not target.is_deleted else 'Personen' }} får ikke at vide, hvem der har anmeldt.</p>
   <form method="post" novalidate class="form">
     {{ form.hidden_tag() }}
     <fieldset class="field{% if form.reason.errors %} has-error{% endif %}">
@@ -15,7 +15,7 @@
       {% for error in form.reason.errors %}<small class="error">{{ error }}</small>{% endfor %}
     </fieldset>
     {{ field(form.description) }}
-    {% if target %}
+    {% if target and not target.is_deleted %}
       {{ checkbox(form.also_hide) }}
       {{ checkbox(form.also_block) }}
     {% endif %}

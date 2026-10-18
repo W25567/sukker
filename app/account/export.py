@@ -68,7 +68,7 @@ def export_user_data(user):
         } if profile else None,
         "billeder": [
             {"id": image.public_id, "samling": image.collection, "bredde": image.width, "hoejde": image.height,
-             "animeret": image.is_animated, "uploadet": _iso(image.created_at)}
+             "animeret": image.is_animated, "uploadet": _iso(image.created_at), "slettet": _iso(image.deleted_at)}
             for image in db.session.scalars(
                 select(ProfileImage).where(ProfileImage.user_id == user.id).order_by(ProfileImage.id))
         ],

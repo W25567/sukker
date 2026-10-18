@@ -8,6 +8,7 @@ from ..auth.passwords import verify_password
 from ..auth.sessions import active_sessions, end_current_session, login_required, revoke_sessions
 from ..extensions import db, limiter
 from ..subscriptions.services import TIER_LABELS, active_subscription, effective_tier
+from ..core.settings import get_setting
 from ..core.timeutil import today_local
 from .devices import describe_device
 from .export import export_user_data
@@ -94,9 +95,10 @@ def delete():
             delete_account(g.user)
             session.clear()
             db.session.commit()
-            flash("Din profil er slettet. Tak fordi du brugte Sukker.nu.", "info")
+            flash("Din profil er slettet og kan ikke længere ses af andre. Tak fordi du brugte Sukker.nu.", "info")
             return redirect(url_for("core.home"))
-    return render_template("account/delete.html", form=form), 400 if form.errors else 200
+    return (render_template("account/delete.html", form=form, retention_months=get_setting("data_retention_months")),
+            400 if form.errors else 200)
 
 
 @bp.route("/mine-data", methods=["POST"])

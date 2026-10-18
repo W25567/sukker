@@ -3,7 +3,8 @@
 {% block page_class %}admin-wide{% endblock %}
 {% block content %}
   {% include "admin/_nav.html" %}
-  <h1>{{ target.display_name }}</h1>
+  <h1>{{ target | staff_name }}</h1>
+  {% if target.is_deleted %}<p class="card notice-card">Brugeren har slettet sin profil og kan ikke læse eller svare. Samtalen er bevaret til sporbarhed.</p>{% endif %}
   {% include "admin/_user_tabs.html" %}
 
   <p class="muted">Brugeren ser beskederne som fra <strong>Administrator</strong> – ikke hvem af jer, der skriver. Hver besked registreres i administrationsloggen.

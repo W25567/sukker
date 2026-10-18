@@ -37,6 +37,8 @@ def audit(admin, action, target=None, **details):
 def set_status(admin, user, status, reason):
     if user.id == admin.id:
         raise AdminError("Du kan ikke ændre status på din egen konto.")
+    if user.is_deleted:
+        raise AdminError("Brugeren har slettet sin profil. En slettet konto kan ikke genåbnes.")
     old = user.status
     set_account_status(user, status)
     audit(admin, "status", user, old=old, new=status, reason=reason)
@@ -134,6 +136,7 @@ AUDIT_LABELS = {
     "grant_period": "Gav Premium-tid", "set_tier": "Skiftede niveau", "feature_grant": "Individuel regel",
     "feature_grant_removed": "Fjernede regel", "setting": "Ændrede indstilling", "tier_features": "Ændrede rettigheder",
     "disabled_features": "Slog funktioner fra", "test_account": "Testkonto",
+    "account_deleted": "Brugeren slettede sin profil", "account_purged": "Data slettet endeligt",
 }
 
 

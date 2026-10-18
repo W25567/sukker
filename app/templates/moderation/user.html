@@ -4,13 +4,14 @@
   {% include "moderation/_nav.html" %}
   {% set u = data.user %}
   {% set names = data.names %}
-  <h1>{{ u.display_name }}</h1>
+  <h1>{{ u.display_name }}{% if u.is_deleted %} <span class="tag warn">Slettet bruger</span>{% endif %}</h1>
+  {% if u.is_deleted %}<p class="card notice-card">Brugeren slettede sin profil {{ u.deleted_at | local_datetime }}. Data er bevaret til sporbarhed og vises ikke for andre brugere.</p>{% endif %}
   <p class="muted">Adgangen er registreret i revisionsloggen. Visningen ændrer intet for brugeren.</p>
 
   <section class="card">
     <h2>Konto</h2>
     <dl class="facts">
-      <div><dt>E-mail</dt><dd>{{ u.email }}{% if not u.is_verified %} (ubekræftet){% endif %}</dd></div>
+      <div><dt>E-mail</dt><dd>{{ u.admin_email }}{% if not u.is_verified %} (ubekræftet){% endif %}</dd></div>
       <div><dt>Alder og fødselsdato</dt><dd>{{ data.age }} år · {{ u.birthdate.strftime('%d-%m-%Y') }}</dd></div>
       <div><dt>Postnummer og kommune</dt><dd>{{ u.postcode }} · {{ data.kommune or 'ukendt' }}</dd></div>
       <div><dt>Oprettet</dt><dd>{{ u.created_at | local_datetime }}</dd></div>
@@ -33,7 +34,7 @@
   <section class="card">
     <h2>Billeder</h2>
     {% for collection, images in data.images.items() %}
-      <h3>{{ 'Offentlige' if collection == 'public' else 'Privat arkiv' }} ({{ images | length }})</h3>
+      <h3>{{ {'public': 'Offentlige', 'private': 'Privat arkiv', 'deleted': 'Slettet af brugeren'}[collection] }} ({{ images | length }})</h3>
       <div class="image-grid">
         {% for image in images %}
           <img src="{{ url_for('moderation.user_image', user_id=u.id, public_id=image.public_id, variant='lille') }}" alt="Billede">

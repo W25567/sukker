@@ -39,14 +39,14 @@ def unhide(user, target_id):
 def blocked_users(user):
     return db.session.execute(
         select(User, UserBlock.created_at).join(UserBlock, UserBlock.blocked_id == User.id)
-        .where(UserBlock.blocker_id == user.id).order_by(UserBlock.created_at.desc())
+        .where(UserBlock.blocker_id == user.id, User.status != "deleted").order_by(UserBlock.created_at.desc())
     ).all()
 
 
 def hidden_users(user):
     return db.session.execute(
         select(User, UserHide.created_at).join(UserHide, UserHide.hidden_id == User.id)
-        .where(UserHide.hider_id == user.id).order_by(UserHide.created_at.desc())
+        .where(UserHide.hider_id == user.id, User.status != "deleted").order_by(UserHide.created_at.desc())
     ).all()
 
 

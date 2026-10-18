@@ -49,4 +49,8 @@ def move_files(public_id, from_collection, to_collection):
 
 def delete_files(image):
     """Sletter billedet og alle afledte varianter (specifikation 4.5)."""
-    shutil.rmtree(_image_dir(image.collection, image.public_id), ignore_errors=True)
+    delete_files_for(image.collection, image.public_id)
+
+
+def delete_files_for(collection, public_id):
+    shutil.rmtree(_image_dir(collection, public_id), ignore_errors=True)

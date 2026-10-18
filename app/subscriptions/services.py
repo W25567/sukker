@@ -73,8 +73,8 @@ def early_bird_count():
 
     return db.session.scalar(
         select(func.count(Subscription.id)).join(User, User.id == Subscription.user_id)
-        .where(Subscription.source == "early_bird", User.is_test.is_(False))
-    )
+        .where(Subscription.source == "early_bird", User.is_test.is_(False), User.status != "deleted")
+    )  # en slettet tidlig fugl giver plads til en ny, ligesom før sletning blev blød
 
 
 def early_bird_open():
@@ -89,7 +89,8 @@ def has_public_image(user_id):
     from ..media.models import ProfileImage
 
     return db.session.scalar(
-        select(ProfileImage.id).where(ProfileImage.user_id == user_id, ProfileImage.collection == "public").limit(1)
+        select(ProfileImage.id).where(ProfileImage.user_id == user_id, ProfileImage.collection == "public",
+                                    ProfileImage.deleted_at.is_(None)).limit(1)
     ) is not None
 
 

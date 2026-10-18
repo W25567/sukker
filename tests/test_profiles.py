@@ -259,8 +259,9 @@ def test_delete_and_make_primary(client, ctx):
     path = storage.file_path(first, "stor")
     assert os.path.exists(path)
     client.post(f"/profil/billeder/{first.public_id}/slet")
-    assert not os.path.exists(path)
-    assert [(i.public_id, i.position) for i in images_of()] == [(third.public_id, 0), (second.public_id, 1)]
+    assert os.path.exists(path)  # bevares til sporbarhed i opbevaringsperioden
+    assert client.get(f"/billede/{first.public_id}/lille.webp").status_code == 404  # heller ikke for ejeren
+    assert [(i.public_id, i.position) for i in images_of() if not i.is_deleted] == [(third.public_id, 0), (second.public_id, 1)]
 
 
 def test_cannot_delete_someone_elses_image(app, ctx):

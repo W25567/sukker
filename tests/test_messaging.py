@@ -212,7 +212,9 @@ def test_deleted_account_shows_as_deleted_user(app, outbox, ctx):
 
     response = anna.post("/konto/slet", data={"password": "et-langt-password", "confirm": "y"})
     assert response.status_code == 302
-    assert user("Anna") is None
+    anna_user = user("Anna")  # kontoen er lukket, men bevaret til sporbarhed
+    assert anna_user.is_deleted and anna_user.deleted_email == "anna@example.com"
+    assert anna_user.email != "anna@example.com"  # e-mailen er fri til en ny konto
     assert db.session.scalar(select(func.count(Message.id))) == 2
 
     html = bodil.get(url).get_data(as_text=True)

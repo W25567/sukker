@@ -29,3 +29,10 @@ class ProfileImage(db.Model):
     height: Mapped[int] = mapped_column(Integer, nullable=False)
     size_bytes: Mapped[int] = mapped_column(Integer, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    # Slettede billeder skjules for alle, også ejeren, men filerne bevares til administration og moderation
+    # i opbevaringsperioden (app/maintenance/retention.py). Kun administration og moderation kan se dem.
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    @property
+    def is_deleted(self):
+        return self.deleted_at is not None

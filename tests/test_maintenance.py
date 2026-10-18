@@ -95,10 +95,15 @@ def test_conversation_without_members_is_deleted(app, outbox, ctx):
     anna, bodil = matched_pair(app, outbox)
     send(anna, open_conversation(anna, "Bodil"), "Hej")
     anna.post("/konto/slet", data={"password": "et-langt-password", "confirm": "y"})
-    retention.run()
-    assert messages() == ["Hej"]  # Bodil har stadig samtalen
     bodil.post("/konto/slet", data={"password": "et-langt-password", "confirm": "y"})
-    assert retention.run()["samtaler_uden_deltagere"] == 1
+    counts = retention.run()
+    assert counts["slettede_konti"] == 0 and messages() == ["Hej"]  # bevares i opbevaringsperioden
+
+    for name in ("Anna", "Bodil"):
+        user(name).deleted_at = LONG_AGO
+    db.session.commit()
+    counts = retention.run()
+    assert counts["slettede_konti"] == 2 and counts["samtaler_uden_deltagere"] == 1
     assert messages() == []
 
 

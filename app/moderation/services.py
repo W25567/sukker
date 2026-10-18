@@ -70,6 +70,8 @@ def decide(case, moderator, decision, note):
     if subject is not None and subject.id == moderator.id:
         raise ModerationError("Du kan ikke træffe afgørelse i en sag om dig selv.")
     if decision in ("restricted", "suspended", "lifted"):
+        if subject.is_deleted:
+            add_event(case, moderator, "note", "Brugeren har slettet sin profil. Kontoen er lukket, så status ændres ikke.")
         set_account_status(subject, {"restricted": "restricted", "suspended": "suspended", "lifted": "active"}[decision])
     case.decision, case.decision_note = decision, note
     case.status, case.closed_at = "closed", now_utc()
@@ -77,6 +79,8 @@ def decide(case, moderator, decision, note):
 
 
 def set_account_status(user, status):
+    if user.is_deleted:
+        return  # en slettet konto forbliver slettet; afgørelsen står i sagen
     user.status, user.status_changed_at = status, now_utc()
     if status == "suspended":
         revoke_sessions(user.id)

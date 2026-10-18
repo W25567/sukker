@@ -57,7 +57,7 @@ def search(viewer, criteria=None, page=1, hide_liked=False):
     bucket = bucket_expression(KommuneDistance.km)
     primary_image = (
         select(ProfileImage.public_id)
-        .where(ProfileImage.user_id == User.id, ProfileImage.collection == "public")
+        .where(ProfileImage.user_id == User.id, ProfileImage.collection == "public", ProfileImage.deleted_at.is_(None))
         .order_by(ProfileImage.position, ProfileImage.id)
         .limit(1)
         .scalar_subquery()

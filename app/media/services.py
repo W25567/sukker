@@ -3,6 +3,7 @@ import secrets
 from sqlalchemy import func, select
 
 from ..core.settings import get_setting
+from ..core.timeutil import now_utc
 from ..extensions import db
 from ..profiles.services import can_view_profile
 from ..core.features import has_feature
@@ -11,18 +12,20 @@ from .models import ProfileImage
 from .processing import ImageRejected, process_upload
 
 MB = 1024 * 1024
+# Billeder, der ikke er slettet. Slettede billeder bevares til sporbarhed, men bruges ingen steder for brugerne.
+LIVE = ProfileImage.deleted_at.is_(None)
 
 
 def list_images(user_id, collection="public"):
     return db.session.scalars(
         select(ProfileImage)
-        .where(ProfileImage.user_id == user_id, ProfileImage.collection == collection)
+        .where(ProfileImage.user_id == user_id, ProfileImage.collection == collection, LIVE)
         .order_by(ProfileImage.position, ProfileImage.id)
     ).all()
 
 
 def _count(user_id, *conditions):
-    return db.session.scalar(select(func.count(ProfileImage.id)).where(ProfileImage.user_id == user_id, *conditions))
+    return db.session.scalar(select(func.count(ProfileImage.id)).where(ProfileImage.user_id == user_id, LIVE, *conditions))
 
 
 def _animated_refusal(user):
@@ -49,7 +52,7 @@ def upload_image(user, data, collection="public"):
     )
     next_position = db.session.scalar(
         select(func.coalesce(func.max(ProfileImage.position) + 1, 0)).where(
-            ProfileImage.user_id == user.id, ProfileImage.collection == collection
+            ProfileImage.user_id == user.id, ProfileImage.collection == collection, LIVE
         )
     )
     image = ProfileImage(
@@ -69,15 +72,15 @@ def upload_image(user, data, collection="public"):
 
 
 def owned_image(user, public_id):
-    return db.session.scalar(select(ProfileImage).where(ProfileImage.public_id == public_id, ProfileImage.user_id == user.id))
+    return db.session.scalar(select(ProfileImage).where(ProfileImage.public_id == public_id, ProfileImage.user_id == user.id, LIVE))
 
 
 def delete_image(image):
-    collection, user_id = image.collection, image.user_id
-    db.session.delete(image)
+    """Brugeren sletter et billede. Det forsvinder fra profilen med det samme, men billedet og filerne bevares
+    til administration og moderation i opbevaringsperioden (app/maintenance/retention.py)."""
+    image.deleted_at = now_utc()
     db.session.flush()
-    storage.delete_files(image)
-    for position, remaining in enumerate(list_images(user_id, collection)):
+    for position, remaining in enumerate(list_images(image.user_id, image.collection)):
         remaining.position = position
 
 
@@ -104,7 +107,7 @@ def set_collection(image, collection):
                                "billeder. Slet et billede først.")
     image.position = db.session.scalar(
         select(func.coalesce(func.max(ProfileImage.position) + 1, 0))
-        .where(ProfileImage.user_id == user_id, ProfileImage.collection == collection)
+        .where(ProfileImage.user_id == user_id, ProfileImage.collection == collection, LIVE)
     )
     image.collection = collection
     db.session.flush()
@@ -142,7 +145,7 @@ def avatar_ids(viewer, users):
         return {}
     rows = db.session.execute(
         select(ProfileImage.user_id, ProfileImage.public_id)
-        .where(ProfileImage.user_id.in_([u.id for u in visible]), ProfileImage.collection == "public")
+        .where(ProfileImage.user_id.in_([u.id for u in visible]), ProfileImage.collection == "public", LIVE)
         .order_by(ProfileImage.user_id, ProfileImage.position.desc(), ProfileImage.id.desc())
     ).all()
     return {user_id: public_id for user_id, public_id in rows}  # den sidste pr. bruger vinder: position 0
@@ -154,7 +157,7 @@ def can_view_image(viewer, image, owner):
     Offentlige billeder følger profilens synlighed. Private arkiver kommer i fase 2 og er indtil da
     kun synlige for ejeren.
     """
-    if viewer is None:
+    if viewer is None or image.is_deleted:
         return False
     if image.collection == "public":
         return can_view_profile(viewer, owner)

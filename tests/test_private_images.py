@@ -68,7 +68,7 @@ def test_last_public_image_cannot_be_made_private_or_deleted_while_private_exist
 
     anna.post(f"/profil/billeder/{second.public_id}/slet")  # private kan altid slettes
     anna.post(f"/profil/billeder/{first.public_id}/slet")  # nu er der ingen private
-    assert images("Anna") == []
+    assert all(image.is_deleted for image in images("Anna"))
 
 
 def test_other_users_cannot_move_images(app, outbox, ctx):
