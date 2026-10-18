@@ -14,22 +14,38 @@ import ssl
 from email.message import EmailMessage
 
 from flask import current_app, render_template
+from jinja2 import TemplateNotFound
 
 from .timeutil import now_utc
 
 
+def _html_version(template, context):
+    """HTML-udgaven (fx mail/verify_email.html ved siden af .txt), så links kan klikkes i alle mailprogrammer.
+    None, hvis mailen kun findes som tekst."""
+    name = template.rsplit(".", 1)[0] + ".html"
+    try:
+        current_app.jinja_env.get_template(name)
+    except TemplateNotFound:
+        return None
+    return render_template(name, **context)
+
+
 def send_mail(to, subject, template, **context):
     """Sender en systemmail. Returnerer False, hvis afsendelsen fejlede. Fejlen logges, men vælter ikke
-    forespørgslen, så fx en oprettelse ikke går tabt. Brugeren kan bede om mailen igen."""
+    forespørgslen, så fx en oprettelse ikke går tabt. Brugeren kan bede om mailen igen.
+
+    Mailen sendes som tekst og, hvis der er en HTML-skabelon, også som HTML (multipart/alternative)."""
     body = render_template(template, **context)
+    html = _html_version(template, context)
     backend = current_app.config["MAIL_BACKEND"]
     if backend == "memory":
-        current_app.extensions.setdefault("mail_outbox", []).append({"to": to, "subject": subject, "body": body})
+        current_app.extensions.setdefault("mail_outbox", []).append({"to": to, "subject": subject, "body": body,
+                                                                     "html": html})
     elif backend == "console":
-        _write_to_outbox(to, subject, body)
+        _write_to_outbox(to, subject, body, html)
     elif backend == "smtp":
         try:
-            _send_smtp(to, subject, body)
+            _send_smtp(to, subject, body, html)
         except (smtplib.SMTPException, OSError):
             current_app.logger.exception("Mail til %s (%s) kunne ikke sendes", to, subject)
             return False
@@ -38,7 +54,7 @@ def send_mail(to, subject, template, **context):
     return True
 
 
-def _write_to_outbox(to, subject, body):
+def _write_to_outbox(to, subject, body, html=None):
     outbox = os.path.join(current_app.instance_path, "outbox")
     os.makedirs(outbox, exist_ok=True)
     ascii_subject = subject.lower().replace("æ", "ae").replace("ø", "oe").replace("å", "aa")
@@ -46,16 +62,21 @@ def _write_to_outbox(to, subject, body):
     path = os.path.join(outbox, f"{now_utc():%Y%m%d-%H%M%S-%f}-{slug}.txt")
     with open(path, "w", encoding="utf-8") as fh:
         fh.write(f"Til: {to}\nEmne: {subject}\n\n{body}")
+    if html:
+        with open(path[:-4] + ".html", "w", encoding="utf-8") as fh:
+            fh.write(html)
     current_app.logger.info("Mail til %s (%s) gemt i %s", to, subject, path)
 
 
-def _send_smtp(to, subject, body):
+def _send_smtp(to, subject, body, html=None):
     config = current_app.config
     message = EmailMessage()
     message["From"] = config["MAIL_FROM"]
     message["To"] = to
     message["Subject"] = subject
     message.set_content(body)
+    if html:
+        message.add_alternative(html, subtype="html")
     context = ssl.create_default_context()
     if config["SMTP_PORT"] == 465:
         smtp = smtplib.SMTP_SSL(config["SMTP_HOST"], 465, timeout=20, context=context)

@@ -1,0 +1,11 @@
+{% extends "mail/_layout.html" %}
+{% from "mail/_macros.html" import button, fallback %}
+{% block title %}Bekræft din e-mail{% endblock %}
+{% block content %}
+  <p style="margin:0 0 16px;">Hej {{ name }}</p>
+  <p style="margin:0 0 16px;">Tak fordi du har oprettet en profil på Sukker.nu. Bekræft din e-mail ved at trykke på knappen. Så får du også dine 3 måneders Premium.</p>
+  {{ button(verify_url, "Bekræft din e-mail") }}
+  {{ fallback(verify_url) }}
+  <p style="margin:0 0 16px;">Linket virker i {{ hours }} timer og kan kun bruges én gang.</p>
+  <p style="margin:0;color:#6f6475;">Har du ikke oprettet en profil, kan du se bort fra denne mail.</p>
+{% endblock %}
