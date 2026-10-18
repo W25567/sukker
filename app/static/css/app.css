@@ -284,6 +284,20 @@ body:has(.bottomnav) .page { padding-bottom: 88px; }
 .radio-list label { display: flex; gap: 10px; align-items: center; font-weight: 400; }
 .bubble-meta a { color: var(--muted); }
 
+/* Verificering med selfie */
+.verified-badge { display: inline-flex; align-items: center; gap: 4px; margin-left: 8px; padding: 2px 10px 2px 8px; border-radius: 999px;
+  background: var(--info-bg); color: var(--success); font-size: 0.8rem; font-weight: 600; vertical-align: middle; white-space: nowrap; }
+.verified-badge::before { content: "✓"; font-weight: 700; }
+.verified-badge.small { margin-left: 4px; padding: 0 7px 0 5px; font-size: 0.72rem; }
+.card > p > .verified-badge:first-child { margin-left: 0; }
+.steps { margin: 0 0 16px; padding-left: 20px; display: grid; gap: 6px; }
+.gesture { color: var(--accent); }
+.verify-compare { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; margin: 12px 0 16px; }
+.verify-compare figure { margin: 0; padding: 10px; }
+.verify-compare figcaption { font-size: 0.85rem; color: var(--muted); margin-bottom: 6px; }
+.verify-compare img { width: 100%; max-height: 420px; object-fit: contain; border-radius: 8px; background: var(--info-bg); }
+.sort-note { font-size: 0.85rem; }
+
 /* Notifikationsvalg på Konto */
 .notify-table { width: 100%; border-collapse: collapse; margin: 12px 0 16px; }
 .notify-table th, .notify-table td { padding: 10px 6px; border-bottom: 1px solid var(--border); vertical-align: middle; }
@@ -295,7 +309,7 @@ body:has(.bottomnav) .page { padding-bottom: 88px; }
 .notify-table input[type=checkbox] { width: 22px; height: 22px; }
 
 /* Moderation (M6) */
-.mod-nav { display: flex; gap: 16px; margin-bottom: 8px; font-size: 0.92rem; }
+.mod-nav { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-bottom: 8px; font-size: 0.92rem; }
 .mod-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; margin-bottom: 16px; }
 .mod-table th, .mod-table td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--border); vertical-align: top; }
 .mod-table tr.high td { background: var(--info-bg); }

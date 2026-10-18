@@ -10,7 +10,22 @@
         Funktioner, der burde være helt naturlige, bliver låst bag betalingsmure, og det kan være svært at gennemskue,
         hvad man egentlig får for pengene.</p>
       <p class="purpose-claim">Det vil vi gerne gøre op med.</p>
+      <p>Navnet handler om at forsøde tilværelsen – uanset hvor i livet du er, og hvad du søger.</p>
     </header>
+
+    <section id="raekkefoelge">
+      <h2>Ingen algoritme bestemmer, hvem du ser</h2>
+      <p>Mange datingapps lader en algoritme vurdere, hvor "attraktiv" du er, og bestemme, hvem du får lov at se – og hvem
+        der får lov at se dig. Det gør vi ikke.</p>
+      <p>I Udforsk ser du profilerne efter afstand og derefter den nyeste profil. Intet andet afgør rækkefølgen: ikke hvor
+        mange likes en profil har fået, ikke hvor meget du har betalt, og ikke en skjult score. Med Premium kan du vælge at
+        se de nyeste profiler først. Du ser kun de køn, du er interesseret i, og kun profiler, der også er interesseret i
+        dit køn.</p>
+      {% if inactive_months %}
+      <p>Profiler, der ikke har været i brug i {{ inactive_months }} måneder, bliver skjult fra Udforsk, så du ikke bruger tid
+        på at skrive til nogen, der for længst er gået. De kommer frem igen, så snart personen logger ind.</p>
+      {% endif %}
+    </section>
 
     <section>
       <h2>Rigtige mennesker. Ægte forbindelser.</h2>
@@ -19,7 +34,9 @@
       <p>Vi opretter ikke falske profiler for at lokke nogen til at betale, og vi bruger ikke automatiske samtaler til at
         holde dig beskæftiget. Vi viser heller ikke opdigtede tal for, hvor mange der er på siden.</p>
       <p>Vi kan ikke love, at ingen nogensinde forsøger at oprette en falsk profil. Men vi kan love, at vi tager det alvorligt:
-        Alle kan anmelde en profil eller en besked, og anmeldelser behandles af mennesker, der kan fjerne falske profiler.</p>
+        Alle kan anmelde en profil eller en besked, og anmeldelser behandles af mennesker, der kan fjerne falske profiler.
+        Profiler med mærket <strong>Verificeret</strong> har sendt en selfie, som en moderator har sammenlignet med
+        profilbillederne.</p>
       <p class="purpose-claim">Når du skriver til nogen på Sukker.nu, skal du kunne stole på, at der sidder et rigtigt menneske i den anden ende.</p>
     </section>
 
@@ -76,6 +93,7 @@
       <ul>
         <li>Ingen opdigtede profiler fra vores side.</li>
         <li>Ingen robotter, der lader som om, de er interesserede.</li>
+        <li>Ingen algoritme, der bestemmer, hvem du ser.</li>
         <li>Ingen skjulte fiduser – og et menneske, du kan skrive til.</li>
       </ul>
       <p>Bare en datingside, der prøver at gøre tingene lidt mere ærligt, lidt mere menneskeligt og til en pris, der giver mening.</p>

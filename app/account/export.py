@@ -61,6 +61,8 @@ def export_user_data(user):
             "vilkaarsversion": user.terms_version,
             "status": user.status,
             "notifikationer": notification_prefs.current(user),
+            "sidst_aktiv": _iso(user.last_active_at),
+            "billeder_verificeret": _iso(user.photo_verified_at),
         },
         "profil": {
             "felter": {f.label: display_value(profile, f) for f in FIELDS if display_value(profile, f)},

@@ -1,0 +1,11 @@
+{% extends "mail/_layout.html" %}
+{% from "mail/_macros.html" import button, fallback %}
+{% block title %}Din profil bliver snart skjult{% endblock %}
+{% block content %}
+  <p style="margin:0 0 16px;">Hej {{ name }}</p>
+  <p style="margin:0 0 16px;">Du har ikke været logget ind på Sukker.nu i et stykke tid. Den <strong>{{ hidden_date }}</strong> bliver din profil derfor skjult fra Udforsk, så andre kun ser profiler, der faktisk er i brug.</p>
+  <p style="margin:0 0 16px;">Du mister ikke noget. Dine matches og samtaler er der stadig, og din profil bliver vist igen, så snart du logger ind.</p>
+  {{ button(login_url, "Log ind") }}
+  {{ fallback(login_url) }}
+  <p style="margin:0;font-size:13px;color:#6f6475;"><a href="{{ unsubscribe_url }}" style="color:#a8325a;">Afmeld disse varsler</a>.</p>
+{% endblock %}

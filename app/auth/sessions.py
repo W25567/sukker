@@ -22,6 +22,7 @@ LAST_SEEN_INTERVAL = timedelta(minutes=5)
 
 def start_session(user):
     raw = secrets.token_urlsafe(32)
+    user.last_active_at = now_utc()
     db.session.add(
         UserSession(
             user_id=user.id,
@@ -77,6 +78,7 @@ def _load_current_user():
         return
     if now - user_session.last_seen_at > LAST_SEEN_INTERVAL:
         user_session.last_seen_at = now
+        db.session.execute(update(User).where(User.id == user_session.user_id).values(last_active_at=now))
         db.session.commit()
     user = db.session.get(User, user_session.user_id)
     if user.status == "suspended":

@@ -10,7 +10,7 @@ Se, hvad der er med i Free og Premium:
 
 Du kan altid se din periode under Konto: {{ account_url }}
 
-Du får denne påmindelse, fordi den er slået til under Konto. Du kan slå den fra her: {{ settings_url }}
+Du får denne påmindelse, fordi den er slået til under Konto. Afmeld påmindelser om Premium med ét klik: {{ unsubscribe_url }}
 
 Venlig hilsen
 Sukker.nu

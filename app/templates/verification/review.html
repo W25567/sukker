@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Verificering – Sukker.nu{% endblock %}
+{% block content %}
+  {% include "admin/_nav.html" if current_user.role == 'admin' else "moderation/_nav.html" %}
+  <a class="back-link" href="{{ url_for('verification.queue') }}">← Verificeringer</a>
+  <h1>Verificering af {{ user.display_name }}</h1>
+  <p class="muted">Status: {{ statuses[row.status] }} · sendt {{ row.created_at | local_datetime }}
+    {% if row.decided_at %} · afgjort {{ row.decided_at | local_datetime }}{% if decided_by %} af {{ decided_by.display_name }}{% endif %}{% endif %}</p>
+  {% if row.note %}<p><strong>Begrundelse:</strong> {{ row.note }}</p>{% endif %}
+
+  {% if row.status == 'pending' %}
+    <p>Gestus, brugeren skulle lave: <strong>{{ gesture }}</strong></p>
+    <div class="verify-compare">
+      <figure class="card">
+        <figcaption>Selfie</figcaption>
+        {% if row.public_id %}<img src="{{ url_for('verification.selfie', verification_id=row.id) }}" alt="Selfie">{% else %}<p class="muted">Selfien er slettet.</p>{% endif %}
+      </figure>
+      {% for image in images %}
+        <figure class="card">
+          <figcaption>Profilbillede {{ loop.index }}</figcaption>
+          <img src="{{ url_for('verification.profile_image', verification_id=row.id, public_id=image.public_id) }}" alt="Profilbillede {{ loop.index }}">
+        </figure>
+      {% else %}
+        <p class="muted">Brugeren har ingen offentlige billeder lige nu.</p>
+      {% endfor %}
+    </div>
+    <form method="post" class="form card">
+      {{ form.hidden_tag() }}
+      <div class="field"><label for="note">Begrundelse (kræves ved afvisning, brugeren kan se den)</label>
+        <textarea id="note" name="note" rows="2" maxlength="500"></textarea></div>
+      <div class="actions">
+        <button type="submit" name="action" value="approve" class="button">Godkend</button>
+        <button type="submit" name="action" value="reject" class="button secondary danger">Afvis</button>
+      </div>
+    </form>
+  {% elif row.status == 'approved' and user.photo_verified_at %}
+    <form method="post" class="form card">
+      {{ form.hidden_tag() }}
+      <p>Profilen er verificeret. Fjern mærket, hvis profilbillederne ikke længere viser den samme person.</p>
+      <div class="field"><label for="note">Begrundelse (brugeren kan se den)</label>
+        <textarea id="note" name="note" rows="2" maxlength="500" required></textarea></div>
+      <button type="submit" name="action" value="revoke" class="button secondary danger">Fjern mærket</button>
+    </form>
+  {% endif %}
+{% endblock %}

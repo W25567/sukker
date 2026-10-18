@@ -110,7 +110,7 @@ def update_settings(admin, values):
 def update_features(admin, mapping, disabled):
     if mapping != features.tier_features():
         audit(admin, "tier_features", old=features.tier_features(), new=mapping)
-        set_setting("tier_features", mapping)
+        set_setting("tier_features", features.stored_mapping(mapping))
     if set(disabled) != features.disabled_features():
         audit(admin, "disabled_features", old=sorted(features.disabled_features()), new=sorted(disabled))
         set_setting("disabled_features", sorted(disabled))

@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Verificeringer – Sukker.nu{% endblock %}
+{% block content %}
+  {% include "admin/_nav.html" if current_user.role == 'admin' else "moderation/_nav.html" %}
+  <h1>Verificeringer</h1>
+  <p class="muted">Sammenlign selfien med profilbillederne. Er det samme person, og laver personen den viste gestus? Selfien slettes, når du har afgjort sagen.</p>
+
+  <h2>Venter ({{ pending | length }})</h2>
+  {% if pending %}
+    <table class="mod-table">
+      <thead><tr><th>Bruger</th><th>Sendt</th><th></th></tr></thead>
+      <tbody>
+        {% for row in pending %}
+          <tr>
+            <td>{{ users[row.user_id].display_name }}</td>
+            <td>{{ row.created_at | local_datetime }}</td>
+            <td><a href="{{ url_for('verification.review', verification_id=row.id) }}">Vurdér</a></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <div class="card"><p>Ingen selfies venter.</p></div>
+  {% endif %}
+
+  {% if decided %}
+    <h2>Senest afgjort</h2>
+    <table class="mod-table">
+      <thead><tr><th>Bruger</th><th>Afgørelse</th><th>Afgjort</th><th></th></tr></thead>
+      <tbody>
+        {% for row in decided %}
+          <tr>
+            <td>{{ users[row.user_id].display_name }}</td>
+            <td>{{ statuses[row.status] }}</td>
+            <td>{{ row.decided_at | local_datetime }}</td>
+            <td><a href="{{ url_for('verification.review', verification_id=row.id) }}">Se</a></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+{% endblock %}

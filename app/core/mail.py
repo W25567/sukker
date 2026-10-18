@@ -30,22 +30,24 @@ def _html_version(template, context):
     return render_template(name, **context)
 
 
-def send_mail(to, subject, template, **context):
+def send_mail(to, subject, template, headers=None, **context):
     """Sender en systemmail. Returnerer False, hvis afsendelsen fejlede. Fejlen logges, men vælter ikke
     forespørgslen, så fx en oprettelse ikke går tabt. Brugeren kan bede om mailen igen.
 
-    Mailen sendes som tekst og, hvis der er en HTML-skabelon, også som HTML (multipart/alternative)."""
+    Mailen sendes som tekst og, hvis der er en HTML-skabelon, også som HTML (multipart/alternative).
+    `headers` er ekstra mailheadere, fx List-Unsubscribe (notify/unsubscribe.py)."""
     body = render_template(template, **context)
     html = _html_version(template, context)
+    headers = headers or {}
     backend = current_app.config["MAIL_BACKEND"]
     if backend == "memory":
         current_app.extensions.setdefault("mail_outbox", []).append({"to": to, "subject": subject, "body": body,
-                                                                     "html": html})
+                                                                     "html": html, "headers": headers})
     elif backend == "console":
-        _write_to_outbox(to, subject, body, html)
+        _write_to_outbox(to, subject, body, html, headers)
     elif backend == "smtp":
         try:
-            _send_smtp(to, subject, body, html)
+            _send_smtp(to, subject, body, html, headers)
         except (smtplib.SMTPException, OSError):
             current_app.logger.exception("Mail til %s (%s) kunne ikke sendes", to, subject)
             return False
@@ -54,26 +56,29 @@ def send_mail(to, subject, template, **context):
     return True
 
 
-def _write_to_outbox(to, subject, body, html=None):
+def _write_to_outbox(to, subject, body, html=None, headers=None):
     outbox = os.path.join(current_app.instance_path, "outbox")
     os.makedirs(outbox, exist_ok=True)
     ascii_subject = subject.lower().replace("æ", "ae").replace("ø", "oe").replace("å", "aa")
     slug = re.sub(r"[^a-z0-9]+", "-", ascii_subject).strip("-")[:40]
     path = os.path.join(outbox, f"{now_utc():%Y%m%d-%H%M%S-%f}-{slug}.txt")
     with open(path, "w", encoding="utf-8") as fh:
-        fh.write(f"Til: {to}\nEmne: {subject}\n\n{body}")
+        extra = "".join(f"{name}: {value}\n" for name, value in (headers or {}).items())
+        fh.write(f"Til: {to}\nEmne: {subject}\n{extra}\n{body}")
     if html:
         with open(path[:-4] + ".html", "w", encoding="utf-8") as fh:
             fh.write(html)
     current_app.logger.info("Mail til %s (%s) gemt i %s", to, subject, path)
 
 
-def _send_smtp(to, subject, body, html=None):
+def _send_smtp(to, subject, body, html=None, headers=None):
     config = current_app.config
     message = EmailMessage()
     message["From"] = config["MAIL_FROM"]
     message["To"] = to
     message["Subject"] = subject
+    for name, value in (headers or {}).items():
+        message[name] = value
     message.set_content(body)
     if html:
         message.add_alternative(html, subtype="html")

@@ -29,6 +29,8 @@ KINDS = [
     Kind("grant", "Adgang til private billeder", "Når nogen giver dig adgang til deres private billeder.", True, True),
     Kind("admin", "Beskeder fra Administrator", "Fx svar på en henvendelse eller besked om en afgørelse.", True, True),
     Kind("premium", "Premium udløber snart", "En påmindelse 14 og 3 dage før din Premium-periode udløber.", None, True),
+    Kind("inactive", "Din profil skjules snart", "En uge før din profil skjules fra Udforsk, fordi du ikke har været "
+                                                 "logget ind i længere tid.", None, True),
     Kind("staff", "Svar til Administrator", "Når en bruger svarer i en samtale med Administrator.", True, True,
          admin_only=True),
 ]

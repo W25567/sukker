@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Afmeld e-mails – Sukker.nu{% endblock %}
+{% block content %}
+  <section class="card">
+    {% if done %}
+      <h1>Du er afmeldt</h1>
+      <p>Du får ikke flere {{ label }}. Du kan altid slå dem til igen under <a href="{{ url_for('account.overview') }}#notifikationer">Konto</a>.</p>
+    {% else %}
+      <h1>Afmeld e-mails</h1>
+      <p>Vil du afmelde {{ label }} fra Sukker.nu?</p>
+      <form method="post" action="{{ url_for('notify.unsubscribe', token=token) }}">
+        <button type="submit" class="button">Afmeld</button>
+      </form>
+      <p class="muted">Du kan altid vælge, hvilke notifikationer du vil have, under <a href="{{ url_for('account.overview') }}#notifikationer">Konto</a>.</p>
+    {% endif %}
+  </section>
+{% endblock %}

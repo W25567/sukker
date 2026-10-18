@@ -39,7 +39,7 @@ def test_settings_card_and_defaults(app, outbox, ctx):
 def test_saving_choices_stores_only_differences(app, outbox, ctx):
     anna = make_user(app, outbox, "Anna")
     everything = {f"{c}_{k}": True for k in ("message", "match", "request", "grant", "admin") for c in ("app", "mail")}
-    save(anna, **{**everything, "mail_premium": True, "app_match": False, "mail_message": False})
+    save(anna, **{**everything, "mail_premium": True, "mail_inactive": True, "app_match": False, "mail_message": False})
     db.session.refresh(user("Anna"))
     assert user("Anna").notification_prefs == {"match": {"app": False}, "message": {"mail": False}}
     assert not wants(user("Anna"), "match", "app") and wants(user("Anna"), "match", "mail")
@@ -61,7 +61,7 @@ def test_in_app_toast_can_be_turned_off_but_badge_stays(app, outbox, ctx):
 def test_mail_when_away_once_until_back(app, outbox, ctx):
     anna, bodil = matched_pair(app, outbox)
     send(bodil, open_conversation(bodil, "Anna"), "Hej Anna, en hemmelig besked")
-    assert mail.run(now_utc()) == {"nyt": 0, "premium": 0}  # Anna er lige logget ind og er på siden
+    assert mail.run(now_utc())["nyt"] == 0  # Anna er lige logget ind og er på siden
 
     counts = mail.run(now_utc() + LATER)
     (sent,) = news_mails(outbox, "anna@example.com")

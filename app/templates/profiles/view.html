@@ -97,7 +97,7 @@
     </div>
 
       <header class="pv-header">
-        <h1>{{ user.display_name }}<span class="pv-age">{{ age }}</span></h1>
+        <h1>{{ user.display_name }}<span class="pv-age">{{ age }}</span>{% if user.photo_verified_at %} <span class="verified-badge" title="En moderator har sammenlignet en selfie med profilbillederne">Verificeret</span>{% endif %}</h1>
         <p class="pv-meta">
           {% if recently_active %}<span class="pv-active">Aktiv for nylig</span>{% endif %}
           {% if distance %}<span>{{ distance }}</span>{% endif %}

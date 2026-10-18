@@ -13,10 +13,22 @@
     <input type="hidden" name="likede" value="vis">
     <div class="field checkbox"><label><input type="checkbox" name="likede" value="skjul"{% if hide_liked %} checked{% endif %}> Skjul profiler, jeg har liket</label></div>
   {% endmacro %}
+  {# Rækkefølgen kan kun vælges med Premium. Uden valget er den altid afstand og derefter nyeste profil. #}
+  {% macro sort_field() %}
+    {% if newest_allowed %}
+      <div class="field"><label for="sortering">Rækkefølge</label>
+        <select id="sortering" name="sortering">
+          <option value="">Afstand, derefter nyeste</option>
+          <option value="nyeste"{% if newest_first %} selected{% endif %}>Nyeste profiler først</option>
+        </select>
+      </div>
+    {% endif %}
+  {% endmacro %}
   <details class="card filters"{% if filters_active %} open{% endif %}>
     <summary>Filtre{% if filters_active or hide_liked %} <span class="badge-inline">Aktive</span>{% endif %}</summary>
     {% if filters_allowed %}
       <form method="get" action="{{ url_for('explore.index') }}" class="form">
+        {{ sort_field() }}
         <div class="field">{{ form.afstand.label }}{{ form.afstand() }}</div>
         <div class="row">
           <div class="field">{{ form.alder_fra.label }}{{ form.alder_fra(min=18, max=99) }}</div>
@@ -37,11 +49,12 @@
       </form>
     {% else %}
       <form method="get" action="{{ url_for('explore.index') }}" class="form">
+        {{ sort_field() }}
         {{ hide_liked_field() }}
         <div class="actions"><button type="submit" class="button">Vis profiler</button></div>
       </form>
-      <p>Filtrering på afstand, alder, køn, hvad folk søger og billeder kræver Premium eller Premium+.</p>
-      <p class="muted">Du kan stadig se alle profiler, sorteret efter hvem der bor tættest på.</p>
+      <p>Filtrering på afstand, alder, køn, hvad folk søger og billeder{% if not newest_allowed %} og at se de nyeste profiler først{% endif %} kræver Premium eller Premium+.</p>
+      <p class="muted">Du kan stadig se alle profiler.</p>
     {% endif %}
   </details>
 
@@ -52,6 +65,10 @@
       Vælg under "Interesseret i", hvem du vil se.
     {% endif %}
     <a href="{{ url_for('profiles.edit') }}">Ret på din profil</a>
+  </p>
+  <p class="muted sort-note">
+    {% if newest_first %}Rækkefølge: nyeste profiler først.{% else %}Rækkefølge: efter afstand og derefter nyeste profil.{% endif %}
+    Ingen algoritme bestemmer, hvem du ser. <a href="{{ url_for('pages.purpose') }}#raekkefoelge">Læs hvorfor</a>
   </p>
 
   {% if not has_kommune %}
@@ -70,7 +87,7 @@
               {{ photo_placeholder() }}
             {% endif %}
             <div class="card-body">
-              <strong>{{ card.display_name }}, {{ card.age }}</strong>
+              <strong>{{ card.display_name }}, {{ card.age }}{% if card.verified %} <span class="verified-badge small">Verificeret</span>{% endif %}</strong>
               <span class="muted">
                 {{ card.distance_label or '' }}{% if card.distance_label and card.kommune %} · {% endif %}{{ card.kommune or '' }}
               </span>

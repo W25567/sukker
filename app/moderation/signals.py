@@ -10,6 +10,9 @@ Signaler:
 - signal_spam: den samme besked sendt til mange forskellige samtaler på kort tid
 - signal_blokering: mange forskellige brugere har blokeret brugeren på kort tid
 - signal_scraping: brugeren har ramt grænsen for, hvor mange profiler eller billeder man kan hente
+- signal_interesse: brugeren har åbnet den samme profil usædvanligt mange gange på en uge. Afstanden til profilen
+  vises derefter altid som "I nærheden" for brugeren, uanset hvor de bor, så den ikke kan bruges til at finde
+  personen, fx ved at sammenligne afstanden fra konti forskellige steder i landet (safety.models.DistanceMask)
 """
 from datetime import timedelta
 
@@ -24,6 +27,7 @@ SIGNAL_LABELS = {
     "signal_spam": "Signal: samme besked til mange",
     "signal_blokering": "Signal: blokeret af mange",
     "signal_scraping": "Signal: mange profilvisninger",
+    "signal_interesse": "Signal: usædvanlig interesse for én profil",
 }
 DEDUPE = timedelta(days=1)
 
@@ -35,6 +39,10 @@ BLOCK_WAVE_COUNT = 3
 BLOCK_WAVE_WINDOW = timedelta(days=7)
 
 SAMPLE_LENGTH = 300
+
+INTEREST_WINDOW_DAYS = 7
+VISIT_GAP = timedelta(minutes=5)  # flere visninger inden for 5 minutter tæller som én (fx frem og tilbage)
+VISIT_KEEP_DAYS = 30  # besøgstællingerne slettes derefter (maintenance/retention.py)
 
 
 def signal_count(user):
@@ -99,6 +107,49 @@ def check_new_account(user, previous):
                         f"Ny konto med samme e-mail som {len(previous)} slettet konto/konti.",
                         {"type": "signal", "previous_user_ids": [p.id for p in previous],
                          "captured_at": now_utc().isoformat()})
+
+
+def is_masked(viewer_id, target_id):
+    from ..safety.models import DistanceMask
+
+    return db.session.get(DistanceMask, (viewer_id, target_id)) is not None
+
+
+def record_visit(viewer, target):
+    """Tæller et besøg på `target`s profil og opretter et signal og en afstandsmaske, hvis `viewer` har åbnet
+    profilen usædvanligt mange gange på en uge. Kalderen committer."""
+    from ..core.settings import get_setting
+    from ..core.timeutil import today_local
+    from ..safety.models import DistanceMask, ProfileVisit
+
+    if viewer.id == target.id:
+        return
+    now, today = now_utc(), today_local()
+    visit = db.session.get(ProfileVisit, (viewer.id, target.id, today))
+    if visit is None:
+        db.session.add(ProfileVisit(viewer_id=viewer.id, target_id=target.id, day=today, views=1, last_view_at=now))
+    elif now - visit.last_view_at >= VISIT_GAP:
+        visit.views += 1
+        visit.last_view_at = now
+    else:
+        return
+    db.session.flush()
+
+    threshold = get_setting("interest_signal_views")
+    if not threshold or is_masked(viewer.id, target.id):
+        return
+    views = db.session.scalar(select(func.sum(ProfileVisit.views)).where(
+        ProfileVisit.viewer_id == viewer.id, ProfileVisit.target_id == target.id,
+        ProfileVisit.day > today - timedelta(days=INTEREST_WINDOW_DAYS)))
+    if views < threshold:
+        return
+    case = raise_signal(viewer, "signal_interesse",
+                        f"Har åbnet den samme profil {views} gange på {INTEREST_WINDOW_DAYS} dage. Afstanden til "
+                        "profilen vises nu altid som \"I nærheden\" for brugeren.",
+                        {"type": "signal", "target_user_id": target.id, "views": views,
+                         "captured_at": now.isoformat()})
+    db.session.add(DistanceMask(viewer_id=viewer.id, target_id=target.id, case_id=case.id if case else None))
+    db.session.flush()
 
 
 def scraping_breach(limit):

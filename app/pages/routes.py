@@ -32,6 +32,7 @@ def _legal_context():
         "legal_draft": not config["LEGAL_REVIEWED"],
         "retention_months": get_setting("data_retention_months"),
         "signup_months": get_setting("signup_premium_months"),
+        "inactive_months": get_setting("inactive_hide_months"),
     }
 
 
@@ -62,6 +63,7 @@ PREMIUM_ROWS = [
     ("messages.reply", "Skrive i samtaler med dine matches"),
     ("likes.view_received", "Se hvem der har liket dig"),
     ("search.filters", "Filtrere på alder, afstand, køn og relationstype"),
+    ("search.newest_first", "Se de nyeste profiler først"),
     ("media.animated", "Animerede billeder på profilen"),
 ]
 

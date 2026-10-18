@@ -12,6 +12,7 @@ from .services import search, seeking_genders
 bp = Blueprint("explore", __name__)
 
 LIKED_PARAM = "likede"  # ?likede=skjul eller ?likede=vis. Uden parameter gælder brugerens præference.
+SORT_PARAM, NEWEST = "sortering", "nyeste"  # ?sortering=nyeste (Premium)
 
 
 def hide_liked_choice(user):
@@ -35,7 +36,10 @@ def index():
     filters_allowed = has_feature(g.user, "search.filters")
     criteria = form.criteria() if filters_allowed else None
     hide_liked = hide_liked_choice(g.user)
-    cards, has_more = search(g.user, criteria, page, hide_liked=hide_liked)
+    # De nyeste profiler først er en Premium-funktion. Ellers er rækkefølgen altid afstand og derefter nyeste.
+    newest_allowed = has_feature(g.user, "search.newest_first")
+    newest_first = newest_allowed and request.args.get(SORT_PARAM) == NEWEST
+    cards, has_more = search(g.user, criteria, page, hide_liked=hide_liked, newest_first=newest_first)
     seeking = choices.labels(choices.GENDERS_PLURAL, seeking_genders(g.user))
 
     next_args = request.args.to_dict(flat=False)
@@ -48,7 +52,9 @@ def index():
         cards=cards,
         form=form,
         filters_allowed=filters_allowed,
-        filters_active=filters_allowed and form.active,
+        filters_active=filters_allowed and form.active or newest_first,
+        newest_allowed=newest_allowed,
+        newest_first=newest_first,
         has_more=has_more,
         page=page,
         next_args=next_args,

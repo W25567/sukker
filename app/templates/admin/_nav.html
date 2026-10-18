@@ -7,6 +7,8 @@
   <a href="{{ url_for('admin.threads') }}"{% if here in ('admin.threads', 'admin.user_thread') %} aria-current="page"{% endif %}>Henvendelser{% if waiting %} <span class="unread-count">{{ waiting }}</span>{% endif %}</a>
   {% set bugs = admin_open_bug_reports() %}
   <a href="{{ url_for('admin.bug_reports') }}"{% if here in ('admin.bug_reports', 'admin.bug_report') %} aria-current="page"{% endif %}>Fejlrapporter{% if bugs %} <span class="unread-count">{{ bugs }}</span>{% endif %}</a>
+  {% set selfies = pending_verifications() %}
+  <a href="{{ url_for('verification.queue') }}"{% if here.startswith('verification.') %} aria-current="page"{% endif %}>Verificeringer{% if selfies %} <span class="unread-count">{{ selfies }}</span>{% endif %}</a>
   <a href="{{ url_for('admin.settings') }}"{% if here == 'admin.settings' %} aria-current="page"{% endif %}>Indstillinger</a>
   <a href="{{ url_for('admin.log') }}"{% if here == 'admin.log' %} aria-current="page"{% endif %}>Log</a>
   <a href="{{ url_for('moderation.log') }}">Moderatoradgang</a>

@@ -58,6 +58,11 @@ class User(db.Model):
     # Valg af notifikationer på siden og pr. e-mail, kun afvigelser fra standarden. NULL = standard
     # (app/notify/prefs.py).
     notification_prefs: Mapped[dict | None] = mapped_column(JSONB)
+    # Sidst brugeren var logget ind og aktiv. Opdateres højst hvert 5. minut (auth/sessions.py). Bevares, også når
+    # gamle sessioner slettes, så profiler kan skjules fra Udforsk efter længere tids inaktivitet.
+    last_active_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    # Sat, når en moderator har godkendt en selfie (app/verification). NULL = ikke verificeret.
+    photo_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     __table_args__ = (
         CheckConstraint("role IN ('user', 'moderator', 'admin')", name="role"),

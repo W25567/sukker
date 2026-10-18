@@ -172,6 +172,18 @@
     <p class="muted">Dit standardvalg. Du kan altid slå det til og fra under Filtre i Udforsk. Et match vises altid.</p>
   </section>
 
+  <section class="card" id="verificering">
+    <h2>Verificering</h2>
+    {% if current_user.photo_verified_at %}
+      <p><span class="verified-badge">Verificeret</span> Andre kan se, at du er personen på dine billeder.</p>
+    {% elif verification and verification.status == 'pending' %}
+      <p class="muted">Din selfie venter på at blive vurderet. Du får besked i Beskeder.</p>
+    {% else %}
+      <p class="muted">Vis andre, at du er personen på dine billeder. Du tager en selfie, og en moderator sammenligner den med dine billeder. Selfien slettes bagefter.</p>
+      <a class="button secondary" href="{{ url_for('verification.start') }}">Verificér din profil</a>
+    {% endif %}
+  </section>
+
   <section class="card">
     <h2>Pause</h2>
     <p class="muted">På pause forsvinder profilen fra Udforsk, men dine matches og samtaler bevares.</p>

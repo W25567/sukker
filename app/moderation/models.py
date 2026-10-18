@@ -20,7 +20,8 @@ REASON_LABELS = dict(REASONS) | {"klage": "Klage over afgørelse", "mistanke": "
                                  "signal_konto": "Signal: ny konto med e-mail fra slettet konto",
                                  "signal_spam": "Signal: samme besked til mange",
                                  "signal_blokering": "Signal: blokeret af mange",
-                                 "signal_scraping": "Signal: mange profilvisninger"}
+                                 "signal_scraping": "Signal: mange profilvisninger",
+                                 "signal_interesse": "Signal: usædvanlig interesse for én profil"}
 HIGH_PRIORITY = {"falsk", "svindel", "mindreaarig"}
 
 STATUSES = [("open", "Åben"), ("in_progress", "Under behandling"), ("closed", "Afsluttet")]

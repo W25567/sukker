@@ -16,6 +16,7 @@ FEATURES = {
     "messages.unmatched.send": "Skrive til personer uden match (fase 2)",
     "likes.view_received": "Se hvem der har liket dig",
     "search.filters": "Filtrere søgning i Udforsk",
+    "search.newest_first": "Se de nyeste profiler først i Udforsk",
     "media.animated": "Uploade animerede billeder",
 }
 
@@ -23,16 +24,34 @@ TIERS = ["free", "premium", "premium_plus"]
 
 DEFAULT_TIER_FEATURES = {
     "free": ["messages.read"],
-    "premium": ["messages.read", "messages.reply", "likes.view_received", "search.filters", "media.animated"],
-    "premium_plus": ["messages.read", "messages.reply", "likes.view_received", "search.filters", "media.animated",
-                     "messages.unmatched.send"],
+    "premium": ["messages.read", "messages.reply", "likes.view_received", "search.filters", "search.newest_first",
+                "media.animated"],
+    "premium_plus": ["messages.read", "messages.reply", "likes.view_received", "search.filters", "search.newest_first",
+                     "media.animated", "messages.unmatched.send"],
 }
+# De funktioner, der fandtes, før fordelingen gemte, hvilke funktioner den kendte ("_known"). En funktion, som en
+# gemt fordeling ikke kender, får standardfordelingen, indtil administrator gemmer fordelingen igen.
+LEGACY_KNOWN = {"messages.read", "messages.reply", "messages.unmatched.send", "likes.view_received",
+                "search.filters", "media.animated"}
 
 
 def tier_features():
     """Den aktuelle fordeling af funktioner pr. niveau."""
     stored = get_setting("tier_features")
-    return {tier: list((stored or DEFAULT_TIER_FEATURES).get(tier, [])) for tier in TIERS}
+    if not stored:
+        return {tier: list(DEFAULT_TIER_FEATURES[tier]) for tier in TIERS}
+    known = set(stored.get("_known", LEGACY_KNOWN))
+    result = {}
+    for tier in TIERS:
+        features = list(stored.get(tier, []))
+        features += [f for f in DEFAULT_TIER_FEATURES[tier] if f not in known and f not in features]
+        result[tier] = features
+    return result
+
+
+def stored_mapping(mapping):
+    """Fordelingen, som den gemmes af administrationen, med de funktioner, den kender."""
+    return {**mapping, "_known": list(FEATURES)}
 
 
 def disabled_features():

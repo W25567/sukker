@@ -150,7 +150,8 @@ def notify_command():
     from .notify import mail
 
     counts = mail.run()
-    click.echo(f"Notifikationer: {counts['nyt']} mail(s) om nyt, {counts['premium']} påmindelse(r) om Premium.")
+    click.echo(f"Notifikationer: {counts['nyt']} mail(s) om nyt, {counts['premium']} påmindelse(r) om Premium, "
+               f"{counts['inaktiv']} varsel/varsler om inaktivitet.")
 
 
 @sukker_cli.command("monitor")

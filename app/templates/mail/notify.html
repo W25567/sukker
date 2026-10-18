@@ -10,5 +10,6 @@
   {{ button(login_url, "Log ind og se det") }}
   {{ fallback(login_url) }}
   <p style="margin:0;font-size:13px;color:#6f6475;">Du får denne mail, fordi du har slået notifikationer pr. e-mail til. Vi sender højst én mail af hver slags, indtil du har været inde igen.
-    <a href="{{ settings_url }}" style="color:#a8325a;">Vælg, hvad du vil have besked om</a>.</p>
+    <a href="{{ settings_url }}" style="color:#a8325a;">Vælg, hvad du vil have besked om</a>, eller
+    <a href="{{ unsubscribe_url }}" style="color:#a8325a;">afmeld e-mails om nyt</a>.</p>
 {% endblock %}

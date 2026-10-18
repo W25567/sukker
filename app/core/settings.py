@@ -21,6 +21,11 @@ DEFAULTS = {
     "distance_nearby_km": 10,
     "distance_rounding_km": 10,
     "data_retention_months": 12,
+    # Profiler skjules fra Udforsk, når brugeren ikke har været logget ind i så mange måneder. 0 = aldrig.
+    "inactive_hide_months": 3,
+    # Så mange visninger af den samme profil på 7 dage giver et signal, og afstanden vises derefter altid som
+    # "I nærheden" for den, der kigger (moderation/signals.py). 0 = slået fra.
+    "interest_signal_views": 15,
     "max_public_images": 20,
     "max_private_images": 10,
     "max_animated_images": 3,
@@ -45,6 +50,8 @@ SETTING_META = [
     ("distance_nearby_km", "Afstand, der vises som \"I nærheden\" (km)", "int"),
     ("distance_rounding_km", "Afrunding af viste afstande (km)", "int"),
     ("data_retention_months", "Opbevaring af skjulte og slettede data (måneder)", "int"),
+    ("inactive_hide_months", "Skjul profiler fra Udforsk efter inaktivitet (måneder, 0 = aldrig)", "int"),
+    ("interest_signal_views", "Visninger af samme profil på 7 dage, der giver et signal (0 = slået fra)", "int"),
     ("max_public_images", "Offentlige billeder pr. bruger", "int"),
     ("max_private_images", "Billeder i privat arkiv pr. bruger", "int"),
     ("max_animated_images", "Animerede billeder pr. bruger", "int"),

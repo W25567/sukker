@@ -26,11 +26,13 @@ from ..messaging.models import AdminMessage, AdminThread, ConversationMember, Me
 from ..subscriptions.models import Subscription
 from .models import NotificationMailState
 from .prefs import wants
+from .unsubscribe import mail_headers, unsubscribe_url
 
 IDLE = timedelta(minutes=15)
 MIN_INTERVAL = timedelta(hours=1)  # aldrig to mails af samme slags inden for en time
 MAX_AGE = timedelta(days=3)  # ældre nyheder giver ingen mail (fx efter en længere driftspause)
 PREMIUM_STEPS = (("premium_14", 14), ("premium_3", 3))
+INACTIVE_WARNING = timedelta(days=7)  # varsel en uge før en inaktiv profil skjules fra Udforsk
 
 # Rækkefølgen er rækkefølgen i mailen.
 LINES = {
@@ -158,9 +160,11 @@ def _site_url(endpoint, **values):
 
 
 def _send_news(user, kinds):
-    return send_mail(user.email, "Der er nyt til dig på Sukker.nu", "mail/notify.txt", name=user.display_name,
+    return send_mail(user.email, "Der er nyt til dig på Sukker.nu", "mail/notify.txt",
+                     headers=mail_headers(user, "news"), name=user.display_name,
                      lines=[LINES[kind] for kind in kinds], login_url=_site_url("auth.login"),
-                     settings_url=_site_url("account.overview") + "#notifikationer")
+                     settings_url=_site_url("account.overview") + "#notifikationer",
+                     unsubscribe_url=unsubscribe_url(user, "news"))
 
 
 # --- Premium ------------------------------------------------------------------------------------------------
@@ -211,10 +215,11 @@ def _send_premium(user, end, now):
     days = max(1, round((end - now).total_seconds() / 86400))
     local_end = end.astimezone(DANISH_TZ)
     return send_mail(user.email, f"Din Premium udløber om {days} dage" if days > 1 else "Din Premium udløber i morgen",
-                     "mail/premium_expiry.txt", name=user.display_name, days=days,
-                     end_date=local_end.strftime("%d-%m-%Y"), premium_url=_site_url("pages.premium"),
+                     "mail/premium_expiry.txt", headers=mail_headers(user, "premium"), name=user.display_name,
+                     days=days, end_date=local_end.strftime("%d-%m-%Y"), premium_url=_site_url("pages.premium"),
                      account_url=_site_url("account.overview"),
-                     settings_url=_site_url("account.overview") + "#notifikationer")
+                     settings_url=_site_url("account.overview") + "#notifikationer",
+                     unsubscribe_url=unsubscribe_url(user, "premium"))
 
 
 def _premium_candidates(now):
@@ -223,13 +228,41 @@ def _premium_candidates(now):
     return _eligible(select(User).where(User.id.in_(soon)))
 
 
+# --- Inaktivitet --------------------------------------------------------------------------------------------
+
+
+def _inactive_candidates(now):
+    """Synlige profiler, der skjules fra Udforsk inden for INACTIVE_WARNING, og som ikke er skjult endnu."""
+    from ..explore.services import inactive_before
+    from ..profiles.models import Profile
+
+    hide_before = inactive_before(now)
+    if hide_before is None:
+        return []
+    visible = select(Profile.user_id).where(Profile.paused_at.is_(None), Profile.hidden_from_search.is_(False),
+                                            Profile.matches_only.is_(False))
+    return _eligible(select(User).where(User.id.in_(visible), User.last_active_at >= hide_before,
+                                        User.last_active_at < hide_before + INACTIVE_WARNING))
+
+
+def _send_inactive(user, now):
+    from ..explore.services import inactive_before
+
+    hidden_at = user.last_active_at + (now - inactive_before(now))
+    return send_mail(user.email, "Din profil på Sukker.nu bliver snart skjult", "mail/inactive.txt",
+                     headers=mail_headers(user, "inactive"), name=user.display_name, hidden_date=hidden_at.astimezone(DANISH_TZ).strftime("%d-%m-%Y"),
+                     login_url=_site_url("auth.login"),
+                     settings_url=_site_url("account.overview") + "#notifikationer",
+                     unsubscribe_url=unsubscribe_url(user, "inactive"))
+
+
 # --- Jobbet -------------------------------------------------------------------------------------------------
 
 
 def run(now=None):
-    """Sender de mails, der er brug for nu. Returnerer {"nyt": antal mails, "premium": antal mails}."""
+    """Sender de mails, der er brug for nu. Returnerer antal mails pr. slags."""
     now = now or now_utc()
-    counts = {"nyt": 0, "premium": 0}
+    counts = {"nyt": 0, "premium": 0, "inaktiv": 0}
     with current_app.test_request_context(base_url=current_app.config["BASE_URL"]):
         for user in _candidates(now - MAX_AGE):
             states = _states(user)
@@ -245,5 +278,15 @@ def run(now=None):
             if reminder and _send_premium(user, reminder[1], now):
                 _remember(user, states, reminder[0], now, reminder[1])
                 counts["premium"] += 1
+                db.session.commit()
+        for user in _inactive_candidates(now):
+            states = _states(user)
+            state = states.get("inactive")
+            # Én mail pr. periode med inaktivitet: logger brugeren ind, starter en ny periode.
+            if not wants(user, "inactive", "mail") or (state is not None and state.item_at == user.last_active_at):
+                continue
+            if _send_inactive(user, now):
+                _remember(user, states, "inactive", now, user.last_active_at)
+                counts["inaktiv"] += 1
                 db.session.commit()
     return counts

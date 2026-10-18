@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Verificér din profil – Sukker.nu{% endblock %}
+{% block content %}
+  <a class="back-link" href="{{ url_for('profiles.me') }}">← Min profil</a>
+  <h1>Verificér din profil</h1>
+  <p>Med mærket <strong>Verificeret</strong> kan andre se, at du er den person, der er på dine billeder.</p>
+
+  {% if current_user.photo_verified_at %}
+    <div class="card"><p><span class="verified-badge">Verificeret</span> Din profil er verificeret.</p></div>
+  {% elif latest and latest.status == 'pending' %}
+    <div class="card"><p>Din selfie venter på at blive vurderet. Du får besked i Beskeder, når den er vurderet.</p></div>
+  {% elif not has_public %}
+    <div class="card"><p>Du skal have mindst ét offentligt profilbillede, før du kan verificere din profil.</p>
+      <a class="button secondary" href="{{ url_for('profiles.me') }}#billeder">Tilføj billeder</a></div>
+  {% else %}
+    {% if latest and latest.status == 'rejected' %}
+      <div class="card notice-card"><p><strong>Sidste forsøg blev afvist:</strong> {{ latest.note }}</p></div>
+    {% endif %}
+    <section class="card">
+      <h2>Sådan gør du</h2>
+      <ol class="steps">
+        <li>Tag en selfie, hvor dit ansigt er tydeligt, og hvor du gør dette: <strong class="gesture">{{ gesture }}</strong>.</li>
+        <li>Send den herunder. En moderator sammenligner den med dine profilbilleder.</li>
+        <li>Du får svar i Beskeder, normalt inden for et par dage.</li>
+      </ol>
+      <form method="post" enctype="multipart/form-data" class="form" novalidate>
+        {{ form.hidden_tag() }}
+        <div class="field{% if form.selfie.errors %} has-error{% endif %}">
+          {{ form.selfie.label }}
+          {{ form.selfie(accept=accept, capture="user") }}
+          {% for error in form.selfie.errors %}<small class="error">{{ error }}</small>{% endfor %}
+        </div>
+        <button type="submit" class="button">Send selfie</button>
+      </form>
+      <p class="muted">Selfien ses kun af moderatorer og slettes, så snart den er vurderet. Den vises aldrig på din profil,
+        og vi bruger ikke ansigtsgenkendelse: et menneske sammenligner billederne.</p>
+    </section>
+  {% endif %}
+{% endblock %}

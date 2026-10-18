@@ -66,6 +66,9 @@ def delete_account(user):
     user.deleted_at = now
     revoke_sessions(user.id)
     db.session.execute(delete(EmailToken).where(EmailToken.user_id == user.id))
+    # En selfie, der venter på verificering, slettes med det samme. Den er ikke bevis i en sag.
+    from ..verification.services import withdraw_pending
+    withdraw_pending(user)
     # Aktive matches ophører, så modparten ikke længere ser brugeren som match. Selve matchet og samtalen
     # bevares, og samtalen kan stadig læses af modparten.
     db.session.execute(

@@ -105,6 +105,34 @@ def purge_sessions_and_tokens():
     return sessions, tokens
 
 
+def purge_profile_visits():
+    """Besøgstællingerne bruges kun til at opdage usædvanlig interesse og slettes efter VISIT_KEEP_DAYS."""
+    from ..moderation.signals import VISIT_KEEP_DAYS
+    from ..safety.models import ProfileVisit
+
+    keep_from = today_local() - timedelta(days=VISIT_KEEP_DAYS)
+    return db.session.execute(delete(ProfileVisit).where(ProfileVisit.day < keep_from)).rowcount
+
+
+def purge_stale_selfies():
+    """Selfies slettes, når de er vurderet (app/verification). Her ryddes mapper, der alligevel er blevet
+    tilbage, fx efter en fejl midt i en afgørelse."""
+    from ..verification.models import PhotoVerification
+
+    base = os.path.join(current_app.config["MEDIA_ROOT"], PhotoVerification.collection)
+    if not os.path.isdir(base):
+        return 0
+    pending = set(db.session.scalars(select(PhotoVerification.public_id).where(
+        PhotoVerification.status == "pending", PhotoVerification.public_id.isnot(None))))
+    removed = 0
+    for name in os.listdir(base):
+        path = os.path.join(base, name)
+        if name not in pending and _old_enough(path):
+            shutil.rmtree(path, ignore_errors=True)
+            removed += 1
+    return removed
+
+
 def _old_enough(path):
     try:
         return time.time() - os.path.getmtime(path) > FILE_GRACE_SECONDS
@@ -157,6 +185,8 @@ def run():
         "beviser": purge_case_evidence(before),
     })
     counts["sessioner"], counts["engangslinks"] = purge_sessions_and_tokens()
+    counts["profilbesoeg"] = purge_profile_visits()
+    counts["selfies"] = purge_stale_selfies()
     db.session.commit()
     # Filer ryddes efter commit, så de kun forsvinder, når databasen er opdateret.
     delete_files(account_files + image_files + report_files)

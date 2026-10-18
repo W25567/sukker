@@ -56,6 +56,8 @@ def create_app(config_name=None):
     from .matches.routes import bp as matches_bp
     from .messaging.routes import bp as messaging_bp
     from .moderation.routes import bp as moderation_bp
+    from .notify.routes import bp as notify_bp
+    from .verification.routes import bp as verification_bp
     from .safety.routes import bp as safety_bp
     from .media.routes import bp as media_bp
     from .profiles.routes import bp as profiles_bp
@@ -83,6 +85,8 @@ def create_app(config_name=None):
     app.register_blueprint(moderation_bp)
     app.register_blueprint(admin_bp)
     app.register_blueprint(support_bp)
+    app.register_blueprint(notify_bp)
+    app.register_blueprint(verification_bp)
 
     from .core.timeutil import DANISH_TZ
     from .messaging.services import total_unread

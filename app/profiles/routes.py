@@ -10,7 +10,7 @@ from ..explore.services import RECENTLY_ACTIVE
 from ..auth.sessions import login_required, safe_next_url
 from ..core.timeutil import now_utc
 from ..extensions import PROFILE_VIEW_LIMIT, db, limiter, user_or_ip
-from ..moderation.signals import scraping_breach
+from ..moderation.signals import is_masked, record_visit, scraping_breach
 from ..location.distance import distance_label
 from ..location.services import km_between, kommune_name
 from ..matches.queries import has_active_match
@@ -20,6 +20,7 @@ from ..media import services as media
 from ..media.models import PrivateAccess
 from ..media.processing import ACCEPT, ImageRejected
 from ..subscriptions.services import early_bird_open, grant_early_bird, has_early_bird
+from ..verification.services import latest as latest_verification
 from .fields import completeness, visible_fields
 from .forms import ExplorePreferenceForm, ProfileForm, VisibilityForm
 from .services import age_of, can_view_profile, find_user_by_handle, get_or_create_profile, is_interested_in
@@ -54,7 +55,8 @@ def _render_profile_view(user, *, preview):
         groups=visible_fields(profile, as_owner=False),
         zodiac=visible_zodiac(user, profile),
         preview=preview,
-        distance=None if preview else distance_label(km_between(g.user.kommune_code, user.kommune_code)),
+        distance=None if preview else ("I nærheden" if is_masked(g.user.id, user.id)
+                                       else distance_label(km_between(g.user.kommune_code, user.kommune_code))),
         kommune=kommune_name(user.kommune_code) if profile.show_kommune else None,
         back_url=safe_next_url(request.args.get("fra")),
         liked=False if preview else has_liked(g.user.id, user.id),
@@ -89,6 +91,7 @@ def me():
         accept=ACCEPT,
         is_early_bird=has_early_bird(g.user),
         early_bird_open=early_bird_open(),
+        verification=latest_verification(g.user),
     )
 
 
@@ -179,6 +182,9 @@ def view(handle):
         abort(404)
     if user.id == g.user.id:
         return redirect(url_for("profiles.preview"))
+    if g.user.role == "user":
+        record_visit(g.user, user)  # kun et antal pr. dag, til at opdage usædvanlig interesse
+        db.session.commit()
     return _render_profile_view(user, preview=False)
 
 

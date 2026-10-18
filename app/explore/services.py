@@ -2,9 +2,10 @@
 from dataclasses import dataclass
 from datetime import timedelta
 
-from sqlalchemy import and_, any_, func, literal, or_, select
+from sqlalchemy import and_, any_, case, func, literal, or_, select
 
 from ..auth.models import User, UserSession
+from ..core.settings import get_setting
 from ..core.timeutil import now_utc, today_local
 from ..extensions import db
 from ..location.distance import bucket_expression, label_for_bucket
@@ -13,9 +14,11 @@ from ..matches.models import Like, Match
 from ..media.models import ProfileImage
 from ..profiles.models import Profile
 from ..profiles.services import age_of
+from ..safety.models import DistanceMask
 from ..safety.queries import blocked_either_way, hidden_by
 
 PAGE_SIZE = 24
+INACTIVE_DAYS_PER_MONTH = 30
 RECENTLY_ACTIVE = timedelta(days=3)
 PRESENTATION_PREVIEW = 120
 
@@ -32,6 +35,7 @@ class Card:
     recently_active: bool
     liked: bool
     matched: bool
+    verified: bool = False
 
 
 def _years_ago(years):
@@ -64,10 +68,25 @@ def seeking_genders(viewer):
     return list(profile.seeking_genders) if profile and profile.seeking_genders else []
 
 
-def search(viewer, criteria=None, page=1, hide_liked=False):
+def inactive_before(now=None):
+    """Profiler, hvis bruger ikke har været aktiv siden dette tidspunkt, vises ikke i Udforsk. None = aldrig."""
+    months = get_setting("inactive_hide_months")
+    if not months:
+        return None
+    return (now or now_utc()) - timedelta(days=INACTIVE_DAYS_PER_MONTH * months)
+
+
+def search(viewer, criteria=None, page=1, hide_liked=False, newest_first=False):
     """Returnerer (kort, flere_sider). `criteria` er None for brugere uden adgang til filtre.
-    `hide_liked` skjuler profiler, brugeren har liket, men som ikke har liket tilbage (et match vises stadig)."""
-    bucket = bucket_expression(KommuneDistance.km)
+    `hide_liked` skjuler profiler, brugeren har liket, men som ikke har liket tilbage (et match vises stadig).
+
+    Rækkefølgen er fast og forklares for brugeren: efter afstand og derefter nyeste profil. Med `newest_first`
+    (Premium) kommer de nyeste profiler først uanset afstand. Intet andet afgør, hvem man ser."""
+    # Har brugeren vist usædvanlig interesse for en profil, vises afstanden til den altid som "I nærheden",
+    # også når der sorteres og filtreres (moderation/signals.py).
+    masked = select(DistanceMask.viewer_id).where(DistanceMask.viewer_id == viewer.id,
+                                                  DistanceMask.target_id == User.id).exists()
+    bucket = case((masked, 0), else_=bucket_expression(KommuneDistance.km))
     primary_image = (
         select(ProfileImage.public_id)
         .where(ProfileImage.user_id == User.id, ProfileImage.collection == "public",
@@ -109,6 +128,10 @@ def search(viewer, criteria=None, page=1, hide_liked=False):
     # "Interesseret i" gælder altid og i begge retninger, også for Free. Det er brugerens grundvalg, ikke et
     # Premium-filter: man ser kun de køn, man søger, og kun profiler, der søger ens eget køn (eller ikke har
     # valgt), ser en. Så får ingen henvendelser fra et køn, de ikke søger. Køn er påkrævet og kan ikke skjules.
+    hide_before = inactive_before()
+    if hide_before is not None:
+        query = query.where(User.last_active_at >= hide_before)
+
     seeking = seeking_genders(viewer)
     if seeking:
         query = query.where(Profile.gender.in_(seeking))
@@ -134,8 +157,10 @@ def search(viewer, criteria=None, page=1, hide_liked=False):
         if criteria["photos_only"]:
             query = query.where(primary_image.isnot(None))
 
+    order = ((User.created_at.desc(), User.id.desc()) if newest_first
+             else (bucket.asc().nulls_last(), User.created_at.desc(), User.id.desc()))
     query = (
-        query.order_by(bucket.asc().nulls_last(), User.created_at.desc(), User.id.desc())
+        query.order_by(*order)
         .offset((page - 1) * PAGE_SIZE)
         .limit(PAGE_SIZE + 1)
     )
@@ -153,6 +178,7 @@ def search(viewer, criteria=None, page=1, hide_liked=False):
             recently_active=bool(profile.show_activity and seen and seen >= recent_after),
             liked=is_liked,
             matched=is_matched,
+            verified=user.photo_verified_at is not None,
         )
         for user, profile, kommune_name, row_bucket, image_id, seen, is_liked, is_matched in rows[:PAGE_SIZE]
     ]

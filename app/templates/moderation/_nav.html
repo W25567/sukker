@@ -2,4 +2,6 @@
   <a href="{{ url_for('moderation.queue') }}">Sager</a>
   <a href="{{ url_for('moderation.queue', lukkede=1) }}">Lukkede</a>
   <a href="{{ url_for('moderation.users') }}">Find bruger</a>
+  {% set selfies = pending_verifications() %}
+  <a href="{{ url_for('verification.queue') }}">Verificeringer{% if selfies %} <span class="unread-count">{{ selfies }}</span>{% endif %}</a>
 </nav>

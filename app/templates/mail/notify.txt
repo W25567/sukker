@@ -12,5 +12,7 @@ Du får denne mail, fordi du har slået notifikationer pr. e-mail til. Vi sender
 
 {{ settings_url }}
 
+Afmeld e-mails om nyt med ét klik: {{ unsubscribe_url }}
+
 Venlig hilsen
 Sukker.nu
