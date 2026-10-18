@@ -3,7 +3,7 @@
 Trin:
 1. Henter kommune- og postnummerpolygoner fra Datafordelerens DAGI WFS, eller læser dem fra GeoJSON-filer.
 2. Finder kommunerne for hvert postnummer ud fra arealoverlap.
-3. Beregner den korteste afstand mellem hver to kommuners grænser.
+3. Beregner afstanden mellem hver to kommuners midtpunkter.
 4. Skriver resultatet som CSV i data/geo/, som `load-geo` indlæser i databasen.
 
 Kræver shapely (requirements-dev.txt). Koordinater forventes i EPSG:25832, så afstande er i meter.
@@ -25,8 +25,6 @@ PAGE_SIZE = 500
 # Mindste andel af et postnummers landareal, før en kommune tæller med. Under 5 % spørges brugeren ikke,
 # og den primære kommune bruges. Det koster højst lidt præcision, fordi nabokommuner har afstanden 0.
 MIN_SHARE = 0.05
-# Polygonerne forenkles før afstandsberegning. 100 m er langt under den afrunding, der vises.
-SIMPLIFY_METERS = 100
 
 KOMMUNE_CODE_KEYS = ("kommunekode", "kode", "KOMKODE")
 KOMMUNE_NAME_KEYS = ("navn", "kommunenavn", "KOMNAVN")
@@ -118,13 +116,16 @@ def build(kommune_features, postnummer_features):
             if share >= MIN_SHARE or code == primary:
                 mapping.append((postcode, code, round(share, 4), code == primary))
 
-    simplified = {code: geom.simplify(SIMPLIFY_METERS) for code, geom in kommuner.items()}
-    codes = sorted(simplified)
+    # Afstanden måles mellem kommunernes midtpunkter (tyngdepunktet af landarealet), ikke mellem de
+    # nærmeste grænser. Med grænseafstand fik alle nabokommuner 0 km, så fx Odense og Middelfart blev
+    # "I nærheden". Brugere i samme kommune har stadig 0 km.
+    centers = {code: geom.centroid for code, geom in kommuner.items()}
+    codes = sorted(centers)
     distances = []
     for i, a in enumerate(codes):
         distances.append((a, a, 0.0))
         for b in codes[i + 1:]:
-            km = round(simplified[a].distance(simplified[b]) / 1000, 1)
+            km = round(centers[a].distance(centers[b]) / 1000, 1)
             distances.append((a, b, km))
             distances.append((b, a, km))
 

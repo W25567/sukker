@@ -269,8 +269,10 @@ def test_build_and_load_geo(tmp_path, ctx):
     border = [m for m in mapping if m[0] == "2222"]  # halvdelen i hver kommune
     assert {m[1] for m in border} == {"0101", "0102"} and sum(m[3] for m in border) == 1
     km = {(a, b): d for a, b, d in distances}
-    assert km[("0101", "0102")] == 0.0  # naboer
-    assert km[("0102", "0103")] == 40.0 and km[("0103", "0102")] == 40.0
+    # Afstanden måles mellem midtpunkterne, så naboer ikke automatisk får 0 km.
+    assert km[("0101", "0101")] == 0.0
+    assert km[("0101", "0102")] == 10.0
+    assert km[("0102", "0103")] == 50.0 and km[("0103", "0102")] == 50.0
 
     build.write_csv(tmp_path, *result)
     db.session.add(User(
