@@ -19,7 +19,7 @@
   <p class="muted">Dit stjernetegn: <span aria-hidden="true">{{ zodiac.symbol }}</span> {{ zodiac.name }} ·
     {{ 'skjult for andre' if zodiac_hidden else 'vises på din profil' }}. <a href="{{ url_for('profiles.edit') }}#stjernetegn">Ret</a></p>
 
-  <section class="card">
+  <section class="card" id="billeder">
     <h2>Billeder</h2>
     {% if is_early_bird and not images %}
       <p class="early-bird-note"><strong>Din Premium for livstid er sat på pause.</strong> Den gælder, så længe du har mindst ét billede på profilen. Upload et billede for at bruge den igen.</p>
@@ -43,6 +43,41 @@
                   <button type="submit" class="link">Gør til profilbillede</button>
                 </form>
               {% endif %}
+              {% if images | length > 1 %}
+                {# Det sidste offentlige billede kan ikke gøres privat: man skal have ét offentligt for at have private. #}
+                <form method="post" action="{{ url_for('profiles.move_image', public_id=image.public_id, target='privat') }}">
+                  {{ action_form.hidden_tag() }}
+                  <button type="submit" class="link">Gør privat</button>
+                </form>
+              {% endif %}
+              {% if not (images | length == 1 and private_images) %}
+                <form method="post" action="{{ url_for('profiles.delete_image', public_id=image.public_id) }}">
+                  {{ action_form.hidden_tag() }}
+                  <button type="submit" class="link danger">Slet</button>
+                </form>
+              {% endif %}
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="muted">Du har ingen billeder endnu. Profiler med billeder får flere likes.</p>
+    {% endif %}
+
+    <h3 class="subheading">Privat arkiv</h3>
+    {% if private_images %}
+      <ul class="image-grid">
+        {% for image in private_images %}
+          <li>
+            <img src="{{ url_for('media.image', public_id=image.public_id, variant='lille') }}"
+                 alt="Dit private billede {{ loop.index }}" loading="lazy">
+            <span class="badge badge-private">Privat</span>
+            {% if image.is_animated %}<span class="badge badge-right">Animation</span>{% endif %}
+            <div class="image-actions">
+              <form method="post" action="{{ url_for('profiles.move_image', public_id=image.public_id, target='offentlig') }}">
+                {{ action_form.hidden_tag() }}
+                <button type="submit" class="link">Gør offentlig</button>
+              </form>
               <form method="post" action="{{ url_for('profiles.delete_image', public_id=image.public_id) }}">
                 {{ action_form.hidden_tag() }}
                 <button type="submit" class="link danger">Slet</button>
@@ -51,14 +86,17 @@
           </li>
         {% endfor %}
       </ul>
+      <p class="muted">Private billeder kan kun ses af dig. De vises ikke på din profil.</p>
+    {% elif images | length > 1 %}
+      <p class="muted">Du kan gøre et billede privat, så kun du kan se det. Du skal altid have mindst ét offentligt billede.</p>
     {% else %}
-      <p class="muted">Du har ingen billeder endnu. Profiler med billeder får flere likes.</p>
+      <p class="muted">Du kan gøre billeder private, når du har mindst to billeder. Ét billede skal altid være offentligt.</p>
     {% endif %}
     <form method="post" action="{{ url_for('profiles.upload') }}" enctype="multipart/form-data" class="form upload">
       {{ upload_form.hidden_tag() }}
       <label for="image" class="field-label">Tilføj billede</label>
       {{ upload_form.image(accept=accept) }}
-      <small class="hint">JPEG, PNG, WebP, GIF eller AVIF, højst 15 MB. Placering og andre oplysninger i billedet fjernes automatisk.</small>
+      <small class="hint">JPEG, PNG, WebP, GIF eller AVIF, højst 15 MB. Nye billeder bliver offentlige. Placering og andre oplysninger i billedet fjernes automatisk.</small>
       <button type="submit" class="button">Upload</button>
     </form>
   </section>

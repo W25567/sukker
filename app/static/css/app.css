@@ -71,7 +71,8 @@ h2 { font-size: 1.15rem; margin: 0 0 0.75rem; }
 .muted { color: var(--muted); font-size: 0.92rem; }
 .center { text-align: center; }
 
-.form { display: grid; gap: 14px; margin-bottom: 16px; }
+/* minmax(0, 1fr): et langt felt, fx filvælgeren, må aldrig gøre formularen bredere end kortet. */
+.form { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; margin-bottom: 16px; }
 .field { display: grid; gap: 6px; }
 .field label { font-weight: 600; }
 .field input[type=text], .field input[type=email], .field input[type=password], .field input[type=date] {
@@ -151,8 +152,10 @@ fieldset.field legend { font-weight: 600; margin-bottom: 6px; }
   background: var(--accent); color: var(--accent-ink); font-size: 0.75rem; font-weight: 600;
 }
 .badge-right { left: auto; right: 8px; }
-.image-actions { display: flex; justify-content: space-between; gap: 8px; padding-top: 6px; font-size: 0.88rem; }
-.upload input[type=file] { font: inherit; }
+.image-actions { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 10px; padding-top: 6px; font-size: 0.88rem; }
+.upload input[type=file] { font: inherit; width: 100%; max-width: 100%; min-width: 0; }
+.subheading { font-size: 1rem; margin: 20px 0 8px; }
+.badge-private { background: var(--text); color: var(--surface); }
 
 .gallery { display: grid; gap: 8px; margin-bottom: 16px; }
 .gallery img { width: 100%; height: auto; border-radius: var(--radius); display: block; }
@@ -419,7 +422,7 @@ body:has(.bottomnav) .site-footer { padding-bottom: 80px; }
   .panels > * { break-inside: avoid; }
   .cards { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
   .image-grid { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); }
-  .filters .form { grid-template-columns: 1fr 1fr; column-gap: 24px; }
+  .filters .form { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 24px; }
   .filters .form > .checkbox, .filters .form > .actions { grid-column: 1 / -1; }
   .profile { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 24px; align-items: start; }
   .profile .gallery { position: sticky; top: 16px; }

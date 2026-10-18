@@ -40,6 +40,13 @@ def save_files(image, processed):
         raise
 
 
+def move_files(public_id, from_collection, to_collection):
+    """Flytter et billedes filer mellem offentligt og privat område. Samme filsystem, så flytningen er atomar."""
+    target = _image_dir(to_collection, public_id)
+    os.makedirs(os.path.dirname(target), exist_ok=True)
+    os.replace(_image_dir(from_collection, public_id), target)
+
+
 def delete_files(image):
     """Sletter billedet og alle afledte varianter (specifikation 4.5)."""
     shutil.rmtree(_image_dir(image.collection, image.public_id), ignore_errors=True)

@@ -57,6 +57,7 @@ def me():
         "profiles/me.html",
         profile=profile,
         images=images,
+        private_images=media.list_images(g.user.id, "private"),
         completeness=completeness(profile, len(images)),
         upload_form=UploadForm(),
         visibility_form=visibility_form,
@@ -171,10 +172,41 @@ def delete_image(public_id):
     if image is None:
         abort(404)
     if ActionForm().validate_on_submit():
-        media.delete_image(image)
-        db.session.commit()
-        flash("Billedet er slettet.", "info")
-    return redirect(url_for("profiles.me"))
+        refusal = media.delete_refusal(image)
+        if refusal:
+            flash(refusal, "error")
+        else:
+            media.delete_image(image)
+            db.session.commit()
+            flash("Billedet er slettet.", "info")
+    return redirect(url_for("profiles.me") + "#billeder")
+
+
+@bp.route("/profil/billeder/<public_id>/<any(privat, offentlig):target>", methods=["POST"])
+@login_required
+def move_image(public_id, target):
+    """Gør et billede privat eller offentligt. Private billeder kan kun ses af ejeren (specifikation 4.1)."""
+    image = media.owned_image(g.user, public_id)
+    if image is None:
+        abort(404)
+    if ActionForm().validate_on_submit():
+        try:
+            old = media.set_collection(image, "private" if target == "privat" else "public")
+        except media.ImageMoveRefused as refusal:
+            db.session.rollback()
+            flash(str(refusal), "error")
+        else:
+            public_id, moved_to = image.public_id, image.collection
+            try:
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
+                if old:
+                    media.undo_move(public_id, moved_to, old)  # filerne tilbage, så de passer med databasen
+                raise
+            flash("Billedet er nu privat. Kun du kan se det." if target == "privat"
+                  else "Billedet er nu offentligt på din profil.", "success")
+    return redirect(url_for("profiles.me") + "#billeder")
 
 
 @bp.route("/profil/billeder/<public_id>/primaer", methods=["POST"])

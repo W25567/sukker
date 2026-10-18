@@ -81,6 +81,52 @@ def delete_image(image):
         remaining.position = position
 
 
+class ImageMoveRefused(ValueError):
+    """Billedet kan ikke flyttes eller slettes. Beskeden kan vises direkte for brugeren."""
+
+
+LAST_PUBLIC = ("Du skal have mindst ét offentligt billede for at have private billeder. "
+               "Upload eller offentliggør et andet billede først.")
+
+
+def set_collection(image, collection):
+    """Gør et billede privat eller offentligt. Der skal altid være mindst ét offentligt billede, når der er
+    private billeder. Billedet lægges sidst i den nye samling, og filerne flyttes med (storage.move_files).
+    Kalderen committer; fejler det, skal `undo_move` kaldes, så filerne kommer tilbage."""
+    if collection not in ("public", "private") or image.collection == collection:
+        return None
+    user_id, old = image.user_id, image.collection
+    if collection == "private" and _count(user_id, ProfileImage.collection == "public") <= 1:
+        raise ImageMoveRefused(LAST_PUBLIC)
+    limit = get_setting("max_public_images" if collection == "public" else "max_private_images")
+    if limit is not None and _count(user_id, ProfileImage.collection == collection) >= limit:
+        raise ImageMoveRefused(f"Du kan højst have {limit} {'offentlige' if collection == 'public' else 'private'} "
+                               "billeder. Slet et billede først.")
+    image.position = db.session.scalar(
+        select(func.coalesce(func.max(ProfileImage.position) + 1, 0))
+        .where(ProfileImage.user_id == user_id, ProfileImage.collection == collection)
+    )
+    image.collection = collection
+    db.session.flush()
+    for position, remaining in enumerate(list_images(user_id, old)):
+        remaining.position = position
+    storage.move_files(image.public_id, old, collection)
+    return old
+
+
+def undo_move(public_id, moved_to, old_collection):
+    storage.move_files(public_id, moved_to, old_collection)
+
+
+def delete_refusal(image):
+    """Brugeren kan ikke slette sit sidste offentlige billede, så længe der er private billeder."""
+    if image.collection == "public" and _count(image.user_id, ProfileImage.collection == "public") <= 1 \
+            and _count(image.user_id, ProfileImage.collection == "private") > 0:
+        return ("Du skal have mindst ét offentligt billede for at have private billeder. "
+                "Gør et privat billede offentligt, eller slet de private billeder først.")
+    return None
+
+
 def make_primary(image):
     others = [i for i in list_images(image.user_id, image.collection) if i.id != image.id]
     image.position = 0
