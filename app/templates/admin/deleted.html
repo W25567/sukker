@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Slettede profiler – Administration{% endblock %}
+{% block page_class %}admin-wide{% endblock %}
+{% block content %}
+  {% include "admin/_nav.html" %}
+  <h1>Slettede profiler <span class="muted">({{ total }})</span></h1>
+  <p class="muted">Profiler, som brugerne selv har slettet. De er lukket og skjult for andre brugere, men alle data bevares i
+    {{ retention_months }} måneder af hensyn til sporbarhed og slettes derefter endeligt. Er brugeren part i en sag, der ikke er
+    afsluttet, eller hvor opbevaringen er forlænget, venter den endelige sletning.</p>
+
+  <form method="get" class="admin-filter">
+    <div class="field"><label for="q">Søg</label><input id="q" name="q" type="search" value="{{ query }}" placeholder="Navn, oprindelig e-mail eller handle"></div>
+    <button type="submit" class="button small">Søg</button>
+  </form>
+
+  <div class="table-scroll">
+    <table class="mod-table admin-users">
+      <thead>
+        <tr>
+          <th>Bruger</th><th>E-mail</th><th>Oprettet</th><th>Slettet</th><th>Slettes endeligt</th>
+          <th class="num">Billeder</th><th class="num">Beskeder</th><th class="num">Sager</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+          {% set u = r.user %}
+          <tr>
+            <td><a href="{{ url_for('admin.user', user_id=u.id) }}">{{ u.display_name }}</a></td>
+            <td>{{ u.deleted_email }}</td>
+            <td>{{ u.created_at.strftime('%d-%m-%Y') }}</td>
+            <td>{{ u.deleted_at | local_datetime }}</td>
+            <td>{{ r.purge_after.strftime('%d-%m-%Y') if r.purge_after else '–' }}{% if r.on_hold %} <span class="tag warn">venter på sag</span>{% endif %}</td>
+            <td class="num">{{ r.images }}</td>
+            <td class="num">{{ r.messages }}</td>
+            <td class="num{% if r.cases %} warn{% endif %}">{{ r.cases }}</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="8" class="muted">Ingen slettede profiler.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <p class="pager">
+    {% if page > 1 %}<a href="{{ url_for('admin.deleted_users', q=query or None, side=page - 1) }}">← Forrige</a>{% endif %}
+    {% if has_more %}<a href="{{ url_for('admin.deleted_users', q=query or None, side=page + 1) }}">Næste →</a>{% endif %}
+  </p>
+{% endblock %}

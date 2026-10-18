@@ -1,10 +1,12 @@
 <nav class="mod-nav">
   {% set here = request.endpoint or '' %}
   <a href="{{ url_for('admin.dashboard') }}"{% if here == 'admin.dashboard' %} aria-current="page"{% endif %}>Overblik</a>
-  <a href="{{ url_for('admin.users') }}"{% if here in ('admin.users', 'admin.user') %} aria-current="page"{% endif %}>Brugere</a>
+  <a href="{{ url_for('admin.users') }}"{% if here in ('admin.users', 'admin.user', 'admin.deleted_users') %} aria-current="page"{% endif %}>Brugere</a>
   <a href="{{ url_for('admin.oversight') }}"{% if here == 'admin.oversight' %} aria-current="page"{% endif %}>Tilsyn</a>
   {% set waiting = admin_unread_threads() %}
   <a href="{{ url_for('admin.threads') }}"{% if here in ('admin.threads', 'admin.user_thread') %} aria-current="page"{% endif %}>Henvendelser{% if waiting %} <span class="unread-count">{{ waiting }}</span>{% endif %}</a>
+  {% set bugs = admin_open_bug_reports() %}
+  <a href="{{ url_for('admin.bug_reports') }}"{% if here in ('admin.bug_reports', 'admin.bug_report') %} aria-current="page"{% endif %}>Fejlrapporter{% if bugs %} <span class="unread-count">{{ bugs }}</span>{% endif %}</a>
   <a href="{{ url_for('admin.settings') }}"{% if here == 'admin.settings' %} aria-current="page"{% endif %}>Indstillinger</a>
   <a href="{{ url_for('admin.log') }}"{% if here == 'admin.log' %} aria-current="page"{% endif %}>Log</a>
   <a href="{{ url_for('moderation.log') }}">Moderatoradgang</a>

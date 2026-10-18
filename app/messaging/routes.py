@@ -77,8 +77,9 @@ def _admin_thread_or_404():
 @login_required
 @limiter.limit("30 per minute;200 per day", methods=["POST"])
 def admin_conversation():
-    """Samtalen med Administrator. Virker uanset abonnement, match og begrænsning, så man altid kan svare."""
-    _admin_thread_or_404()
+    """Samtalen med Administrator. Virker uanset abonnement, match og begrænsning, så man altid kan svare.
+    Brugeren kan også selv starte en samtale, fx fra Min profil."""
+    thread = admin_threads.visible_to_user(g.user)
     form = AdminReplyForm()
     if form.validate_on_submit():
         try:
@@ -90,13 +91,16 @@ def admin_conversation():
         return redirect(url_for("messaging.admin_conversation") + "#bund")
     admin_threads.mark_read_by_user(g.user)
     db.session.commit()
-    return render_template("messaging/admin_conversation.html", form=form, action_form=ActionForm(),
-                           messages=admin_threads.messages(g.user.id), version=admin_threads.version(g.user.id))
+    return render_template("messaging/admin_conversation.html", form=form, action_form=ActionForm(), thread=thread,
+                           messages=admin_threads.messages(g.user.id) if thread else [],
+                           version=admin_threads.version(g.user.id) if thread else "0-0")
 
 
 @bp.route("/administrator/nye")
 @login_required
 def admin_updates():
+    if admin_threads.visible_to_user(g.user) is None and request.args.get("version") == "0-0":
+        return Response(status=204, headers={"Cache-Control": "no-store"})  # ny samtale uden beskeder endnu
     _admin_thread_or_404()
     version = admin_threads.version(g.user.id)
     if request.args.get("version") == version:

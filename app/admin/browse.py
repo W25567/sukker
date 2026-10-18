@@ -120,6 +120,8 @@ def user_list(filter_key="alle", q="", sort="nyeste", page=1):
     signals = signal_columns()
     conditions = list(filters[filter_key][1]) + [User.is_test.is_(filter_key == "test")]
     q = (q or "").strip()
+    if filter_key != "slettede" and not q:
+        conditions.append(User.status != "deleted")  # slettede har deres egen liste (deleted_list); søgning finder dem
     if q:
         # Også den oprindelige e-mail for slettede konti, så de kan findes, fx ved en henvendelse fra politiet.
         conditions.append(or_(User.display_name.ilike(f"%{q}%"), User.email == q.lower(), User.deleted_email == q.lower(),
@@ -142,6 +144,41 @@ def user_list(filter_key="alle", q="", sort="nyeste", page=1):
     )
     rows = [Row(user, *values) for user, *values in db.session.execute(query).all()]
     return rows[:PAGE_SIZE], total, len(rows) > PAGE_SIZE
+
+
+@dataclass
+class DeletedRow:
+    user: User
+    purge_after: object
+    on_hold: bool
+    images: int
+    messages: int
+    cases: int
+
+
+def deleted_list(q="", page=1):
+    """Slettede konti, der stadig bevares, nyeste sletning først. (rækker, antal i alt, flere sider)."""
+    from ..account.services import held_user_ids, retention_status
+
+    conditions = [User.status == "deleted", User.is_test.is_(False)]
+    q = (q or "").strip()
+    if q:
+        conditions.append(or_(User.display_name.ilike(f"%{q}%"), User.deleted_email == q.lower(), User.handle == q))
+    total = db.session.scalar(select(func.count(User.id)).where(*conditions))
+    columns = (
+        _count(ProfileImage.id, ProfileImage.user_id == User.id).label("images"),
+        _count(Message.id, Message.sender_id == User.id).label("messages"),
+        _count(ModerationCase.id, or_(ModerationCase.subject_user_id == User.id,
+                                      ModerationCase.reporter_id == User.id)).label("cases"),
+        User.id.in_(held_user_ids()).label("on_hold"),
+    )
+    rows = db.session.execute(
+        select(User, *columns).where(*conditions).order_by(User.deleted_at.desc(), User.id.desc())
+        .offset((page - 1) * PAGE_SIZE).limit(PAGE_SIZE + 1)
+    ).all()
+    result = [DeletedRow(user, retention_status(user)[0], bool(on_hold), images, messages, cases)
+              for user, images, messages, cases, on_hold in rows[:PAGE_SIZE]]
+    return result, total, len(rows) > PAGE_SIZE
 
 
 def user_signals(user):

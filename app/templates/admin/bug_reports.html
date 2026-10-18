@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Fejlrapporter – Administration{% endblock %}
+{% block page_class %}admin-wide{% endblock %}
+{% block content %}
+  {% include "admin/_nav.html" %}
+  <h1>Fejlrapporter <span class="muted">· {{ 'lukkede' if show_closed else 'åbne' }} ({{ reports | length }})</span></h1>
+  <p class="chips-row">
+    <a class="chip{% if not show_closed %} active{% endif %}" href="{{ url_for('admin.bug_reports') }}">Åbne</a>
+    <a class="chip{% if show_closed %} active{% endif %}" href="{{ url_for('admin.bug_reports', lukkede=1) }}">Lukkede</a>
+  </p>
+  <div class="table-scroll">
+    <table class="mod-table">
+      <thead><tr><th>#</th><th>Modtaget</th><th>Modul</th><th>Fra</th><th>Beskrivelse</th><th class="num">Billeder</th></tr></thead>
+      <tbody>
+        {% for r in reports %}
+          <tr>
+            <td><a href="{{ url_for('admin.bug_report', report_id=r.id) }}">#{{ r.id }}</a></td>
+            <td>{{ r.created_at | local_datetime }}</td>
+            <td>{{ modules.get(r.module, r.module) }}</td>
+            <td>{% if r.user_id in users %}<a href="{{ url_for('admin.user', user_id=r.user_id) }}">{{ users[r.user_id] | staff_name }}</a>{% else %}–{% endif %}</td>
+            <td><a href="{{ url_for('admin.bug_report', report_id=r.id) }}">{{ r.description | truncate(90) }}</a></td>
+            <td class="num">{{ counts.get(r.id, 0) }}</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="6" class="muted">Ingen {{ 'lukkede' if show_closed else 'åbne' }} fejlrapporter.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="muted">Lukkede fejlrapporter slettes med skærmbilleder efter opbevaringsperioden.</p>
+{% endblock %}

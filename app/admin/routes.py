@@ -2,7 +2,7 @@ from datetime import datetime, time
 
 from flask import Blueprint, abort, current_app, flash, g, jsonify, redirect, render_template, request, send_file, url_for
 from flask_wtf import FlaskForm
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from ..account.services import retention_status
 from ..auth.models import User
@@ -19,6 +19,8 @@ from ..core.timeutil import DANISH_TZ
 from ..extensions import db
 from ..subscriptions.services import TIER_LABELS, active_subscription, effective_tier
 from ..subscriptions.models import Subscription
+from ..support import services as support
+from ..support.models import MODULE_LABELS, BugReport, BugReportImage
 from . import browse, metrics, services
 from .models import UserFeatureGrant
 
@@ -46,6 +48,63 @@ def users():
         filter_key=filter_key if filter_key in labels else "alle", sort=sort if sort in browse.SORTS else "nyeste",
         filters=labels, sorts=browse.SORTS,
     )
+
+
+@bp.route("/slettede")
+@admin_required
+def deleted_users():
+    """Slettede profiler, der bevares i opbevaringsperioden af hensyn til sporbarhed."""
+    query = (request.args.get("q") or "").strip()
+    page = max(1, request.args.get("side", 1, type=int) or 1)
+    rows, total, has_more = browse.deleted_list(query, page)
+    return render_template("admin/deleted.html", rows=rows, total=total, has_more=has_more, page=page, query=query,
+                           retention_months=get_setting("data_retention_months"))
+
+
+@bp.route("/fejl")
+@admin_required
+def bug_reports():
+    """Fejlrapporter fra brugerne. Åbne først."""
+    show_closed = request.args.get("lukkede") == "1"
+    reports = db.session.scalars(
+        select(BugReport).where(BugReport.status == ("closed" if show_closed else "open"))
+        .order_by(BugReport.created_at.desc()).limit(200)
+    ).all()
+    users = {u.id: u for u in db.session.scalars(select(User).where(User.id.in_({r.user_id for r in reports if r.user_id})))}
+    counts = dict(db.session.execute(
+        select(BugReportImage.report_id, func.count(BugReportImage.id))
+        .where(BugReportImage.report_id.in_([r.id for r in reports])).group_by(BugReportImage.report_id)
+    ).all()) if reports else {}
+    return render_template("admin/bug_reports.html", reports=reports, users=users, counts=counts,
+                           show_closed=show_closed, modules=MODULE_LABELS)
+
+
+@bp.route("/fejl/<int:report_id>", methods=["GET", "POST"])
+@admin_required
+def bug_report(report_id):
+    report = db.session.get(BugReport, report_id)
+    if report is None:
+        abort(404)
+    if request.method == "POST":
+        if not FlaskForm().validate_on_submit() or request.form.get("status") not in ("open", "closed"):
+            abort(400)
+        support.set_status(report, g.user, request.form["status"], request.form.get("note"))
+        db.session.commit()
+        flash("Fejlrapporten er lukket." if report.status == "closed" else "Fejlrapporten er åbnet igen.", "success")
+        return redirect(url_for("admin.bug_reports"))
+    reporter = db.session.get(User, report.user_id) if report.user_id else None
+    return render_template("admin/bug_report.html", report=report, reporter=reporter, images=support.images_for(report),
+                           modules=MODULE_LABELS, form=FlaskForm())
+
+
+@bp.route("/fejl/<int:report_id>/billede/<public_id>/<variant>.webp")
+@admin_required
+def bug_report_image(report_id, public_id, variant):
+    image = db.session.scalar(select(BugReportImage).where(BugReportImage.public_id == public_id,
+                                                           BugReportImage.report_id == report_id))
+    if image is None or variant not in storage.VARIANTS:
+        abort(404)
+    return _send_image(image, variant)
 
 
 @bp.route("/tilsyn")
@@ -210,6 +269,10 @@ def user_image(user_id, public_id, variant):
     image = db.session.scalar(select(ProfileImage).where(ProfileImage.public_id == public_id, ProfileImage.user_id == user_id))
     if image is None or variant not in storage.VARIANTS:
         abort(404)
+    return _send_image(image, variant)
+
+
+def _send_image(image, variant):
     response = send_file(storage.file_path(image, variant), mimetype="image/webp")
     response.headers["Cache-Control"] = "private, no-store"
     return response

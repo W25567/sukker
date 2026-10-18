@@ -10,3 +10,4 @@ from .moderation.models import CaseEvent, ModerationCase, ModeratorAccessLog  # 
 from .safety.models import UserBlock, UserHide  # noqa: F401
 from .profiles.models import Profile  # noqa: F401
 from .subscriptions.models import Subscription  # noqa: F401
+from .support.models import BugReport, BugReportImage  # noqa: F401

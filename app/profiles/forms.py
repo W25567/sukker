@@ -2,6 +2,7 @@ from flask_wtf import FlaskForm
 from wtforms import BooleanField, IntegerField, SelectField, SelectMultipleField, StringField, TextAreaField, widgets
 from wtforms.validators import Length, NumberRange, Optional, ValidationError
 
+from ..core import contact_info
 from . import choices
 from .fields import FIELDS
 
@@ -22,11 +23,12 @@ def _strip_or_none(value):
 
 
 class ProfileForm(FlaskForm):
-    presentation = TextAreaField("Præsentation", filters=[_strip_or_none], validators=[Optional(), Length(max=1000)])
+    presentation = TextAreaField("Præsentation", filters=[_strip_or_none],
+                                 validators=[Optional(), Length(max=1000), contact_info.validator])
     gender = SelectField("Køn", choices=_blank(choices.GENDERS), validators=[Optional()])
     seeking_genders = MultiCheckboxField("Interesseret i", choices=choices.GENDERS, validators=[Optional()])
     height_cm = IntegerField("Højde i cm", validators=[Optional(), NumberRange(120, 230, "Skriv en højde mellem 120 og 230 cm.")])
-    occupation = StringField("Beskæftigelse", filters=[_strip_or_none], validators=[Optional(), Length(max=80)])
+    occupation = StringField("Beskæftigelse", filters=[_strip_or_none], validators=[Optional(), Length(max=80), contact_info.validator])
     education = SelectField("Uddannelse", choices=_blank(choices.EDUCATION), validators=[Optional()])
 
     children = SelectField("Børn", choices=_blank(choices.CHILDREN), validators=[Optional()])
@@ -34,8 +36,9 @@ class ProfileForm(FlaskForm):
     exercise = SelectField("Motion", choices=_blank(choices.EXERCISE), validators=[Optional()])
     smoking = SelectField("Rygning", choices=_blank(choices.SMOKING), validators=[Optional()])
     alcohol = SelectField("Alkohol", choices=_blank(choices.ALCOHOL), validators=[Optional()])
-    interests = StringField("Interesser og hobbyer", filters=[_strip_or_none], validators=[Optional(), Length(max=300)])
-    travel = StringField("Rejser", filters=[_strip_or_none], validators=[Optional(), Length(max=300)])
+    interests = StringField("Interesser og hobbyer", filters=[_strip_or_none],
+                            validators=[Optional(), Length(max=300), contact_info.validator])
+    travel = StringField("Rejser", filters=[_strip_or_none], validators=[Optional(), Length(max=300), contact_info.validator])
 
     relationship_types = MultiCheckboxField("Søger", choices=choices.RELATIONSHIP_TYPES, validators=[Optional()])
     age_min = IntegerField("Alder fra", validators=[Optional(), NumberRange(18, 99, "Alder skal være mellem 18 og 99.")])
@@ -44,7 +47,8 @@ class ProfileForm(FlaskForm):
     long_distance_ok = SelectField(
         "Åben for langdistance", choices=[("", "Ikke oplyst"), ("ja", "Ja"), ("nej", "Nej")], validators=[Optional()]
     )
-    expectations = TextAreaField("Forventninger", filters=[_strip_or_none], validators=[Optional(), Length(max=500)])
+    expectations = TextAreaField("Forventninger", filters=[_strip_or_none],
+                                 validators=[Optional(), Length(max=500), contact_info.validator])
 
     # Stjernetegnet beregnes ud fra fødselsdatoen og kan ikke redigeres, kun skjules.
     hidden_fields = MultiCheckboxField("Skjul for andre", choices=[(f.name, f.label) for f in FIELDS] + [("zodiac", "Stjernetegn")],

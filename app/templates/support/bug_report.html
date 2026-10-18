@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% from "_forms.html" import field %}
+{% block title %}Rapportér en fejl – Sukker.nu{% endblock %}
+{% block content %}
+  <a class="back-link" href="{{ url_for('profiles.me') }}">← Min profil</a>
+  <h1>Rapportér en fejl</h1>
+  <p class="muted">Virker noget ikke, som det skal? Fortæl os, hvad du gjorde, hvad du forventede, og hvad der skete.
+    Vi gemmer også, hvilken browser og enhed du bruger, så vi kan finde fejlen.</p>
+  <form method="post" enctype="multipart/form-data" class="form" novalidate>
+    {{ form.hidden_tag() }}
+    {{ field(form.module) }}
+    {{ field(form.description) }}
+    <div class="field{% if form.screenshots.errors %} has-error{% endif %}">
+      {{ form.screenshots.label }}
+      {{ form.screenshots(accept=accept, multiple=True, **{'data-max-files': max_files}) }}
+      <small class="hint">Højst {{ max_files }} billeder på hver højst 5 MB. Skjul gerne personlige oplysninger på billederne, før du sender dem.</small>
+      {% for error in form.screenshots.errors %}<small class="error">{{ error }}</small>{% endfor %}
+    </div>
+    <button type="submit" class="button">Send fejlrapport</button>
+  </form>
+  <script src="{{ url_for('static', filename='js/bug_report.js') }}" defer></script>
+{% endblock %}

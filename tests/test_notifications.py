@@ -94,4 +94,7 @@ def test_hide_liked_filter_and_preference(app, outbox, ctx):
     assert db.session.get(Profile, user("Anna").id).hide_liked is True
     assert "Carl, " not in anna.get("/udforsk").get_data(as_text=True)
     assert "Carl, " in anna.get("/udforsk?likede=vis").get_data(as_text=True)
-    assert 'aria-checked="true"' in anna.get("/udforsk").get_data(as_text=True)
+    assert 'value="skjul" checked' in anna.get("/udforsk").get_data(as_text=True)
+    # Formularen sender både "vis" og (når feltet er krydset af) "skjul". Det sidste vinder.
+    assert "Carl, " in anna.get("/udforsk?likede=vis").get_data(as_text=True)
+    assert "Carl, " not in anna.get("/udforsk?likede=vis&likede=skjul").get_data(as_text=True)

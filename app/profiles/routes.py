@@ -1,6 +1,6 @@
-from flask import Blueprint, abort, flash, g, redirect, render_template, request, url_for
+from flask import Blueprint, abort, flash, g, jsonify, redirect, render_template, request, url_for
 from flask_wtf import FlaskForm
-from flask_wtf.file import FileField, FileRequired
+from wtforms import MultipleFileField
 
 from ..auth.forms import ActionForm
 from ..auth.sessions import login_required, safe_next_url
@@ -22,7 +22,9 @@ bp = Blueprint("profiles", __name__)
 
 
 class UploadForm(FlaskForm):
-    image = FileField("Billede", validators=[FileRequired("Vælg et billede.")])
+    # Flere billeder kan vælges på én gang. Med JavaScript sendes de ét ad gangen (static/js/upload.js),
+    # så ingen forespørgsel bliver større end grænsen på 16 MB.
+    image = MultipleFileField("Billeder")
 
 
 def _render_profile_view(user, *, preview):
@@ -146,23 +148,32 @@ def view(handle):
 @login_required
 @limiter.limit("30 per hour", methods=["POST"])
 def upload():
+    """Uploader et eller flere billeder. Kaldt fra upload.js (header X-Upload) svares med JSON, og siden
+    genindlæses bagefter. Fejl og tidlig fugl vises som beskeder på siden i begge tilfælde."""
     form = UploadForm()
-    if not form.validate_on_submit():
+    files = [f for f in request.files.getlist("image") if f and f.filename]
+    from_script = request.headers.get("X-Upload") == "1"
+    if not form.validate_on_submit() or not files:
         flash("Vælg et billede at uploade.", "error")
-        return redirect(url_for("profiles.me"))
-    try:
-        media.upload_image(g.user, form.image.data.read())
-        early_bird = grant_early_bird(g.user)  # tidlige fugle får Premium for livstid ved første billede
-        db.session.commit()
-    except ImageRejected as rejection:
-        db.session.rollback()
-        flash(str(rejection), "error")
-    else:
-        if early_bird is not None:
-            flash("Billedet er uploadet. Tak, fordi du er tidlig fugl – du har nu Premium for livstid!", "success")
-        else:
-            flash("Billedet er uploadet.", "success")
-    return redirect(url_for("profiles.me"))
+        return jsonify(uploaded=0) if from_script else redirect(url_for("profiles.me") + "#billeder")
+    uploaded = 0
+    for file in files:
+        try:
+            media.upload_image(g.user, file.read())
+            db.session.commit()
+            uploaded += 1
+        except ImageRejected as rejection:
+            db.session.rollback()
+            flash(f"{file.filename}: {rejection}" if len(files) > 1 or from_script else str(rejection), "error")
+    early_bird = grant_early_bird(g.user) if uploaded else None  # Premium for livstid ved første billede
+    db.session.commit()
+    if early_bird is not None:
+        flash("Tak, fordi du er tidlig fugl – du har nu Premium for livstid!", "success")
+    if from_script:
+        return jsonify(uploaded=uploaded)
+    if uploaded:
+        flash("Billedet er uploadet." if uploaded == 1 else f"{uploaded} billeder er uploadet.", "success")
+    return redirect(url_for("profiles.me") + "#billeder")
 
 
 @bp.route("/profil/billeder/<public_id>/slet", methods=["POST"])

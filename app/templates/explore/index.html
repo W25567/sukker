@@ -6,11 +6,16 @@
     <h1>Udforsk</h1>
   </div>
 
+  {# "Skjul profiler, jeg har liket" er ikke et Premium-filter og står i filtrene for alle. Det skjulte felt sender
+     "vis", når feltet ikke er krydset af, så et fravalg også virker, når standardvalget under Min profil er "skjul". #}
+  {% macro hide_liked_field() %}
+    <input type="hidden" name="likede" value="vis">
+    <div class="field checkbox"><label><input type="checkbox" name="likede" value="skjul"{% if hide_liked %} checked{% endif %}> Skjul profiler, jeg har liket</label></div>
+  {% endmacro %}
   <details class="card filters"{% if filters_active %} open{% endif %}>
-    <summary>Filtre{% if filters_active %} <span class="badge-inline">Aktive</span>{% endif %}</summary>
+    <summary>Filtre{% if filters_active or hide_liked %} <span class="badge-inline">Aktive</span>{% endif %}</summary>
     {% if filters_allowed %}
       <form method="get" action="{{ url_for('explore.index') }}" class="form">
-        <input type="hidden" name="likede" value="{{ 'skjul' if hide_liked else 'vis' }}">
         <div class="field">{{ form.afstand.label }}{{ form.afstand() }}</div>
         <div class="row">
           <div class="field">{{ form.alder_fra.label }}{{ form.alder_fra(min=18, max=99) }}</div>
@@ -23,12 +28,17 @@
           <div class="chips">{% for o in form.soeger %}<label class="chip">{{ o() }} {{ o.label.text }}</label>{% endfor %}</div>
         </fieldset>
         <div class="field checkbox"><label>{{ form.kun_billeder() }} {{ form.kun_billeder.label.text }}</label></div>
+        {{ hide_liked_field() }}
         <div class="actions">
           <button type="submit" class="button">Vis profiler</button>
           <a class="button secondary" href="{{ url_for('explore.index') }}">Nulstil</a>
         </div>
       </form>
     {% else %}
+      <form method="get" action="{{ url_for('explore.index') }}" class="form">
+        {{ hide_liked_field() }}
+        <div class="actions"><button type="submit" class="button">Vis profiler</button></div>
+      </form>
       <p>Filtrering på afstand, alder, køn, hvad folk søger og billeder kræver Premium eller Premium+.</p>
       <p class="muted">Du kan stadig se alle profiler, sorteret efter hvem der bor tættest på.</p>
     {% endif %}
@@ -42,15 +52,6 @@
     {% endif %}
     <a href="{{ url_for('profiles.edit') }}">Ret på din profil</a>
   </p>
-
-  {# Gælder for alle, også Free. Standardvalget gemmes under Min profil → Udforsk. #}
-  <div class="chips-row explore-toggles">
-    <a class="chip{% if hide_liked %} active{% endif %}" href="{{ url_for('explore.index', **toggle_args) }}"
-       role="switch" aria-checked="{{ 'true' if hide_liked else 'false' }}">
-      {% if hide_liked %}✓ {% endif %}Skjul profiler, jeg har liket
-    </a>
-    <a class="small-link" href="{{ url_for('profiles.me') }}#udforsk">Standardvalg</a>
-  </div>
 
   {% if not has_kommune %}
     <p class="muted">Afstande vises, når kommunedata er indlæst.</p>

@@ -144,7 +144,7 @@ def test_user_can_delete_admin_thread_until_admin_writes_again(app, outbox, ctx)
     admin.post(f"/admin/bruger/{user('Anna').id}/samtale", data={"body": "Første besked"})
     anna.post("/beskeder/administrator/slet")
     assert 'href="/beskeder/administrator"' not in anna.get("/beskeder/").get_data(as_text=True)
-    assert anna.get("/beskeder/administrator").status_code == 404
+    assert "Første besked" not in anna.get("/beskeder/administrator").get_data(as_text=True)  # skjult for Anna
 
     admin.post(f"/admin/bruger/{user('Anna').id}/samtale", data={"body": "Anden besked"})
     page = anna.get("/beskeder/administrator").get_data(as_text=True)
@@ -154,7 +154,8 @@ def test_user_can_delete_admin_thread_until_admin_writes_again(app, outbox, ctx)
 def test_admin_thread_is_admin_only_and_not_for_other_users(app, outbox, ctx):
     anna, bodil = make_user(app, outbox, "Anna"), make_user(app, outbox, "Bodil")
     assert anna.post(f"/admin/bruger/{user('Bodil').id}/samtale", data={"body": "x"}).status_code == 404
-    assert bodil.get("/beskeder/administrator").status_code == 404  # ingen samtale endnu
+    page = bodil.get("/beskeder/administrator").get_data(as_text=True)  # ingen samtale endnu: Bodil kan starte en
+    assert "Har du et spørgsmål" in page and "Slet samtalen for mig" not in page
 
 
 def test_admin_thread_live_updates(app, outbox, ctx):

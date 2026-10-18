@@ -2,9 +2,15 @@
 {% from "_forms.html" import field %}
 {% block title %}Administrator – Sukker.nu{% endblock %}
 {% block content %}
-  <a class="back-link" href="{{ url_for('messaging.inbox') }}">← Beskeder</a>
+  <a class="back-link" href="{{ url_for('messaging.inbox') if thread else url_for('profiles.me') }}">← {{ 'Beskeder' if thread else 'Min profil' }}</a>
   <h1>Administrator</h1>
-  <p class="muted">Beskeder fra Sukker.nu's administration. Du kan svare her.</p>
+  {% if thread %}
+    <p class="muted">Samtalen med Sukker.nu's administration. Du kan svare her.</p>
+  {% else %}
+    <p class="muted">Har du et spørgsmål, eller vil du gøre os opmærksom på noget? Skriv til Sukker.nu's administration her.
+      Du får svar i Beskeder. Vil du anmelde en profil eller en besked, så brug Anmeld på profilen eller i samtalen.
+      Har du fundet en fejl, så <a href="{{ url_for('support.bug_report') }}">rapportér fejlen</a>.</p>
+  {% endif %}
 
   <ol class="thread" id="thread"
       data-poll-url="{{ url_for('messaging.admin_updates') }}" data-version="{{ version }}">
@@ -20,11 +26,13 @@
     <button type="submit" class="button">Send</button>
   </form>
 
-  <div class="actions conversation-actions">
-    <form method="post" action="{{ url_for('messaging.admin_hide') }}">
-      {{ action_form.hidden_tag() }}
-      <button type="submit" class="button secondary danger">Slet samtalen for mig</button>
-    </form>
-  </div>
-  <p class="muted">Sletter du samtalen, forsvinder den for dig. Skriver Administrator igen, kan du se hele samtalen igen.</p>
+  {% if thread %}
+    <div class="actions conversation-actions">
+      <form method="post" action="{{ url_for('messaging.admin_hide') }}">
+        {{ action_form.hidden_tag() }}
+        <button type="submit" class="button secondary danger">Slet samtalen for mig</button>
+      </form>
+    </div>
+    <p class="muted">Sletter du samtalen, forsvinder den for dig. Skriver du eller Administrator igen, kan du se hele samtalen igen.</p>
+  {% endif %}
 {% endblock %}

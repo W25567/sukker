@@ -28,7 +28,7 @@ from ..media.storage import VARIANTS
 
 KEEP_PER_LABEL = {"nightly": None}  # None = BACKUP_KEEP
 KEEP_OTHER_LABELS = 3
-MEDIA_PARTS = ("public", "private", "evidence")
+MEDIA_PARTS = ("public", "private", "evidence", "bugreports")
 
 
 class BackupError(RuntimeError):

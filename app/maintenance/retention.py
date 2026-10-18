@@ -12,6 +12,7 @@ from flask import current_app
 from sqlalchemy import and_, delete, exists, not_, or_, select
 
 from ..account.services import delete_files, purge_deleted_accounts, purge_deleted_images
+from ..support.services import purge_closed as purge_closed_bug_reports
 from ..auth.models import EmailToken, UserSession
 from ..core.settings import get_setting
 from ..core.timeutil import add_months, now_utc, today_local
@@ -146,6 +147,7 @@ def run():
     counts["slettede_konti"], account_files = purge_deleted_accounts(before)
     image_files = purge_deleted_images(before)
     counts["slettede_billeder"] = len(image_files)
+    counts["fejlrapporter"], report_files = purge_closed_bug_reports(before)
     counts.update({
         "skjulte_samtaler": purge_hidden_conversations(before),
         "samtaler_uden_deltagere": purge_orphaned_conversations(),
@@ -155,6 +157,6 @@ def run():
     counts["sessioner"], counts["engangslinks"] = purge_sessions_and_tokens()
     db.session.commit()
     # Filer ryddes efter commit, så de kun forsvinder, når databasen er opdateret.
-    delete_files(account_files + image_files)
+    delete_files(account_files + image_files + report_files)
     counts["filer"] = purge_orphan_files()
     return counts

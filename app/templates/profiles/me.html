@@ -92,13 +92,17 @@
     {% else %}
       <p class="muted">Du kan gøre billeder private, når du har mindst to billeder. Ét billede skal altid være offentligt.</p>
     {% endif %}
-    <form method="post" action="{{ url_for('profiles.upload') }}" enctype="multipart/form-data" class="form upload">
+    {# Med JavaScript uploades billederne, så snart de er valgt (static/js/upload.js). Uden JavaScript bruges knappen. #}
+    <form method="post" action="{{ url_for('profiles.upload') }}" enctype="multipart/form-data" class="form upload"
+          data-max-bytes="{{ 15 * 1024 * 1024 }}" data-done-url="{{ url_for('profiles.me') }}">
       {{ upload_form.hidden_tag() }}
-      <label for="image" class="field-label">Tilføj billede</label>
-      {{ upload_form.image(accept=accept) }}
-      <small class="hint">JPEG, PNG, WebP, GIF eller AVIF, højst 15 MB. Nye billeder bliver offentlige. Placering og andre oplysninger i billedet fjernes automatisk.</small>
-      <button type="submit" class="button">Upload</button>
+      {{ upload_form.image(accept=accept, multiple=True, class="visually-hidden upload-input") }}
+      <label for="image" class="button upload-pick">Tilføj billeder</label>
+      <small class="hint">Vælg et eller flere billeder. JPEG, PNG, WebP, GIF eller AVIF, højst 15 MB pr. billede. Nye billeder bliver offentlige. Placering og andre oplysninger i billedet fjernes automatisk.</small>
+      <p class="upload-status muted" aria-live="polite"></p>
+      <button type="submit" class="button secondary upload-submit">Upload valgte billeder</button>
     </form>
+    <script src="{{ url_for('static', filename='js/upload.js') }}" defer></script>
   </section>
 
   <div class="panels">
@@ -121,7 +125,7 @@
       <div class="field checkbox"><label>{{ explore_form.hide_liked() }} {{ explore_form.hide_liked.label.text }}</label></div>
       <button type="submit" class="button secondary">Gem standardvalg</button>
     </form>
-    <p class="muted">Dit standardvalg. Du kan altid slå det til og fra øverst i Udforsk. Et match vises altid.</p>
+    <p class="muted">Dit standardvalg. Du kan altid slå det til og fra under Filtre i Udforsk. Et match vises altid.</p>
   </section>
 
   <section class="card">
@@ -137,6 +141,18 @@
     <h2>Hjælp</h2>
     <p class="muted">Sådan virker Sukker.nu, tryghed, spørgsmål og svar, vilkår og kontakt.</p>
     <a class="button secondary" href="{{ url_for('pages.help') }}">Hjælp og vilkår</a>
+  </section>
+
+  <section class="card" id="kontakt">
+    <h2>Skriv til Administrator</h2>
+    <p class="muted">Har du et spørgsmål, eller vil du gøre os opmærksom på noget? Svaret kommer i Beskeder.</p>
+    <a class="button secondary" href="{{ url_for('messaging.admin_conversation') }}">Skriv til Administrator</a>
+  </section>
+
+  <section class="card" id="fejl">
+    <h2>Rapportér en fejl</h2>
+    <p class="muted">Virker noget ikke, som det skal? Beskriv fejlen, og vedhæft gerne op til tre skærmbilleder.</p>
+    <a class="button secondary" href="{{ url_for('support.bug_report') }}">Rapportér en fejl</a>
   </section>
   </div>
 {% endblock %}

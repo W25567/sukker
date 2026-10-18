@@ -1,7 +1,11 @@
-from flask_wtf import FlaskForm
-from wtforms import BooleanField, DateField, EmailField, PasswordField, SelectField, StringField
-from wtforms.validators import DataRequired, Email, EqualTo, Length, Regexp, ValidationError
+from datetime import date
 
+from flask_wtf import FlaskForm
+from markupsafe import Markup, escape
+from wtforms import BooleanField, EmailField, Field, PasswordField, SelectField, StringField
+from wtforms.validators import DataRequired, Email, EqualTo, Length, Regexp, StopValidation, ValidationError
+
+from ..core import contact_info
 from ..core.timeutil import age_on, today_local
 
 # Vist navn: behøver ikke være unikt. Bogstaver (også æøå og accenter), tal og enkelte skilletegn.
@@ -24,6 +28,73 @@ def _lower(value):
     return value.strip().lower() if isinstance(value, str) else value
 
 
+MONTHS = ["januar", "februar", "marts", "april", "maj", "juni", "juli", "august", "september", "oktober",
+          "november", "december"]
+OLDEST_AGE = 100
+
+
+class BirthdateWidget:
+    """Tre rullelister (dag, måned, år) i stedet for en datovælger, der er besværlig på mobil, når man skal
+    langt tilbage i tiden. Alle tre hedder det samme, så feltet modtager [dag, måned, år]."""
+
+    def __call__(self, field, **kwargs):
+        chosen = [str(v) for v in field.raw_data] if field.raw_data and len(field.raw_data) == 3 else (
+            [str(field.data.day), str(field.data.month), str(field.data.year)] if field.data else ["", "", ""])
+        this_year = today_local().year
+        parts = [
+            ("Dag", "bday-day", [(str(d), str(d)) for d in range(1, 32)]),
+            ("Måned", "bday-month", [(str(i), name) for i, name in enumerate(MONTHS, start=1)]),
+            ("År", "bday-year", [(str(y), str(y)) for y in range(this_year - MIN_AGE, this_year - OLDEST_AGE - 1, -1)]),
+        ]
+        invalid = ' aria-invalid="true"' if kwargs.get("aria-invalid") else ""
+        html = [f'<div class="date-selects" role="group" aria-label="{escape(field.label.text)}">']
+        for index, (label, autocomplete, options) in enumerate(parts):
+            ident = f' id="{escape(field.id)}"' if index == 0 else ""
+            html.append(f'<select name="{escape(field.name)}"{ident} aria-label="{label}" autocomplete="{autocomplete}"{invalid}>')
+            html.append(f'<option value="">{label}</option>')
+            for value, text in options:
+                selected = " selected" if chosen[index] == value else ""
+                html.append(f'<option value="{value}"{selected}>{escape(text)}</option>')
+            html.append("</select>")
+        html.append("</div>")
+        return Markup("".join(html))
+
+
+class BirthdateField(Field):
+    """Fødselsdato fra tre rullelister. Tager også en ISO-dato (ÅÅÅÅ-MM-DD), fx fra tests og ældre formularer."""
+
+    widget = BirthdateWidget()
+
+    def process_formdata(self, valuelist):
+        self.data = None
+        values = [v.strip() for v in valuelist if isinstance(v, str)]
+        if not values or not any(values):
+            return
+        try:
+            if len(values) == 1:
+                self.data = date.fromisoformat(values[0])
+            elif len(values) == 3:
+                if not all(values):
+                    raise ValueError("Vælg dag, måned og år.")
+                day, month, year = (int(v) for v in values)
+                try:
+                    self.data = date(year, month, day)
+                except ValueError:
+                    raise ValueError("Den dato findes ikke. Tjek dag og måned.")
+            else:
+                raise ValueError("Vælg din fødselsdato.")
+        except ValueError as error:
+            self.data = None
+            message = str(error)
+            raise ValueError(message if message.startswith(("Vælg", "Den dato")) else "Vælg en gyldig fødselsdato.")
+
+
+def birthdate_required(form, field):
+    """Som DataRequired, men uden en ekstra fejl, når datoen allerede er afvist (fx 31. februar)."""
+    if field.data is None:
+        raise StopValidation(None if field.process_errors else "Vælg din fødselsdato.")
+
+
 def _new_password_field(label="Password"):
     return PasswordField(
         label,
@@ -41,6 +112,7 @@ def _display_name_field():
         validators=[
             DataRequired("Skriv det navn, andre skal se."),
             Regexp(DISPLAY_NAME_PATTERN, message="2-30 tegn: bogstaver, tal, mellemrum, punktum, bindestreg eller apostrof."),
+            contact_info.validator,
         ],
     )
 
@@ -62,7 +134,7 @@ class RegistrationForm(FlaskForm):
     password_confirm = PasswordField(
         "Gentag password", validators=[DataRequired("Gentag passwordet."), EqualTo("password", "Passwordene er ikke ens.")]
     )
-    birthdate = DateField("Fødselsdato", validators=[DataRequired("Skriv din fødselsdato.")])
+    birthdate = BirthdateField("Fødselsdato", validators=[birthdate_required])
     postcode = StringField(
         "Postnummer",
         filters=[_strip],

@@ -25,6 +25,7 @@
     {% for key in ['alle', 'nye7', 'ubekraeftede', 'uden_billede', 'anmeldt', 'aabne_sager', 'blokeret', 'begraenset', 'suspenderet', 'tidlige_fugle', 'test'] %}
       <a class="chip{% if key == filter_key %} active{% endif %}" href="{{ url_for('admin.users', filter=key, sort=sort, q=query or None) }}">{{ filters[key] }}</a>
     {% endfor %}
+    <a class="chip" href="{{ url_for('admin.deleted_users') }}">Slettede profiler</a>
   </p>
 
   {% set highlight = {'anmeldelser': 'reports', 'blokeringer': 'blocked_by', 'skjult': 'hidden_by', 'likes': 'likes_7', 'beskeder': 'messages_7'}.get(sort) %}

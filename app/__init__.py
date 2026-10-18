@@ -61,6 +61,7 @@ def create_app(config_name=None):
     from .profiles.routes import bp as profiles_bp
     from .pages import legal, onboarding
     from .pages.routes import bp as pages_bp
+    from .support.routes import bp as support_bp
 
     security.init_app(app)
     sessions.init_app(app)
@@ -81,6 +82,7 @@ def create_app(config_name=None):
     app.register_blueprint(safety_bp)
     app.register_blueprint(moderation_bp)
     app.register_blueprint(admin_bp)
+    app.register_blueprint(support_bp)
 
     from .core.timeutil import DANISH_TZ
     from .messaging.services import total_unread
@@ -126,9 +128,11 @@ def create_app(config_name=None):
     def inject_footer():
         # En funktion, så databasen kun spørges, når sidefoden faktisk vises (kun for besøgende).
         from .messaging.admin_threads import total_unread_for_admins
+        from .support.services import open_count as open_bug_reports
         from .subscriptions.services import early_bird_open
 
         return {"footer_pages": lambda: visible_pages()[1:], "current_year": datetime.now(DANISH_TZ).year,
-                "early_bird_open": early_bird_open, "admin_unread_threads": total_unread_for_admins}
+                "early_bird_open": early_bird_open, "admin_unread_threads": total_unread_for_admins,
+                "admin_open_bug_reports": open_bug_reports}
 
     return app

@@ -9,7 +9,8 @@ from datetime import date
 from flask import g, redirect, request, url_for
 
 # 2026-10-18: Opbevaring af slettede profiler og billeder i opbevaringsperioden (sporbarhed).
-TERMS_VERSION = "2026-10-18"
+# 2026-10-18.2: Forbud mod kontaktoplysninger i profilen og mod brug til markedsføring o.l. (afsnit 4).
+TERMS_VERSION = "2026-10-18.2"
 TERMS_EFFECTIVE = date(2026, 10, 18)
 
 # Det, man kan gøre uden at have accepteret de gældende vilkår: læse dem, logge ud eller slette sin profil.

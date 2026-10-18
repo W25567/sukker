@@ -78,11 +78,16 @@ def visible_to_user(user):
 
 
 def reply_from_user(user, body):
-    thread = visible_to_user(user)
-    if thread is None:
-        raise AdminMessageRefused("Samtalen findes ikke.")
+    """Brugeren skriver til Administrator: svarer i samtalen eller starter en ny (fx fra Min profil).
+    Har brugeren slettet samtalen, kommer den frem igen med historikken, når brugeren selv skriver."""
     body = _clean(body)
     now = now_utc()
+    thread = thread_for(user.id)
+    if thread is None:
+        thread = AdminThread(user_id=user.id, created_at=now)
+        db.session.add(thread)
+        db.session.flush()
+    thread.user_hidden_at = None
     message = AdminMessage(user_id=user.id, from_admin=False, body=body, created_at=now)
     db.session.add(message)
     thread.last_message_at = now

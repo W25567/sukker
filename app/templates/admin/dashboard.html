@@ -25,6 +25,7 @@
       {{ stat('Premium', m.paying.premium, url_for('admin.users', filter='premium')) }}
       {{ stat('Premium+', m.paying.premium_plus, url_for('admin.users', filter='premium_plus')) }}
       {{ stat('Tidlige fugle (livstid)', m.paying.early_birds, url_for('admin.users', filter='tidlige_fugle')) }}
+      {{ stat('Slettede profiler (bevares)', m.users.deleted, url_for('admin.deleted_users')) }}
     </div>
   </section>
 
@@ -48,9 +49,7 @@
       {{ stat('Åbne sager', m.safety.open_cases, url_for('admin.users', filter='aabne_sager', sort='anmeldelser')) }}
       {{ stat('Heraf høj prioritet', m.safety.high_open, url_for('admin.users', filter='aabne_sager', sort='anmeldelser')) }}
       {{ stat('Begrænsede', m.users.restricted, url_for('admin.users', filter='begraenset')) }}
-      {{ stat('Suspenderede', m.users.suspended, url_for('admin.users', filter='suspenderet')) }}
-      {{ stat('Slettede (bevares)', m.users.deleted, url_for('admin.users', filter='slettede')) }}
-    </div>
+      {{ stat('Suspenderede', m.users.suspended, url_for('admin.users', filter='suspenderet')) }}    </div>
     <p><a href="{{ url_for('admin.oversight') }}">Gå til tilsyn: hvem skiller sig ud?</a></p>
   </section>
 

@@ -20,7 +20,8 @@
 
 {% block content %}
   <h1>Rediger profil</h1>
-  <p class="muted">Alt er valgfrit. Udfyld det, du har lyst til at dele.</p>
+  <p class="muted">Alt er valgfrit. Udfyld det, du har lyst til at dele. Skriv ikke e-mail, links eller telefonnummer –
+    det er imod <a href="{{ url_for('pages.terms') }}">brugervilkårene</a>.</p>
   <form method="post" novalidate class="form">
     {{ form.hidden_tag() }}
 

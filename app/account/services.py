@@ -67,7 +67,7 @@ def delete_account(user):
     db.session.flush()
 
 
-def _on_hold():
+def held_user_ids():
     """Brugere, der ikke må slettes endeligt endnu: part i en sag, der ikke er afsluttet, eller hvor
     opbevaringen er forlænget."""
     today = today_local()
@@ -82,7 +82,7 @@ def retention_status(user):
     if not user.is_deleted or user.deleted_at is None:
         return None, False
     purge_after = add_months(user.deleted_at, get_setting("data_retention_months")).astimezone(DANISH_TZ).date()
-    on_hold = db.session.scalar(select(db.literal(user.id).in_(_on_hold())))
+    on_hold = db.session.scalar(select(db.literal(user.id).in_(held_user_ids())))
     return purge_after, bool(on_hold)
 
 
@@ -90,7 +90,7 @@ def purge_deleted_accounts(before):
     """Slettede konti, der har været slettet i hele opbevaringsperioden, slettes endeligt med alle data.
     Billedfilerne returneres, så de kan slettes efter commit."""
     users = db.session.scalars(
-        select(User).where(User.status == "deleted", User.deleted_at < before, User.id.not_in(_on_hold()))
+        select(User).where(User.status == "deleted", User.deleted_at < before, User.id.not_in(held_user_ids()))
     ).all()
     files = []
     for user in users:
@@ -111,7 +111,7 @@ def purge_deleted_images(before):
     """Billeder, brugeren selv har slettet, slettes endeligt efter opbevaringsperioden, medmindre brugeren er
     part i en sag, der holder data tilbage."""
     images = db.session.scalars(
-        select(ProfileImage).where(ProfileImage.deleted_at < before, ProfileImage.user_id.not_in(_on_hold()))
+        select(ProfileImage).where(ProfileImage.deleted_at < before, ProfileImage.user_id.not_in(held_user_ids()))
     ).all()
     files = [(image.collection, image.public_id) for image in images]
     for image in images:

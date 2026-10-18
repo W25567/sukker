@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Fejlrapport #{{ report.id }} – Administration{% endblock %}
+{% block page_class %}admin-wide{% endblock %}
+{% block content %}
+  {% include "admin/_nav.html" %}
+  <a class="back-link" href="{{ url_for('admin.bug_reports') }}">← Fejlrapporter</a>
+  <h1>Fejlrapport #{{ report.id }} {% if report.status == 'closed' %}<span class="tag">lukket</span>{% else %}<span class="tag warn">åben</span>{% endif %}</h1>
+
+  <section class="card">
+    <dl class="facts">
+      <div><dt>Modtaget</dt><dd>{{ report.created_at | local_datetime }}</dd></div>
+      <div><dt>Modul</dt><dd>{{ modules.get(report.module, report.module) }}</dd></div>
+      <div><dt>Fra</dt><dd>{% if reporter %}<a href="{{ url_for('admin.user', user_id=reporter.id) }}">{{ reporter | staff_name }}</a>{% else %}–{% endif %}</dd></div>
+      <div><dt>Browser og enhed</dt><dd>{{ report.user_agent | device if report.user_agent else '–' }}<br><small class="muted">{{ report.user_agent or '' }}</small></dd></div>
+      <div><dt>Beskrivelse</dt><dd class="evidence-text">{{ report.description }}</dd></div>
+      {% if report.closed_at %}<div><dt>Lukket</dt><dd>{{ report.closed_at | local_datetime }}</dd></div>{% endif %}
+    </dl>
+  </section>
+
+  {% if images %}
+    <section class="card">
+      <h2>Skærmbilleder</h2>
+      <div class="image-grid screenshots">
+        {% for image in images %}
+          <a href="{{ url_for('admin.bug_report_image', report_id=report.id, public_id=image.public_id, variant='stor') }}" target="_blank" rel="noopener">
+            <img src="{{ url_for('admin.bug_report_image', report_id=report.id, public_id=image.public_id, variant='lille') }}" alt="Skærmbillede {{ loop.index }}" loading="lazy">
+          </a>
+        {% endfor %}
+      </div>
+    </section>
+  {% endif %}
+
+  <section class="card">
+    <h2>Behandling</h2>
+    <form method="post" class="form">
+      {{ form.hidden_tag() }}
+      <div class="field"><label for="note">Note (kun for administrationen)</label>
+        <textarea id="note" name="note" rows="3">{{ report.admin_note or '' }}</textarea></div>
+      {% if report.status == 'open' %}
+        <button type="submit" name="status" value="closed" class="button">Luk fejlrapporten</button>
+      {% else %}
+        <button type="submit" name="status" value="open" class="button secondary">Åbn igen</button>
+      {% endif %}
+    </form>
+    <p class="muted">Vil du svare brugeren, så skriv som Administrator fra brugerens side.</p>
+  </section>
+{% endblock %}

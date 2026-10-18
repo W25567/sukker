@@ -15,7 +15,8 @@ LIKED_PARAM = "likede"  # ?likede=skjul eller ?likede=vis. Uden parameter gælde
 
 def hide_liked_choice(user):
     """Om profiler, brugeren har liket uden match, skal skjules. Valget i Udforsk vinder over præferencen."""
-    value = request.args.get(LIKED_PARAM)
+    values = request.args.getlist(LIKED_PARAM)
+    value = values[-1] if values else None  # formularen sender "vis" og, når feltet er krydset af, "skjul"
     if value in ("skjul", "vis"):
         return value == "skjul"
     profile = db.session.get(Profile, user.id)
