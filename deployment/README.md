@@ -177,7 +177,7 @@ tid og juster RTO, hvis den ikke kan overholdes.
 
 | Dato | Backup | Afprøvning | Resultat |
 |---|---|---|---|
-| | | | |
+| 19-10-2026 | `sukker-production-20261019_103442-nightly.tar.age` | `restore-check` (filer, uden database) | OK |
 
 ## Acceptkriterier (specifikation 15.8)
 
@@ -197,6 +197,6 @@ Udgivelsesløsningen er først færdig, når scenarierne er afprøvet på en rig
 - [ ] Andre applikationers services, skemaer og filer er uændrede (sammenlign `systemctl list-units`,
       `\dn` i psql og `/etc/nginx/sites-enabled` før og efter; rapporten lister alle ændrede filer)
 - [ ] Udgivelse til staging uden påvirkning af produktion
-- [ ] Kopi uden for serveren (`offsite: ok` i `status.json`)
-- [ ] `restore-check` af en natlig backup uden fejl
+- [x] Kopi uden for serveren (`offsite: ok` i `status.json`) (produktion, 19-10-2026)
+- [x] `restore-check` af en natlig backup uden fejl (produktion, 19-10-2026)
 - [ ] Gendannelse af en backup med `verify-media` uden fejl

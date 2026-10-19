@@ -64,11 +64,43 @@ def _write_status(status):
     os.replace(path + ".tmp", path)
 
 
+def _windows_candidates(name):
+    """Typiske installationssteder på Windows, når værktøjet ikke er på PATH (fx i en terminal, der var åben,
+    før det blev installeret). Bruges kun af restore-check, som køres på den ansvarliges egen pc."""
+    local = os.environ.get("LOCALAPPDATA", "")
+    if name == "age":
+        patterns = [os.path.join(local, "Microsoft", "WinGet", "Links", "age.exe"),
+                    os.path.join(local, "Microsoft", "WinGet", "Packages", "FiloSottile.age*", "age", "age.exe")]
+    elif name in PG_TOOLS:
+        patterns = [rf"C:\Program Files\PostgreSQL\*\bin\{name}.exe"]
+    else:
+        return []
+    import glob
+
+    return [path for pattern in patterns for path in sorted(glob.glob(pattern), reverse=True)]
+
+
 def _tool(name):
     pg_bin = current_app.config.get("PG_BIN_DIR")
     if name in PG_TOOLS and pg_bin:
         return os.path.join(pg_bin, name)
-    return shutil.which(name) or name
+    found = shutil.which(name)
+    if found:
+        return found
+    if os.name == "nt":
+        candidates = _windows_candidates(name)
+        if candidates:
+            return candidates[0]
+    return name
+
+
+def _run_tool(args, **kwargs):
+    """subprocess.run, men et manglende program giver en forståelig fejl i stedet for et stacktrace."""
+    try:
+        return subprocess.run(args, capture_output=True, text=True, **kwargs)
+    except FileNotFoundError:
+        raise BackupError(f"Programmet {os.path.basename(args[0])!r} blev ikke fundet. Installér det, eller åbn en ny "
+                          "terminal, hvis du lige har installeret det.")
 
 
 def _sha256(path):
@@ -231,8 +263,7 @@ def restore_check(path, identity=None, database_url=None):
             if not identity:
                 raise BackupError("Backuppen er krypteret. Angiv den private nøgle med --identity.")
             bundle = os.path.join(work, "bundle.tar")
-            result = subprocess.run([_tool("age"), "--decrypt", "--identity", identity, "--output", bundle, path],
-                                    capture_output=True, text=True)
+            result = _run_tool([_tool("age"), "--decrypt", "--identity", identity, "--output", bundle, path])
             if result.returncode != 0:
                 raise BackupError(f"Dekryptering fejlede: {result.stderr.strip()[:500]}")
             checks.append(("Dekryptering", True, "OK"))
@@ -245,7 +276,7 @@ def restore_check(path, identity=None, database_url=None):
         checks.append(("Kontrolsummer", not bad, "OK" if not bad else f"Ændret eller beskadiget: {', '.join(bad)}"))
 
         dump = os.path.join(work, "database.dump")
-        listing = subprocess.run([_tool("pg_restore"), "--list", dump], capture_output=True, text=True)
+        listing = _run_tool([_tool("pg_restore"), "--list", dump])
         tables = sum(1 for line in listing.stdout.splitlines() if " TABLE DATA " in line)
         checks.append(("Databasedump kan læses", listing.returncode == 0,
                        f"{tables} tabeller med data" if listing.returncode == 0 else listing.stderr.strip()[:300]))
@@ -259,8 +290,8 @@ def restore_check(path, identity=None, database_url=None):
 
         if database_url:
             args, env = _connection(database_url)
-            result = subprocess.run([_tool("pg_restore"), "--no-owner", "--no-privileges", "--exit-on-error"]
-                                    + args + [dump], env=env, capture_output=True, text=True)
+            result = _run_tool([_tool("pg_restore"), "--no-owner", "--no-privileges", "--exit-on-error"]
+                               + args + [dump], env=env)
             checks.append(("Gendannelse i databasen", result.returncode == 0,
                            "OK" if result.returncode == 0 else result.stderr.strip()[:300]))
             if result.returncode == 0:

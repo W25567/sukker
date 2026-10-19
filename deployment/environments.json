@@ -17,9 +17,9 @@
     "company_cvr": "45715566",
     "company_address": "",
     "legal_reviewed": false,
-    "backup_age_recipients": [age1pjx9sz0gvqv7hnrdjxvva3qec8d833dq7x3pknwycy2v2awrnq4q3s48xx],
-    "backup_remote": "u671371-sub4@u671371-sub4.your-storagebox.de",
-    "backup_remote_port": "23",
+    "backup_age_recipients": ["age1pjx9sz0gvqv7hnrdjxvva3qec8d833dq7x3pknwycy2v2awrnq4q3s48xx"],
+    "backup_remote": "u671371-sub4@u671371-sub4.your-storagebox.de:sukker/",
+    "backup_remote_port": 23,
     "gunicorn_workers": 3
   },
   "staging": {
@@ -39,7 +39,7 @@
     "company_cvr": "45715566",
     "company_address": "",
     "legal_reviewed": false,
-    "backup_age_recipients": [age1pjx9sz0gvqv7hnrdjxvva3qec8d833dq7x3pknwycy2v2awrnq4q3s48xx],
+    "backup_age_recipients": ["age1pjx9sz0gvqv7hnrdjxvva3qec8d833dq7x3pknwycy2v2awrnq4q3s48xx"],
     "backup_remote": "u671371-sub4@u671371-sub4.your-storagebox.de",
     "backup_remote_port": "23",
     "gunicorn_workers": 2
