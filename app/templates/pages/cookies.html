@@ -14,14 +14,15 @@
         <tbody>
           <tr>
             <td><code>session</code></td>
-            <td>Holder dig logget ind og beskytter formularer mod forfalskede indsendelser. Sættes først, når du logger ind eller udfylder en formular.</td>
-            <td>Indtil du logger ud, dog højst 30 dage uden besøg</td>
+            <td>Holder dig logget ind og beskytter formularer mod forfalskede indsendelser.{% if prerelease_label %} Indtil lanceringen {{ prerelease_label }} husker den også, at du har accepteret, at Sukker.nu er i pre-release.{% endif %}
+              Sættes først, når du logger ind, udfylder en formular{% if prerelease_label %} eller accepterer pre-release{% endif %}.</td>
+            <td>Når du er logget ind: indtil du logger ud, dog højst 30 dage uden besøg. Ellers: indtil du lukker browseren.</td>
           </tr>
         </tbody>
       </table>
     </div>
 
-    <p>Fordi cookien er nødvendig for at levere den tjeneste, du har bedt om, kræver den ikke samtykke, og du ser derfor ingen cookiebanner. Du kan slette cookien i din browser, men så bliver du logget ud.</p>
+    <p>Fordi cookien er nødvendig for at levere den tjeneste, du har bedt om, kræver den ikke samtykke, og du ser derfor ingen cookiebanner. Du kan slette cookien i din browser, men så bliver du logget ud{% if prerelease_label %} og skal acceptere pre-release igen, hvis du ikke er logget ind. Har du en profil, gemmes accepten også på den, så du ikke bliver spurgt igen, når du logger ind{% endif %}.</p>
     <p>Begynder vi at bruge andre cookies, opdaterer vi denne side og beder om dit samtykke, hvis loven kræver det.</p>
     <p>Læs også <a href="{{ url_for('pages.privacy') }}">privatlivspolitikken</a>.</p>
   </article>

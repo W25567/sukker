@@ -75,6 +75,13 @@ def test_logged_in_user_without_acceptance_is_asked(app, outbox, ctx):
         app.config["LAUNCH_AT"] = ""
 
 
+def test_cookie_policy_mentions_prerelease_until_launch(app, client, prerelease):
+    page = client.get("/cookies").get_data(as_text=True)
+    assert "accepteret, at Sukker.nu er i pre-release" in page and "indtil du lukker browseren" in page
+    app.config["LAUNCH_AT"] = (now_utc() - timedelta(minutes=1)).isoformat()
+    assert "pre-release" not in client.get("/cookies").get_data(as_text=True)
+
+
 def test_everything_disappears_after_launch(app, client):
     app.config["LAUNCH_AT"] = (now_utc() - timedelta(minutes=1)).isoformat()
     try:

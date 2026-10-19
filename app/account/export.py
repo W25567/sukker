@@ -63,6 +63,7 @@ def export_user_data(user):
             "notifikationer": notification_prefs.current(user),
             "sidst_aktiv": _iso(user.last_active_at),
             "billeder_verificeret": _iso(user.photo_verified_at),
+            "pre_release_accepteret": _iso(user.prerelease_accepted_at),
         },
         "profil": {
             "felter": {f.label: display_value(profile, f) for f in FIELDS if display_value(profile, f)},
