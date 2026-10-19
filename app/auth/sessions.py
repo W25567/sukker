@@ -31,7 +31,14 @@ def start_session(user):
             user_agent=(request.user_agent.string or "")[:255],
         )
     )
+    # En accept af pre-release fra før login gemmes på kontoen og bevares i sessionen (pages/prerelease.py).
+    from ..pages import prerelease
+
+    accepted = session.get(prerelease.SESSION_KEY)
+    prerelease.carry_over(user)
     session.clear()
+    if accepted:
+        session[prerelease.SESSION_KEY] = True
     session[SESSION_KEY] = raw
     session.permanent = True
 

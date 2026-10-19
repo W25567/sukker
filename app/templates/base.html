@@ -61,6 +61,13 @@
     </nav>
   </header>
 
+  {% if prerelease_label and request.endpoint != 'pages.prerelease_landing' %}
+    {# Vises indtil lanceringen (pages/prerelease.py), så det altid er tydeligt, at siden er i pre-release. #}
+    <a class="prerelease-bar" href="{{ url_for('pages.prerelease_landing') }}">
+      <strong>Pre-release</strong> · Sukker.nu åbner officielt {{ prerelease_label }}
+    </a>
+  {% endif %}
+
   {% if current_user and current_user.status == 'restricted' %}
     <div class="notice">
       <span>Din konto er midlertidigt begrænset, mens en sag behandles. Du kan ikke ses af andre, like eller skrive.</span>

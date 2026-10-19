@@ -131,13 +131,9 @@ def test_premium_page_follows_settings(app, ctx, client):
     assert "Filtrere på alder" not in html and "6 måneders Premium" in html
 
 
-def test_legal_pages_show_draft_note_until_reviewed(app, client):
-    assert "Udkast" in client.get("/vilkaar").get_data(as_text=True)
-    app.config["LEGAL_REVIEWED"] = True
-    try:
-        assert "Udkast" not in client.get("/vilkaar").get_data(as_text=True)
-    finally:
-        app.config["LEGAL_REVIEWED"] = False
+def test_legal_pages_are_not_marked_as_drafts(client):
+    for path in ("/vilkaar", "/privatliv", "/cookies"):
+        assert "Udkast" not in client.get(path).get_data(as_text=True)
 
 
 # --- sitemap.xml og robots.txt -----------------------------------------------------------------------------

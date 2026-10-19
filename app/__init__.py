@@ -61,12 +61,13 @@ def create_app(config_name=None):
     from .safety.routes import bp as safety_bp
     from .media.routes import bp as media_bp
     from .profiles.routes import bp as profiles_bp
-    from .pages import legal, onboarding
+    from .pages import legal, onboarding, prerelease
     from .pages.routes import bp as pages_bp
     from .support.routes import bp as support_bp
 
     security.init_app(app)
     sessions.init_app(app)
+    prerelease.init_app(app)  # efter sessions, før vilkår og velkomst
     legal.init_app(app)  # efter sessions, så g.user er sat
     onboarding.init_app(app)  # efter vilkårene
     errors.init_app(app)

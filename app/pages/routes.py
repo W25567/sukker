@@ -13,7 +13,8 @@ from ..core.timeutil import now_utc
 from ..extensions import db
 from ..subscriptions.services import active_subscription, early_bird_open, grant_early_bird
 from .content import absolute_url, faq_items, seo_for, visible_pages
-from .forms import AcceptTermsForm
+from . import prerelease
+from .forms import AcceptTermsForm, PrereleaseForm
 from .legal import TERMS_EFFECTIVE, TERMS_VERSION
 
 bp = Blueprint("pages", __name__)
@@ -29,7 +30,6 @@ def _legal_context():
         "effective": TERMS_EFFECTIVE,
         "contact_email": config["CONTACT_EMAIL"],
         "company": {"name": config["COMPANY_NAME"], "cvr": config["COMPANY_CVR"], "address": config["COMPANY_ADDRESS"]},
-        "legal_draft": not config["LEGAL_REVIEWED"],
         "retention_months": get_setting("data_retention_months"),
         "signup_months": get_setting("signup_premium_months"),
         "inactive_months": get_setting("inactive_hide_months"),
@@ -151,6 +151,24 @@ def welcome():
         subscription=active_subscription(g.user.id), early_bird_open=early_bird_open(),
         signup_months=get_setting("signup_premium_months"),
     )
+
+
+@bp.route("/pre-release", methods=["GET", "POST"])
+@public_page
+def prerelease_landing():
+    """Landingssiden indtil lanceringen (app/pages/prerelease.py). Bagefter sendes man til forsiden."""
+    next_url = safe_next_url(request.args.get("next")) or url_for("core.home")
+    if not prerelease.is_prerelease():
+        return redirect(next_url)
+    form = PrereleaseForm()
+    if form.validate_on_submit():
+        prerelease.accept(g.get("user"))
+        db.session.commit()
+        return redirect(next_url)
+    return render_template("pages/prerelease.html", form=form, launch=prerelease.launch_at(), now=now_utc(),
+                           launch_label=prerelease.launch_label(), next_url=next_url,
+                           already_accepted=prerelease.has_accepted(), early_bird_open=early_bird_open(),
+                           signup_months=get_setting("signup_premium_months")), 400 if form.errors else 200
 
 
 @bp.route("/vilkaar/accepter", methods=["GET", "POST"])

@@ -89,8 +89,9 @@ metadata, `sitemap.xml` og sidefoden. Alt andet sendes med `X-Robots-Tag: noinde
 udleder selv stierne bag login fra URL-reglerne. En ny offentlig side kræver `@public_page` på view'et og en
 linje i registret.
 
-- **Vilkår og privatlivspolitik** er udkast. De vises med en markering, indtil `SUKKER_LEGAL_REVIEWED=1`.
-  Virksomhedsoplysninger og kontaktmail sættes i `.env` (se `.env.example`).
+- **Vilkår og privatlivspolitik:** Virksomhedsoplysninger og kontaktmail sættes i `.env` (se `.env.example`).
+- **Pre-release:** Indtil `SUKKER_LAUNCH_AT` (1. november 2026) viser siden en nedtælling, og besøgende skal acceptere,
+  at platformen endnu ikke er officielt i luften (`app/pages/prerelease.py`). Efter tidspunktet forsvinder det af sig selv.
 - **Ændres vilkårene væsentligt**, hæves `TERMS_VERSION` i `app/pages/legal.py`. Alle skal så acceptere igen ved
   næste besøg. Konti, der fandtes før M8, skal acceptere de første vilkår.
 - **Logo og ikoner** ligger alle i `app/static/images`. Favicons, app-ikoner og `site.webmanifest` kommer fra

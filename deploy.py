@@ -102,7 +102,6 @@ def resolve(env_name, raw):
         "SUKKER_COMPANY_NAME": raw.get("company_name", ""),
         "SUKKER_COMPANY_CVR": raw.get("company_cvr", ""),
         "SUKKER_COMPANY_ADDRESS": raw.get("company_address", ""),
-        "SUKKER_LEGAL_REVIEWED": "1" if raw.get("legal_reviewed") else "0",
         "SUKKER_ALERT_EMAIL": raw.get("alert_email", ""),
         "SUKKER_BACKUP_AGE_RECIPIENTS": " ".join(raw.get("backup_age_recipients", [])),
         "SUKKER_BACKUP_REMOTE": raw.get("backup_remote", ""),

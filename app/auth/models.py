@@ -63,6 +63,8 @@ class User(db.Model):
     last_active_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
     # Sat, når en moderator har godkendt en selfie (app/verification). NULL = ikke verificeret.
     photo_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Hvornår brugeren accepterede, at Sukker.nu var i pre-release (app/pages/prerelease.py).
+    prerelease_accepted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     __table_args__ = (
         CheckConstraint("role IN ('user', 'moderator', 'admin')", name="role"),

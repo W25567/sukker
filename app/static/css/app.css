@@ -284,13 +284,31 @@ body:has(.bottomnav) .page { padding-bottom: 88px; }
 .radio-list label { display: flex; gap: 10px; align-items: center; font-weight: 400; }
 .bubble-meta a { color: var(--muted); }
 
+/* Pre-release indtil lanceringen (pages/prerelease.html) */
+.prerelease-bar { display: block; padding: 8px 16px; text-align: center; font-size: 0.88rem; text-decoration: none;
+  background: var(--accent); color: var(--accent-ink); }
+.prerelease-bar:hover { text-decoration: underline; }
+.prerelease-hero { text-align: center; padding: 28px 0 12px; }
+.prerelease-hero h1 { font-size: clamp(1.9rem, 6vw, 2.8rem); margin: 6px 0 12px; }
+.prerelease-hero .lead { max-width: 36rem; margin: 0 auto 24px; }
+.prerelease-tag { display: inline-block; margin: 8px 0 0; padding: 4px 14px; border-radius: 999px; font-size: 0.8rem;
+  font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; background: var(--accent); color: var(--accent-ink); }
+.countdown { display: grid; grid-template-columns: repeat(4, minmax(0, 96px)); justify-content: center; gap: 10px; margin: 0 auto 8px; }
+.countdown > div { display: flex; flex-direction: column; align-items: center; padding: 14px 4px 10px; border-radius: var(--radius);
+  background: var(--info-bg); border: 1px solid var(--border); }
+.countdown span { font-size: clamp(1.6rem, 7vw, 2.4rem); font-weight: 800; line-height: 1; color: var(--accent);
+  font-variant-numeric: tabular-nums; }
+.countdown small { margin-top: 6px; font-size: 0.75rem; color: var(--muted); }
+.prerelease-body { max-width: 640px; margin: 16px auto 0; }
+.prerelease-body h2 { margin-top: 0; }
+.prerelease-links { margin: 16px 0 0; font-size: 0.85rem; text-align: center; }
+
 /* Verificering med selfie */
 .verified-badge { display: inline-flex; align-items: center; gap: 4px; margin-left: 8px; padding: 2px 10px 2px 8px; border-radius: 999px;
   background: var(--info-bg); color: var(--success); font-size: 0.8rem; font-weight: 600; vertical-align: middle; white-space: nowrap; }
 .verified-badge::before { content: "✓"; font-weight: 700; }
 .verified-badge.small { margin-left: 4px; padding: 0 7px 0 5px; font-size: 0.72rem; }
 .card > p > .verified-badge:first-child { margin-left: 0; }
-.steps { margin: 0 0 16px; padding-left: 20px; display: grid; gap: 6px; }
 .gesture { color: var(--accent); }
 .verify-compare { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; margin: 12px 0 16px; }
 .verify-compare figure { margin: 0; padding: 10px; }
@@ -375,7 +393,6 @@ a.stat .stat-value { color: var(--accent); }
 .prose dt { font-weight: 600; margin-top: 10px; }
 .prose dd { margin: 2px 0 0; }
 .legal h2 { font-size: 1.05rem; }
-.draft-note { padding: 10px 14px; border-radius: 10px; border: 1px dashed var(--accent); background: var(--info-bg); font-size: 0.92rem; }
 .table-scroll { overflow-x: auto; margin: 16px 0; }
 .prose table { width: 100%; border-collapse: collapse; background: var(--surface); font-size: 0.95rem; }
 .prose caption { text-align: left; font-weight: 600; padding-bottom: 8px; }

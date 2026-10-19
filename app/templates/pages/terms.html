@@ -4,10 +4,12 @@
   <article class="prose legal">
     <h1>Brugervilkår</h1>
     <p class="muted">Gældende fra {{ effective.strftime('%d-%m-%Y') }}</p>
-    {% include "pages/_legal_note.html" %}
 
     <h2>1. Om vilkårene</h2>
     <p>Vilkårene gælder for din brug af Sukker.nu{% if company.name %}, som drives af {{ company.name }}{% endif %}. Når du opretter en profil, accepterer du vilkårene og <a href="{{ url_for('pages.privacy') }}">privatlivspolitikken</a>.</p>
+    {% if prerelease_label %}
+      <p><strong>Pre-release:</strong> Indtil den officielle lancering {{ prerelease_label }} er Sukker.nu i pre-release. Du skal acceptere det, før du bruger siden. I perioden kan der være fejl og få profiler, og funktioner kan ændre sig uden varsel. Vilkårene og privatlivspolitikken gælder fuldt ud, også i pre-release, og din profil fortsætter efter lanceringen.</p>
+    {% endif %}
 
     <h2>2. Hvem kan bruge Sukker.nu</h2>
     <ul>
@@ -55,7 +57,7 @@
     <p>Du kan til enhver tid slette din profil under Konto. Kontoen lukkes med det samme, og din profil, dine billeder, likes og matches kan ikke længere ses af andre. Beskeder, du har sendt, bliver stående hos modtageren med afsenderen vist som "Slettet bruger". Af hensyn til sikkerhed, anmeldelser og eventuelle henvendelser fra politiet gemmer vi oplysningerne skjult i en periode, før de slettes endeligt. Det står i <a href="{{ url_for('pages.privacy') }}">privatlivspolitikken</a>. Vi kan lukke en konto, der overtræder vilkårene (afsnit 6).</p>
 
     <h2>9. Ansvar</h2>
-    <p>Vi kontrollerer ikke brugernes identitet eller alder, og vi kan ikke stå inde for, at andre brugeres oplysninger er korrekte. Vær forsigtig, når du deler oplysninger og mødes med nogen. Vi gør vores bedste for, at siden er tilgængelig og sikker, men kan ikke garantere, at den altid er fejlfri. Vi er ikke ansvarlige for andre brugeres handlinger, i det omfang loven tillader det.</p>
+    <p>Vi kontrollerer ikke brugernes identitet eller alder. Mærket "Verificeret" betyder kun, at en moderator har sammenlignet en selfie med profilbillederne. Vi kan ikke stå inde for, at andre brugeres oplysninger er korrekte. Vær forsigtig, når du deler oplysninger og mødes med nogen. Vi gør vores bedste for, at siden er tilgængelig og sikker, men kan ikke garantere, at den altid er fejlfri. Vi er ikke ansvarlige for andre brugeres handlinger, i det omfang loven tillader det.</p>
 
     <h2>10. Ændringer af vilkårene</h2>
     <p>Ændrer vi vilkårene væsentligt, får du besked, og du skal acceptere de nye vilkår, næste gang du logger ind. Vil du ikke acceptere dem, kan du slette din profil.</p>

@@ -60,8 +60,9 @@ class BaseConfig:
     COMPANY_NAME = _env("SUKKER_COMPANY_NAME")
     COMPANY_CVR = _env("SUKKER_COMPANY_CVR")
     COMPANY_ADDRESS = _env("SUKKER_COMPANY_ADDRESS")
-    # Viser en markering på de juridiske sider, indtil teksterne er gennemgået juridisk (specifikation 13.1).
-    LEGAL_REVIEWED = _env("SUKKER_LEGAL_REVIEWED", "0") == "1"
+    # Officiel lancering. Indtil da er siden i pre-release: en landingsside tæller ned, og man skal acceptere, at
+    # platformen endnu ikke er i luften, før man går videre (app/pages/prerelease.py). Tom = ingen pre-release.
+    LAUNCH_AT = _env("SUKKER_LAUNCH_AT", "2026-11-01T00:00:00+01:00")
     # Staging: alt sendes med noindex, og robots.txt udelukker hele siden (specifikation 14.7).
     NOINDEX_ALL = _env("SUKKER_NOINDEX_ALL", "0") == "1"
 
@@ -99,6 +100,7 @@ class TestingConfig(BaseConfig):
     BASE_URL = "http://localhost"
     ENV_NAME = "testing"
     SHOW_WELCOME = False
+    LAUNCH_AT = ""  # ingen pre-release i testene, undtagen hvor den slås til (tests/test_prerelease.py)
 
 
 class ProductionConfig(BaseConfig):
