@@ -167,6 +167,7 @@ def prerelease_landing():
         return redirect(next_url)
     return render_template("pages/prerelease.html", form=form, launch=prerelease.launch_at(), now=now_utc(),
                            launch_label=prerelease.launch_label(), next_url=next_url,
+                           home_url=absolute_url("core.home"),
                            already_accepted=prerelease.has_accepted(), early_bird_open=early_bird_open(),
                            signup_months=get_setting("signup_premium_months")), 400 if form.errors else 200
 

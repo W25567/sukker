@@ -27,7 +27,7 @@ def test_visitors_see_landing_page_first(app, client, prerelease):
     assert response.status_code == 302 and "/pre-release" in response.headers["Location"]
     page = client.get("/pre-release").get_data(as_text=True)
     assert "Noget nyt er på vej" in page and 'class="countdown"' in page and 'data-unit="days">12<' in page
-    assert "countdown.js" in page
+    assert "countdown.js" in page and '<link rel="canonical" href="http://localhost/">' in page
     # Informationssider og mail-links kan læses uden accept
     assert client.get("/vilkaar").status_code == 200 and client.get("/privatlivspolitik").status_code == 200
     assert client.get("/health").status_code == 200
@@ -75,9 +75,42 @@ def test_logged_in_user_without_acceptance_is_asked(app, outbox, ctx):
         app.config["LAUNCH_AT"] = ""
 
 
+def test_acceptance_cookie_lasts_30_days_and_survives_logout(app, outbox, ctx, prerelease):
+    client = app.test_client()
+    response = accept(client)
+    cookie = response.headers["Set-Cookie"]
+    assert "Expires=" in cookie  # vedvarende, ikke kun til browseren lukkes
+
+    register(client, display_name="Anna", email="anna@example.com")
+    client.get(link_from(outbox[-1], "/bekraeft-email/"))
+    login(client)
+    client.post("/log-ud")
+    assert client.get("/vilkaar").status_code == 200
+    assert client.get("/").status_code == 200  # ikke sendt til landingssiden igen efter log ud
+    assert client.get("/udforsk").status_code == 302 and "/log-ind" in client.get("/udforsk").headers["Location"]
+
+
+def test_login_lasts_until_browser_closes_unless_remembered(app, outbox, ctx):
+    client = app.test_client()
+    register(client, display_name="Anna", email="anna@example.com")
+    client.get(link_from(outbox[-1], "/bekraeft-email/"))
+    assert "Husk mig på denne enhed" in client.get("/log-ind").get_data(as_text=True)
+
+    session_only = app.test_client()
+    cookie = session_only.post("/log-ind", data={"email": "anna@example.com", "password": "et-langt-password"}
+                               ).headers["Set-Cookie"]
+    assert "Expires=" not in cookie  # slettes, når browseren lukkes
+
+    remembered = app.test_client()
+    cookie = remembered.post("/log-ind", data={"email": "anna@example.com", "password": "et-langt-password",
+                                               "remember": "y"}).headers["Set-Cookie"]
+    assert "Expires=" in cookie
+
+
 def test_cookie_policy_mentions_prerelease_until_launch(app, client, prerelease):
     page = client.get("/cookies").get_data(as_text=True)
-    assert "accepteret, at Sukker.nu er i pre-release" in page and "indtil du lukker browseren" in page
+    assert "accepteret, at Sukker.nu er i pre-release" in page and "30 dage fra dit seneste besøg" in page
+    assert "accepten af pre-release huskes" in page
     app.config["LAUNCH_AT"] = (now_utc() - timedelta(minutes=1)).isoformat()
     assert "pre-release" not in client.get("/cookies").get_data(as_text=True)
 

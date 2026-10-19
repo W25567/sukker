@@ -16,7 +16,12 @@
             <td><code>session</code></td>
             <td>Holder dig logget ind og beskytter formularer mod forfalskede indsendelser.{% if prerelease_label %} Indtil lanceringen {{ prerelease_label }} husker den også, at du har accepteret, at Sukker.nu er i pre-release.{% endif %}
               Sættes først, når du logger ind, udfylder en formular{% if prerelease_label %} eller accepterer pre-release{% endif %}.</td>
-            <td>Når du er logget ind: indtil du logger ud, dog højst 30 dage uden besøg. Ellers: indtil du lukker browseren.</td>
+            <td>
+              Logget ind: indtil du lukker browseren. Har du valgt "Husk mig på denne enhed": 30 dage fra dit seneste besøg.
+              {% if prerelease_label %}Kun accepteret pre-release (ikke logget ind): 30 dage.{% endif %}
+              Når du logger ud, afsluttes dit login med det samme{% if prerelease_label %}, men accepten af pre-release huskes{% endif %}.
+              Ellers: indtil du lukker browseren.
+            </td>
           </tr>
         </tbody>
       </table>

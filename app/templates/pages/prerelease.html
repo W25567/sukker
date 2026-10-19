@@ -1,7 +1,9 @@
 {% extends "base.html" %}
 {% from "_forms.html" import field %}
 {% block title %}Pre-release – Sukker.nu åbner {{ launch_label }}{% endblock %}
-{% block meta %}<meta name="description" content="Sukker.nu åbner officielt {{ launch_label }}. Indtil da kan du være med i vores pre-release.">{% endblock %}
+{% block meta %}<meta name="description" content="Sukker.nu åbner officielt {{ launch_label }}. Indtil da kan du være med i vores pre-release.">
+  {# Siden er forsidens midlertidige indhold. Søgemaskinerne skal knytte den til forsiden, ikke til /pre-release?next=... #}
+  <link rel="canonical" href="{{ home_url }}">{% endblock %}
 {% block page_class %}public prerelease-page{% endblock %}
 {% block content %}
   <section class="prerelease-hero">

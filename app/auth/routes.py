@@ -73,7 +73,7 @@ def login():
         elif user.status == "suspended":
             return render_template("auth/suspended.html"), 403
         else:
-            start_session(user)
+            start_session(user, remember=form.remember.data)
             db.session.commit()
             return redirect(safe_next_url(request.args.get("next")) or url_for("core.home"))
     if not form.is_submitted() and session.get(PREFILL_EMAIL_KEY):

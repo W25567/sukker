@@ -20,7 +20,10 @@ SESSION_KEY = "sid"
 LAST_SEEN_INTERVAL = timedelta(minutes=5)
 
 
-def start_session(user):
+def start_session(user, remember=False):
+    """Logger brugeren ind. Uden `remember` gælder login-cookien kun, til browseren lukkes, så den næste ved en delt
+    computer ikke kommer ind på profilen. Med "Husk mig på denne enhed" gælder den i PERMANENT_SESSION_LIFETIME
+    (30 dage fra seneste besøg). Serveren afslutter under alle omstændigheder et login efter 30 dage uden besøg."""
     raw = secrets.token_urlsafe(32)
     user.last_active_at = now_utc()
     db.session.add(
@@ -40,13 +43,19 @@ def start_session(user):
     if accepted:
         session[prerelease.SESSION_KEY] = True
     session[SESSION_KEY] = raw
-    session.permanent = True
+    session.permanent = bool(remember)
 
 
 def end_current_session():
     if g.get("user_session") is not None:
         g.user_session.revoked_at = now_utc()
+    # Accepten af pre-release gælder browseren og bevares ved log ud, så man ikke skal acceptere igen.
+    from ..pages import prerelease
+
+    accepted = prerelease.has_accepted(g.get("user"))
     session.clear()
+    if accepted:
+        prerelease.accept()
 
 
 def revoke_sessions(user_id, keep_session_id=None):

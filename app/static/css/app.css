@@ -284,6 +284,8 @@ body:has(.bottomnav) .page { padding-bottom: 88px; }
 .radio-list label { display: flex; gap: 10px; align-items: center; font-weight: 400; }
 .bubble-meta a { color: var(--muted); }
 
+.login-remember-hint { margin: -6px 0 16px; font-size: 0.85rem; }
+
 /* Pre-release indtil lanceringen (pages/prerelease.html) */
 .prerelease-bar { display: block; padding: 8px 16px; text-align: center; font-size: 0.88rem; text-decoration: none;
   background: var(--accent); color: var(--accent-ink); }

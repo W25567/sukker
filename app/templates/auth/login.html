@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_forms.html" import field %}
+{% from "_forms.html" import field, checkbox %}
 {% block title %}Log ind – Sukker.nu{% endblock %}
 {% block content %}
   <h1>Log ind</h1>
@@ -7,6 +7,8 @@
     {{ form.hidden_tag() }}
     {{ field(form.email, autocomplete="email") }}
     {{ field(form.password, autocomplete="current-password") }}
+    {{ checkbox(form.remember) }}
+    <p class="muted login-remember-hint">Uden kryds bliver du logget ud, når du lukker browseren. Sæt kun kryds på din egen enhed – aldrig på en computer, andre bruger.</p>
     <button type="submit" class="button wide">Log ind</button>
   </form>
   <p class="center"><a href="{{ url_for('auth.forgot_password') }}">Glemt password?</a></p>

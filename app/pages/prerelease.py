@@ -54,8 +54,12 @@ def has_accepted(user=None):
 
 
 def accept(user=None):
-    """Registrerer accepten i sessionen og på kontoen. Kalderen committer."""
+    """Registrerer accepten i sessionen og på kontoen. Kalderen committer.
+
+    Cookien gøres vedvarende (PERMANENT_SESSION_LIFETIME, 30 dage), så besøgende uden profil ikke skal acceptere
+    igen, hver gang browseren har været lukket. 30 dage rækker ud over lanceringen."""
     session[SESSION_KEY] = True
+    session.permanent = True
     if user is not None and user.prerelease_accepted_at is None:
         user.prerelease_accepted_at = now_utc()
 

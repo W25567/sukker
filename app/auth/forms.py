@@ -200,6 +200,8 @@ class RegistrationForm(FlaskForm):
 class LoginForm(FlaskForm):
     email = EmailField("E-mail", filters=[_lower], validators=[DataRequired("Skriv din e-mail.")])
     password = PasswordField("Password", validators=[DataRequired("Skriv dit password.")])
+    # Slået fra som standard: uden kryds slutter login, når browseren lukkes (auth/sessions.py).
+    remember = BooleanField("Husk mig på denne enhed")
 
 
 class ForgotPasswordForm(FlaskForm):
