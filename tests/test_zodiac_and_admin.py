@@ -63,7 +63,7 @@ def test_zodiac_is_shown_by_default_and_can_be_hidden(app, outbox, ctx):
 
 
 def test_admin_sees_everything_and_the_view_is_logged(app, outbox, ctx):
-    admin = make_user(app, outbox, "Admin", role="admin")
+    admin = make_user(app, outbox, "Alma", role="admin")
     anna = make_user(app, outbox, "Anna", birthdate="1990-08-01")
     bodil = make_user(app, outbox, "Bodil")
     anna.post("/profil/rediger", data={"gender": "kvinde", "presentation": "Hemmelig tekst", "hidden_fields": ["presentation"]})
@@ -80,7 +80,7 @@ def test_admin_sees_everything_and_the_view_is_logged(app, outbox, ctx):
                      "En privat besked", "Bodil", "Logins og enheder"):
         assert expected in page, expected
     log = db.session.scalar(select(AdminAuditLog).where(AdminAuditLog.action == "view_user"))
-    assert log.admin_username == "Admin" and log.target_username == "Anna"
+    assert log.admin_username == "Alma" and log.target_username == "Anna"
 
     image_id = re.search(r"/admin/bruger/\d+/billede/([^/]+)/", page).group(1)
     assert admin.get(f"/admin/bruger/{user('Anna').id}/billede/{image_id}/lille.webp").status_code == 200
@@ -89,7 +89,7 @@ def test_admin_sees_everything_and_the_view_is_logged(app, outbox, ctx):
 
 
 def test_user_list_filters_and_sorting(app, outbox, ctx):
-    admin = make_user(app, outbox, "Admin", role="admin")
+    admin = make_user(app, outbox, "Alma", role="admin")
     make_user(app, outbox, "Ubekraeftet", verify=False)
     anna, bodil, carl = (make_user(app, outbox, n) for n in ("Anna", "Bodil", "Carl"))
     bodil.post(f"/bruger/{h('Anna')}/bloker")
@@ -105,14 +105,14 @@ def test_user_list_filters_and_sorting(app, outbox, ctx):
 
 
 def test_dashboard_numbers_link_to_lists_and_oversight_renders(app, outbox, ctx):
-    admin = make_user(app, outbox, "Admin", role="admin")
+    admin = make_user(app, outbox, "Alma", role="admin")
     anna, bodil = make_user(app, outbox, "Anna"), make_user(app, outbox, "Bodil")
     bodil.post(f"/bruger/{h('Anna')}/bloker")
     dashboard = admin.get("/admin/").get_data(as_text=True)
     assert 'href="/admin/brugere?filter=nye7"' in dashboard and 'href="/admin/tilsyn"' in dashboard
     oversight = admin.get("/admin/tilsyn").get_data(as_text=True)
     assert "Blokeret af flest" in oversight and ">Anna<" in oversight
-    assert make_user(app, outbox, "Moderator", role="moderator").get("/admin/tilsyn").status_code == 404
+    assert make_user(app, outbox, "Mogens", role="moderator").get("/admin/tilsyn").status_code == 404
 
 
 # --- Samtaler med Administrator --------------------------------------------------------------------------

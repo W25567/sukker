@@ -145,8 +145,8 @@ def test_evidence_is_purged_after_case_closed_long_ago(app, outbox, ctx):
 
 def test_retained_evidence_is_kept_until_the_date(app, outbox, ctx):
     case, _ = _reported_case(app, outbox)
-    mod = make_user(app, outbox, "Moderator")
-    user("Moderator").role = "moderator"
+    mod = make_user(app, outbox, "Mogens")
+    user("Mogens").role = "moderator"
     case.status, case.closed_at = "closed", LONG_AGO
     db.session.commit()
 

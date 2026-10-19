@@ -61,7 +61,7 @@ def test_default_features_per_tier(app, outbox, ctx):
 
 
 def test_individual_grant_and_revoke(app, outbox, ctx):
-    admin = make_user(app, outbox, "Admin", role="admin")
+    admin = make_user(app, outbox, "Alma", role="admin")
     make_user(app, outbox, "Anna")
     make_free("Anna")
     post_user(admin, "Anna", action="grant", feature="search.filters", granted="1", note="Test")
@@ -83,7 +83,7 @@ def test_expired_grant_no_longer_applies(app, outbox, ctx):
 
 
 def test_global_switch_overrides_everything(app, outbox, ctx):
-    admin = make_user(app, outbox, "Admin", role="admin")
+    admin = make_user(app, outbox, "Alma", role="admin")
     anna = make_user(app, outbox, "Anna")
     admin.post("/admin/indstillinger", data=_settings_form(disabled=["search.filters"]))
     assert not has_feature(user("Anna"), "search.filters")
@@ -91,7 +91,7 @@ def test_global_switch_overrides_everything(app, outbox, ctx):
 
 
 def test_tier_mapping_is_central_and_editable(app, outbox, ctx):
-    admin = make_user(app, outbox, "Admin", role="admin")
+    admin = make_user(app, outbox, "Alma", role="admin")
     anna = make_user(app, outbox, "Anna")  # Premium
     make_user(app, outbox, "Bodil").post(f"/like/{h('Anna')}")
     assert "Bodil" in anna.get("/likes").get_data(as_text=True)
@@ -127,8 +127,8 @@ def _settings_form(values=None, mapping=None, disabled=()):
 
 def test_admin_area_is_admin_only(app, outbox, ctx):
     anna = make_user(app, outbox, "Anna")
-    mod = make_user(app, outbox, "Moderator", role="moderator")
-    admin = make_user(app, outbox, "Admin", role="admin")
+    mod = make_user(app, outbox, "Mogens", role="moderator")
+    admin = make_user(app, outbox, "Alma", role="admin")
     for client in (anna, mod):
         assert client.get("/admin/").status_code == 404
         assert client.get("/admin/indstillinger").status_code == 404
@@ -137,7 +137,7 @@ def test_admin_area_is_admin_only(app, outbox, ctx):
 
 
 def test_change_settings_is_validated_and_logged(app, outbox, ctx):
-    admin = make_user(app, outbox, "Admin", role="admin")
+    admin = make_user(app, outbox, "Alma", role="admin")
     admin.post("/admin/indstillinger", data=_settings_form(values={"free_match_limit": 12, "premium_match_limit": None}))
     assert get_setting("free_match_limit") == 12
     log = db.session.scalar(select(AdminAuditLog).where(AdminAuditLog.action == "setting"))
@@ -150,7 +150,7 @@ def test_change_settings_is_validated_and_logged(app, outbox, ctx):
 
 
 def test_admin_subscription_actions(app, outbox, ctx):
-    admin = make_user(app, outbox, "Admin", role="admin")
+    admin = make_user(app, outbox, "Alma", role="admin")
     make_user(app, outbox, "Anna")
     until = (today_local() + timedelta(days=60)).isoformat()
 
@@ -164,7 +164,7 @@ def test_admin_subscription_actions(app, outbox, ctx):
 
 
 def test_admin_status_and_role_changes(app, outbox, ctx):
-    admin = make_user(app, outbox, "Admin", role="admin")
+    admin = make_user(app, outbox, "Alma", role="admin")
     anna = make_user(app, outbox, "Anna")
     post_user(admin, "Anna", action="status", status="suspended", note="Svindel")
     assert user("Anna").status == "suspended"
@@ -172,13 +172,13 @@ def test_admin_status_and_role_changes(app, outbox, ctx):
     post_user(admin, "Anna", action="role", role="moderator")
     assert user("Anna").role == "moderator"
 
-    post_user(admin, "Admin", action="role", role="user")
-    assert user("Admin").role == "admin"  # kan ikke ændre sin egen rolle
+    post_user(admin, "Alma", action="role", role="user")
+    assert user("Alma").role == "admin"  # kan ikke ændre sin egen rolle
     assert audit_actions() == ["status", "role"]
 
 
 def test_admin_audit_log_cannot_be_changed(app, outbox, ctx):
-    admin = make_user(app, outbox, "Admin", role="admin")
+    admin = make_user(app, outbox, "Alma", role="admin")
     make_user(app, outbox, "Anna")
     post_user(admin, "Anna", action="role", role="moderator")
     with pytest.raises(DBAPIError):
@@ -206,7 +206,7 @@ def test_test_accounts_are_separated_from_real_users(app, outbox, ctx):
 
 
 def test_dashboard_excludes_test_accounts(app, outbox, ctx):
-    admin = make_user(app, outbox, "Admin", role="admin")
+    admin = make_user(app, outbox, "Alma", role="admin")
     make_user(app, outbox, "Anna")
     create_test_accounts()
     db.session.commit()

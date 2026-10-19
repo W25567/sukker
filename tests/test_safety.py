@@ -170,7 +170,7 @@ def test_moderation_is_hidden_from_normal_users(app, outbox, ctx):
 
 def test_moderator_needs_logged_reason_to_see_user_data(app, outbox, ctx):
     anna, bodil = make_user(app, outbox, "Anna"), make_user(app, outbox, "Bodil")
-    mod = make_user(app, outbox, "Moderator", role="moderator")
+    mod = make_user(app, outbox, "Mogens", role="moderator")
     matched(anna, bodil, "Anna", "Bodil")
     url = anna.get(f"/beskeder/med/{h('Bodil')}").headers["Location"]
     anna.post(url, data={"body": "Privat besked"})
@@ -183,14 +183,14 @@ def test_moderator_needs_logged_reason_to_see_user_data(app, outbox, ctx):
     data = mod.get(f"/moderation/bruger/{bodil_id}").get_data(as_text=True)
     assert "Privat besked" in data and "bodil@example.com" in data
     entry = db.session.scalar(select(ModeratorAccessLog))
-    assert (entry.moderator_username, entry.target_username, entry.reason) == ("Moderator", "Bodil", "Mistanke om svindel")
+    assert (entry.moderator_username, entry.target_username, entry.reason) == ("Mogens", "Bodil", "Mistanke om svindel")
 
     # Moderatorens læsning giver ingen signaler: Bodils besked er stadig ulæst.
     assert '<span class="unread-count">1</span>' in bodil.get("/beskeder/").get_data(as_text=True)
 
 
 def test_access_log_cannot_be_changed(app, outbox, ctx):
-    mod = make_user(app, outbox, "Moderator", role="moderator")
+    mod = make_user(app, outbox, "Mogens", role="moderator")
     make_user(app, outbox, "Bodil")
     mod.post(f"/moderation/bruger/{user('Bodil').id}/adgang", data={"reason": "Test", "case_id": ""})
     with pytest.raises(DBAPIError):
@@ -203,7 +203,7 @@ def test_access_log_cannot_be_changed(app, outbox, ctx):
 
 def test_suspension_logs_out_and_blocks_login_with_appeal(app, outbox, ctx):
     anna, bodil = make_user(app, outbox, "Anna"), make_user(app, outbox, "Bodil")
-    mod = make_user(app, outbox, "Moderator", role="moderator")
+    mod = make_user(app, outbox, "Mogens", role="moderator")
     anna.post(f"/anmeld/profil/{h('Bodil')}", data={"reason": "svindel"})
     case = latest_case()
 
@@ -242,8 +242,8 @@ def test_restricted_account_is_hidden_and_cannot_act(app, outbox, ctx):
 
 def test_moderator_cannot_decide_own_case(app, outbox, ctx):
     anna = make_user(app, outbox, "Anna")
-    mod = make_user(app, outbox, "Moderator", role="moderator")
-    anna.post(f"/anmeld/profil/{h('Moderator')}", data={"reason": "chikane"})
+    mod = make_user(app, outbox, "Mogens", role="moderator")
+    anna.post(f"/anmeld/profil/{h('Mogens')}", data={"reason": "chikane"})
     case = latest_case()
     mod.post(f"/moderation/sag/{case.id}", data={"action": "decide", "decision-decision": "no_action",
                                                   "decision-note": "Frikender mig selv"})
@@ -252,8 +252,8 @@ def test_moderator_cannot_decide_own_case(app, outbox, ctx):
 
 
 def test_audit_log_page_is_admin_only(app, outbox, ctx):
-    mod = make_user(app, outbox, "Moderator", role="moderator")
-    admin = make_user(app, outbox, "Admin", role="admin")
+    mod = make_user(app, outbox, "Mogens", role="moderator")
+    admin = make_user(app, outbox, "Alma", role="admin")
     assert mod.get("/moderation/log").status_code == 404
     assert admin.get("/moderation/log").status_code == 200
     assert admin.get("/moderation/").status_code == 404  # roller er adskilte

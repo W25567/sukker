@@ -5,7 +5,7 @@ from markupsafe import Markup, escape
 from wtforms import BooleanField, EmailField, Field, PasswordField, SelectField, SelectMultipleField, StringField, widgets
 from wtforms.validators import DataRequired, Email, EqualTo, Length, Regexp, StopValidation, ValidationError
 
-from ..core import contact_info
+from ..core import contact_info, name_rules
 from ..core.timeutil import age_on, today_local
 from ..profiles import choices
 
@@ -121,6 +121,7 @@ def _display_name_field():
             DataRequired("Skriv det navn, andre skal se."),
             Regexp(DISPLAY_NAME_PATTERN, message="2-30 tegn: bogstaver, tal, mellemrum, punktum, bindestreg eller apostrof."),
             contact_info.validator,
+            name_rules.validator,
             not_removed_marker,
         ],
     )
