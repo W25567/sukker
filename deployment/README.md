@@ -27,16 +27,27 @@ service, og `deploy.py` afviser en konfiguration, hvor de deler domæne.
    skal ligge i `~/.ssh/authorized_keys` på serveren. Manglende pakker (nginx, certbot, python3-venv,
    postgresql-client, rsync, age) installeres af scriptet.
 2. **DNS:** `sukker.nu` og `www.sukker.nu` (og `staging.sukker.nu`) peger på serveren. Port 80 og 443 er åbne.
-3. **Backupnøgle (produktion):** På din egen maskine, ikke på serveren:
+3. **Backupnøgle (produktion):** På din egen maskine, ikke på serveren. På Windows installeres age med
+   `winget install FiloSottile.age` (åbn derefter en ny terminal):
    ```
    age-keygen -o sukker-backup.key
    ```
-   Den offentlige nøgle (`age1...`) skrives i `backup_age_recipients`. Den private nøgle opbevares
-   sikkert uden for serveren, fx i en passwordmanager og på papir hos den ansvarlige. Uden den kan
-   ingen backup gendannes.
-4. **Backup uden for serveren:** Sæt `backup_remote` til et rsync-mål, fx `backup@backuphost:sukker/`.
-   Efter første udgivelse viser rapporten servicebrugerens offentlige SSH-nøgle. Læg den i
-   `authorized_keys` hos backupbrugeren, gerne begrænset til rsync.
+   Den offentlige nøgle (`age1...`, står også i filen) skrives i `backup_age_recipients`. Den private nøgle
+   (hele filen) opbevares sikkert uden for serveren, mindst to steder: fx i en passwordmanager og på en
+   USB-nøgle eller papir i et skab. Uden den kan ingen backup gendannes, og serveren har den aldrig.
+4. **Backup uden for serveren:** Produktion og staging kører på samme server, så uden en kopi et andet sted
+   mistes alt, hvis serveren går tabt. Brug fx en Hetzner Storage Box i EU (rsync over SSH på port 23):
+   - Slå "SSH-support" og automatiske **snapshots** til (fx dagligt, 14 dage). Snapshots er beskyttelsen
+     mod, at en angriber med adgang til serveren også sletter kopierne.
+   - Sæt `backup_remote` til fx `u123456@u123456.your-storagebox.de:sukker/` og `backup_remote_port` til `23`.
+     Opret mappen `sukker` på boksen.
+   - Efter første udgivelse viser rapporten servicebrugerens offentlige SSH-nøgle. Læg den i
+     `.ssh/authorized_keys` på boksen (Storage Box: via `ssh-copy-id -p 23 -s u123456@...` fra din egen maskine
+     med nøglen i en fil, eller i webkonsollen).
+   - Kontrollér første kopi: `python deploy.py --run "sukker backup"` og se `offsite: ok` i
+     `status.json` (eller vent på næste nat). Overvågningen sender en alarm, hvis kopien fejler.
+
+   `deploy.py` nægter at udgive produktion uden `backup_age_recipients` og `backup_remote`.
 5. **Udfyld `deployment/environments.json`:** host, ssh_user, alert_email (den navngivne ansvarlige for
    alarmer), smtp_host, smtp_username og virksomhedsoplysninger. Ingen hemmeligheder i filen.
 
@@ -143,8 +154,30 @@ vedligeholdelsesside.
    ```
 8. Slet `/tmp/restore` og den dekrypterede `backup.tar`.
 
-Mindst én gang i kvartalet gendannes en backup på en tom server. Notér den faktiske tid og juster RTO,
-hvis den ikke kan overholdes.
+### Afprøv en backup (hver måned, tager få minutter)
+
+En backup er først god, når den er gendannet. Afprøvningen sker på din egen maskine, ikke på serveren:
+
+1. Hent den nyeste natlige backup, fx fra backupserveren:
+   ```
+   scp -P 23 u123456@u123456.your-storagebox.de:sukker/sukker-production-<tid>-nightly.tar.age .
+   ```
+2. Kontrollér filerne (dekryptering, kontrolsummer, databasedump og billedarkiv):
+   ```
+   .\.venv\Scripts\python.exe -m flask sukker restore-check sukker-production-<tid>-nightly.tar.age --identity sukker-backup.key
+   ```
+3. Vil du også gendanne databasen: opret en tom database (fx `sukker_restore_test` i pgAdmin) og tilføj
+   `--database postgresql://bruger:password@localhost/sukker_restore_test`. Antallet af brugere, profiler,
+   billeder, beskeder, matches og sager sammenlignes med manifestet. Slet databasen bagefter.
+
+Kommandoen sletter selv den dekrypterede kopi. Slet også den hentede `.tar.age`-fil, når du er færdig.
+
+Mindst én gang i kvartalet gendannes en backup på en tom server efter trinene ovenfor. Notér den faktiske
+tid og juster RTO, hvis den ikke kan overholdes.
+
+| Dato | Backup | Afprøvning | Resultat |
+|---|---|---|---|
+| | | | |
 
 ## Acceptkriterier (specifikation 15.8)
 
@@ -164,4 +197,6 @@ Udgivelsesløsningen er først færdig, når scenarierne er afprøvet på en rig
 - [ ] Andre applikationers services, skemaer og filer er uændrede (sammenlign `systemctl list-units`,
       `\dn` i psql og `/etc/nginx/sites-enabled` før og efter; rapporten lister alle ændrede filer)
 - [ ] Udgivelse til staging uden påvirkning af produktion
+- [ ] Kopi uden for serveren (`offsite: ok` i `status.json`)
+- [ ] `restore-check` af en natlig backup uden fejl
 - [ ] Gendannelse af en backup med `verify-media` uden fejl

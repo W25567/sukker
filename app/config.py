@@ -77,6 +77,7 @@ class BaseConfig:
     BACKUP_AGE_RECIPIENTS = _env("SUKKER_BACKUP_AGE_RECIPIENTS", "").split()
     BACKUP_REQUIRE_ENCRYPTION = False
     BACKUP_REMOTE = _env("SUKKER_BACKUP_REMOTE")  # rsync-mål uden for serveren, fx backup@host:sukker/
+    BACKUP_REMOTE_PORT = int(_env("SUKKER_BACKUP_REMOTE_PORT", "22") or 22)  # fx 23 for en Hetzner Storage Box
     PG_BIN_DIR = _env("SUKKER_PG_BIN_DIR")  # mappe med pg_dump, hvis den ikke er i PATH
     ALERT_EMAIL = _env("SUKKER_ALERT_EMAIL")  # den navngivne ansvarlige for alarmer (specifikation 14.8)
     ACCESS_LOG = _env("SUKKER_ACCESS_LOG")  # Nginx' JSON-adgangslog til fejlraten

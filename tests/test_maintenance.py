@@ -245,6 +245,43 @@ def test_backup_contains_database_media_and_manifest(app, outbox, ctx, backup_co
     assert status["ok"] is True and status["encrypted"] is False and status["offsite"] == "ikke sat op"
 
 
+def test_restore_check_on_unencrypted_backup(app, outbox, ctx, backup_config):
+    if not _pg_bin():
+        pytest.skip("pg_dump findes ikke på maskinen")
+    anna = make_user(app, outbox, "Anna")
+    buffer = io.BytesIO()
+    Image.new("RGB", (300, 300), "green").save(buffer, "JPEG")
+    anna.post("/profil/billeder", data={"image": (io.BytesIO(buffer.getvalue()), "a.jpg")},
+              content_type="multipart/form-data")
+    result = backup.run_backup(label="manual")
+    assert result["row_counts"]["users"] == 1 and result["row_counts"]["profile_images"] == 1
+
+    manifest, checks = backup.restore_check(result["file"])
+    assert manifest["images_in_database"] == 1
+    assert all(ok for _, ok, _ in checks), checks
+    assert [name for name, _, _ in checks] == ["Kontrolsummer", "Databasedump kan læses", "Billedarkiv"]
+
+    # En ændret fil opdages
+    tampered = str(backup_config / "tampered.tar")
+    with tarfile.open(result["file"]) as source, tarfile.open(tampered, "w") as target:
+        for member in source.getmembers():
+            data = source.extractfile(member).read()
+            if member.name == "database.dump":
+                middle = len(data) // 2
+                data = data[:middle] + bytes([data[middle] ^ 0xFF]) + data[middle + 1:]
+            member.size = len(data)
+            target.addfile(member, io.BytesIO(data))
+    _, checks = backup.restore_check(tampered)
+    assert ("Kontrolsummer", False) in [(name, ok) for name, ok, _ in checks]
+
+
+def test_restore_check_needs_key_for_encrypted_backup(app, ctx, tmp_path):
+    path = tmp_path / "sukker-production-20261019_023000-nightly.tar.age"
+    path.write_bytes(b"age-encryption.org/v1")
+    with pytest.raises(backup.BackupError, match="--identity"):
+        backup.restore_check(str(path))
+
+
 def test_backup_rotation_keeps_the_newest(app, ctx, backup_config):
     os.makedirs(backup_config)
     for stamp in ("20261001_023000", "20261002_023000", "20261003_023000"):

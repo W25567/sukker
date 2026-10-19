@@ -408,10 +408,11 @@ def ensure_user_and_dirs(cfg, changes):
     return "OK"
 
 
-def ensure_backup_ssh(cfg, remote):
+def ensure_backup_ssh(cfg, remote, port=22):
     """SSH-nøgle til backup uden for serveren. Den offentlige nøgle skal lægges på backupserveren."""
     if not remote or ":" not in remote:
         return None
+    port = int(port or 22)
     home = f"{cfg['app_root']}/shared/home"
     ssh_dir = f"{home}/.ssh"
     key = f"{ssh_dir}/id_ed25519"
@@ -422,8 +423,10 @@ def ensure_backup_ssh(cfg, remote):
     if not os.path.exists(key):
         run(["ssh-keygen", "-q", "-t", "ed25519", "-N", "", "-C", f"{cfg['service']}-backup", "-f", key], user=cfg["user"])
     known_hosts = f"{ssh_dir}/known_hosts"
-    if host not in (read_text(known_hosts) or ""):
-        scan = run(["ssh-keyscan", "-T", "10", host], check=False)
+    # Med en anden port end 22 står værten som [host]:port i known_hosts.
+    entry = host if port == 22 else f"[{host}]:{port}"
+    if entry not in (read_text(known_hosts) or ""):
+        scan = run(["ssh-keyscan", "-T", "10", "-p", str(port), host], check=False)
         if scan.stdout.strip():
             with open(known_hosts, "a", encoding="utf-8") as fh:
                 fh.write(scan.stdout)
@@ -822,7 +825,8 @@ def apply(payload):
         current_step = "Miljøkonfiguration"
         env_values, generated, env_changed = ensure_env_file(cfg, payload, changes)
         step(current_step, "Opdateret" if env_changed else "Uændret")
-        public_key = ensure_backup_ssh(cfg, env_values.get("SUKKER_BACKUP_REMOTE"))
+        public_key = ensure_backup_ssh(cfg, env_values.get("SUKKER_BACKUP_REMOTE"),
+                                       env_values.get("SUKKER_BACKUP_REMOTE_PORT"))
         if public_key:
             result["backup_public_key"] = public_key
         current_step = "Database"

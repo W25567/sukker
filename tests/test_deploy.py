@@ -19,6 +19,7 @@ COMPLETE = {
     "host": "server.example.com", "ssh_user": "deployer", "domain": "sukker.nu", "aliases": ["www.sukker.nu"],
     "alert_email": "drift@example.com", "smtp_host": "smtp.example.com", "smtp_username": "noreply@example.com",
     "backup_age_recipients": ["age1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs3290gq"],
+    "backup_remote": "u1@u1.your-storagebox.de:sukker/", "backup_remote_port": 23,
 }
 
 
@@ -59,6 +60,15 @@ def test_production_requires_public_age_keys():
                for e in deploy.validate("production", environments(production={"backup_age_recipients": []})))
     private = environments(production={"backup_age_recipients": ["AGE-SECRET-KEY-1ABC"]})
     assert any("aldrig private nøgler" in e for e in deploy.validate("production", private))
+
+
+def test_production_requires_offsite_backup_and_proper_sender():
+    errors = deploy.validate("production", environments(production={"backup_remote": "",
+                                                                      "mail_from": "Sukker.nu staging <x@sukker.nu>"}))
+    assert any("backup_remote mangler" in e for e in errors) and any("mail_from" in e for e in errors)
+    assert deploy.validate("staging", environments(staging={"backup_remote": ""})) == []  # kun produktion
+    cfg = deploy.resolve("production", environments()["production"])
+    assert cfg["env_settings"]["SUKKER_BACKUP_REMOTE_PORT"] == "23"
 
 
 def test_environments_cannot_share_a_domain():

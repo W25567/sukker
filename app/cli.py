@@ -188,5 +188,28 @@ def verify_media_command():
         raise SystemExit(1)
 
 
+@sukker_cli.command("restore-check")
+@click.argument("path", type=click.Path(exists=True, dir_okay=False))
+@click.option("--identity", type=click.Path(exists=True, dir_okay=False),
+              help="Den private age-nøgle (sukker-backup.key). Kræves for krypterede backups.")
+@click.option("--database", "database_url", help="En TOM database at gendanne i, fx "
+              "postgresql://bruger:pw@localhost/sukker_restore_test. Uden den kontrolleres kun filerne.")
+def restore_check_command(path, identity, database_url):
+    """Afprøver en backup på din egen maskine: dekryptering, kontrolsummer, databasedump og billedarkiv.
+    Rører ikke serveren eller din egen database (kun den tomme database, du angiver)."""
+    from .maintenance import backup
+
+    try:
+        manifest, checks = backup.restore_check(path, identity, database_url)
+    except backup.BackupError as error:
+        raise click.ClickException(str(error))
+    click.echo(f"Backup fra {manifest['created_at']} ({manifest['environment']}, migration {manifest['alembic_revision']})")
+    for name, ok, detail in checks:
+        click.echo(f"  {'OK  ' if ok else 'FEJL'} {name}: {detail}")
+    if not all(ok for _, ok, _ in checks):
+        raise SystemExit(1)
+    click.echo("Backuppen kan gendannes.")
+
+
 def register_cli(app):
     app.cli.add_command(sukker_cli)

@@ -28,7 +28,11 @@ from ..media.storage import VARIANTS
 
 KEEP_PER_LABEL = {"nightly": None}  # None = BACKUP_KEEP
 KEEP_OTHER_LABELS = 3
+# Selfies til verificering (verification/) kommer bevidst ikke med: de slettes, så snart de er vurderet, og
+# må ikke leve videre i backups. Efter en gendannelse sender brugeren blot en ny selfie.
 MEDIA_PARTS = ("public", "private", "evidence", "bugreports")
+PG_TOOLS = {"pg_dump", "pg_restore"}
+COUNTED_TABLES = ("users", "profiles", "profile_images", "messages", "matches", "moderation_cases")
 
 
 class BackupError(RuntimeError):
@@ -62,7 +66,7 @@ def _write_status(status):
 
 def _tool(name):
     pg_bin = current_app.config.get("PG_BIN_DIR")
-    if name == "pg_dump" and pg_bin:
+    if name in PG_TOOLS and pg_bin:
         return os.path.join(pg_bin, name)
     return shutil.which(name) or name
 
@@ -81,13 +85,18 @@ def _alembic_revision():
     return db.session.scalar(text("SELECT version_num FROM sukker.alembic_version"))
 
 
+def _connection(url):
+    """(argumenter, miljø) til pg_dump og pg_restore. Passwordet gives via miljøet, ikke på kommandolinjen."""
+    url = make_url(url)
+    args = ["--host", url.host or "localhost", "--port", str(url.port or 5432), "--username", url.username,
+            "--dbname", url.database]
+    return args, dict(os.environ, PGPASSWORD=url.password or "")
+
+
 def dump_database(target):
-    """pg_dump af skemaet sukker som migrator. Passwordet gives via miljøet, ikke på kommandolinjen."""
-    url = make_url(current_app.config["MIGRATOR_DATABASE_URL"] or current_app.config["SQLALCHEMY_DATABASE_URI"])
-    env = dict(os.environ, PGPASSWORD=url.password or "")
-    args = [_tool("pg_dump"), "--format=custom", "--schema=sukker", "--file", target,
-            "--host", url.host or "localhost", "--port", str(url.port or 5432),
-            "--username", url.username, "--dbname", url.database]
+    """pg_dump af skemaet sukker som migrator."""
+    args, env = _connection(current_app.config["MIGRATOR_DATABASE_URL"] or current_app.config["SQLALCHEMY_DATABASE_URI"])
+    args = [_tool("pg_dump"), "--format=custom", "--schema=sukker", "--file", target] + args
     result = subprocess.run(args, env=env, capture_output=True, text=True)
     if result.returncode != 0:
         raise BackupError(f"pg_dump fejlede: {result.stderr.strip()[:500]}")
@@ -132,7 +141,10 @@ def _offsite(directory):
     remote = current_app.config["BACKUP_REMOTE"]
     if not remote:
         return "ikke sat op"
-    args = [_tool("rsync"), "-a", "--delete", "-e", "ssh -o BatchMode=yes", "--include", "sukker-*-nightly.tar.age", "--exclude", "*",
+    # Backupserveren spejler de natlige backups (--delete følger rotationen). Beskyttelsen mod, at en angriber
+    # med adgang til serveren også sletter kopierne, er snapshots på backupserveren (deployment/README.md).
+    ssh = f"ssh -p {int(current_app.config['BACKUP_REMOTE_PORT'])} -o BatchMode=yes"
+    args = [_tool("rsync"), "-a", "--delete", "-e", ssh, "--include", "sukker-*-nightly.tar.age", "--exclude", "*",
             directory.rstrip("/") + "/", remote]
     result = subprocess.run(args, capture_output=True, text=True, timeout=3600)
     if result.returncode != 0:
@@ -161,6 +173,9 @@ def run_backup(label="nightly", db_only=False):
                 "label": label,
                 "alembic_revision": _alembic_revision(),
                 "images_in_database": db.session.scalar(select(func.count(ProfileImage.id))),
+                # Til kontrol efter en gendannelse (restore_check): antal rækker i de vigtigste tabeller.
+                "row_counts": {table: db.session.scalar(text(f"SELECT count(*) FROM sukker.{table}"))
+                               for table in COUNTED_TABLES},
                 "media_entries": media_entries,
                 "files": {part: _sha256(os.path.join(work, part)) for part in sorted(os.listdir(work))},
             }
@@ -191,6 +206,77 @@ def run_backup(label="nightly", db_only=False):
             status.update(ok=False, error=str(error)[:500])
             _write_status(status)
         raise
+
+
+def _safe_extract(tar, target):
+    """Pakker kun almindelige filer ud, uden stier uden for målmappen (filter "data")."""
+    tar.extractall(target, filter="data")
+
+
+def restore_check(path, identity=None, database_url=None):
+    """Afprøver en backup uden at røre serveren. Køres på en maskine med den private nøgle, fx den ansvarliges
+    egen pc (deployment/README.md):
+
+    1. dekrypterer filen med `identity` (den private age-nøgle)
+    2. kontrollerer filernes SHA-256 mod manifestet
+    3. kontrollerer, at pg_restore kan læse databasedumpet, og at billedarkivet har det forventede antal mapper
+    4. gendanner med `database_url` databasen i en tom database og sammenligner antal rækker med manifestet
+
+    Den dekrypterede kopi slettes bagefter, også hvis noget fejler. Returnerer (manifest, [(trin, ok, detalje)])."""
+    checks = []
+    work = tempfile.mkdtemp(prefix="sukker-restore-check-")
+    try:
+        bundle = path
+        if path.endswith(".age"):
+            if not identity:
+                raise BackupError("Backuppen er krypteret. Angiv den private nøgle med --identity.")
+            bundle = os.path.join(work, "bundle.tar")
+            result = subprocess.run([_tool("age"), "--decrypt", "--identity", identity, "--output", bundle, path],
+                                    capture_output=True, text=True)
+            if result.returncode != 0:
+                raise BackupError(f"Dekryptering fejlede: {result.stderr.strip()[:500]}")
+            checks.append(("Dekryptering", True, "OK"))
+        with tarfile.open(bundle) as tar:
+            _safe_extract(tar, work)
+        with open(os.path.join(work, "manifest.json"), encoding="utf-8") as fh:
+            manifest = json.load(fh)
+
+        bad = [part for part, digest in manifest["files"].items() if _sha256(os.path.join(work, part)) != digest]
+        checks.append(("Kontrolsummer", not bad, "OK" if not bad else f"Ændret eller beskadiget: {', '.join(bad)}"))
+
+        dump = os.path.join(work, "database.dump")
+        listing = subprocess.run([_tool("pg_restore"), "--list", dump], capture_output=True, text=True)
+        tables = sum(1 for line in listing.stdout.splitlines() if " TABLE DATA " in line)
+        checks.append(("Databasedump kan læses", listing.returncode == 0,
+                       f"{tables} tabeller med data" if listing.returncode == 0 else listing.stderr.strip()[:300]))
+
+        media = os.path.join(work, "media.tar")
+        if os.path.exists(media):
+            with tarfile.open(media) as tar:
+                folders = {"/".join(name.split("/")[:2]) for name in tar.getnames() if name.count("/") >= 1}
+            expected = manifest.get("media_entries")
+            checks.append(("Billedarkiv", len(folders) == expected, f"{len(folders)} mapper (forventet {expected})"))
+
+        if database_url:
+            args, env = _connection(database_url)
+            result = subprocess.run([_tool("pg_restore"), "--no-owner", "--no-privileges", "--exit-on-error"]
+                                    + args + [dump], env=env, capture_output=True, text=True)
+            checks.append(("Gendannelse i databasen", result.returncode == 0,
+                           "OK" if result.returncode == 0 else result.stderr.strip()[:300]))
+            if result.returncode == 0:
+                from sqlalchemy import create_engine
+
+                engine = create_engine(database_url)
+                try:
+                    with engine.connect() as connection:
+                        for table, expected in (manifest.get("row_counts") or {}).items():
+                            actual = connection.scalar(text(f"SELECT count(*) FROM sukker.{table}"))
+                            checks.append((f"Rækker i {table}", actual == expected, f"{actual} (forventet {expected})"))
+                finally:
+                    engine.dispose()
+        return manifest, checks
+    finally:
+        shutil.rmtree(work, ignore_errors=True)
 
 
 def verify_media():

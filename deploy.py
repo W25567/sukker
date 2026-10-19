@@ -106,6 +106,7 @@ def resolve(env_name, raw):
         "SUKKER_ALERT_EMAIL": raw.get("alert_email", ""),
         "SUKKER_BACKUP_AGE_RECIPIENTS": " ".join(raw.get("backup_age_recipients", [])),
         "SUKKER_BACKUP_REMOTE": raw.get("backup_remote", ""),
+        "SUKKER_BACKUP_REMOTE_PORT": str(raw.get("backup_remote_port", 22)),
         "SUKKER_GUNICORN_WORKERS": str(raw.get("gunicorn_workers", 3)),
     }
     return cfg
@@ -133,6 +134,11 @@ def validate(env_name, environments):
             errors.append("production.backup_age_recipients mangler: backup skal være krypteret (specifikation 14.8).")
         if any(not r.startswith("age1") for r in raw.get("backup_age_recipients", [])):
             errors.append("backup_age_recipients skal være offentlige age-nøgler (age1...), aldrig private nøgler.")
+        if not raw.get("backup_remote"):
+            errors.append("production.backup_remote mangler: backuppen skal også ligge uden for serveren, ellers "
+                          "mistes både data og backup, hvis serveren går tabt (specifikation 14.8).")
+        if "staging" in str(raw.get("mail_from", "")).lower():
+            errors.append("production.mail_from indeholder \"staging\". Brugerne vil se det som afsender.")
     mine = resolve(env_name, raw) if raw.get("domain") else None
     for other_name, other_raw in environments.items():
         if other_name == env_name or not other_raw.get("domain") or not mine:
