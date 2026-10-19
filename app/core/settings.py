@@ -38,7 +38,29 @@ DEFAULTS = {
     # Rettighedsmodellen (app/core/features.py). None betyder standardfordelingen i koden.
     "tier_features": None,
     "disabled_features": [],
+    # Administratorens tilføjelser til reglerne for viste navne (app/core/name_rules.py). Lægges oven i listerne i koden.
+    "name_reserved": [],
+    "name_blocked_anywhere": [],
+    "name_blocked_exact": [],
+    "name_blocked_prefix": [],
+    "name_allowed": [],
+    # Kataloget over interesser (app/profiles/interests.py) som [[gruppe, [interesse, ...]], ...]. None = standarden.
+    "interest_catalog": None,
 }
+
+# Ordlister, der redigeres i administrationen som tekst: ét ord pr. linje eller adskilt med komma.
+WORDLIST_META = [
+    ("name_reserved", "Navne, der kan forveksles med administrationen",
+     "Afvises overalt i et ord, fx \"admin\" i \"SuperAdmin\"."),
+    ("name_blocked_anywhere", "Ord, der ikke må stå nogen steder i et navn",
+     "Også inde i andre ord. Brug lange, entydige ord, fx \"fisse\"."),
+    ("name_blocked_exact", "Ord, der kun afvises som et helt ord",
+     "Til korte ord, der ellers ville ramme almindelige navne, fx \"pik\" (Pikachu er tilladt)."),
+    ("name_blocked_prefix", "Ord, der afvises i starten af et ord",
+     "Fx \"sexy\" afviser Sexy_Sofie, men ikke ord, hvor det står inde i ordet."),
+    ("name_allowed", "Navne, der altid er tilladt",
+     "Hele ord, der ellers ville blive afvist ved en fejl, fx \"Fisseha\"."),
+]
 
 # Beskrivelse af de indstillinger, der redigeres i administrationen. Typen styrer formularfeltet:
 # "bool", "int" (heltal) eller "optional_int" (heltal eller tomt for ubegrænset).

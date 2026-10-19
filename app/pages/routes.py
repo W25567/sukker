@@ -62,7 +62,7 @@ PREMIUM_ROWS = [
     ("messages.read", "Læse beskeder, du modtager"),
     ("messages.reply", "Skrive i samtaler med dine matches"),
     ("likes.view_received", "Se hvem der har liket dig"),
-    ("search.filters", "Filtrere på alder, afstand, køn og relationstype"),
+    ("search.filters", "Filtrere på alder, afstand, køn, interesser og relationstype"),
     ("search.newest_first", "Se de nyeste profiler først"),
     ("media.animated", "Animerede billeder på profilen"),
 ]

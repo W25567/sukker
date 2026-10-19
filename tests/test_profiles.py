@@ -135,7 +135,7 @@ def test_completeness_grows_as_profile_is_filled(client, ctx):
     assert "Profilen er 5 % udfyldt" in client.get("/profil").get_data(as_text=True)  # køn udfyldes ved oprettelsen
     client.post("/profil/rediger", data={"gender": "kvinde", "presentation": "Hej"})
     upload(client, jpeg_with_gps((400, 300)))
-    assert "Profilen er 16 % udfyldt" in client.get("/profil").get_data(as_text=True)
+    assert "Profilen er 15 % udfyldt" in client.get("/profil").get_data(as_text=True)  # 3 af 20 felter
 
 
 # --- Upload og omkodning -----------------------------------------------------------------------------

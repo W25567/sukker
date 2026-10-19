@@ -135,7 +135,10 @@
                   <div class="pv-fact{% if field.name in ('interests', 'travel', 'expectations') %} long{% endif %}">
                     <dt>{{ field.label }}</dt>
                     {% if field.multiple %}
-                      <dd>{% for part in value.split(', ') %}<span class="pv-tag">{{ part }}</span>{% endfor %}</dd>
+                      <dd>{% for part in value.split(', ') %}<span class="pv-tag{% if field.name == 'interest_tags' and part in shared_interests %} shared{% endif %}">{{ part }}</span>{% endfor %}</dd>
+                      {% if field.name == 'interest_tags' and shared_interests %}
+                        <p class="pv-shared">{{ shared_interests | length }} {{ 'interesse' if shared_interests | length == 1 else 'interesser' }} til fælles med dig</p>
+                      {% endif %}
                     {% else %}
                       <dd>{{ value }}</dd>
                     {% endif %}

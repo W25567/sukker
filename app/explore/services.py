@@ -12,6 +12,7 @@ from ..location.distance import bucket_expression, distance_visible, kommune_vis
 from ..location.models import Kommune, KommuneDistance
 from ..matches.models import Like, Match
 from ..media.models import ProfileImage
+from ..profiles import interests
 from ..profiles.models import Profile
 from ..profiles.services import age_of
 from ..safety.models import DistanceMask
@@ -36,6 +37,7 @@ class Card:
     liked: bool
     matched: bool
     verified: bool = False
+    shared_interests: int = 0
 
 
 def _years_ago(years):
@@ -161,6 +163,9 @@ def search(viewer, criteria=None, page=1, hide_liked=False, newest_first=False):
                                 _not_hidden("relationship_types"))
         if criteria["photos_only"]:
             query = query.where(primary_image.isnot(None))
+        if criteria.get("interests"):
+            # Mindst én af de valgte interesser. Profiler, der har skjult deres interesser, kommer ikke med.
+            query = query.where(Profile.interest_tags.overlap(criteria["interests"]), _not_hidden("interest_tags"))
 
     order = ((User.created_at.desc(), User.id.desc()) if newest_first or not show_distance
              else (bucket.asc().nulls_last(), User.created_at.desc(), User.id.desc()))
@@ -171,6 +176,9 @@ def search(viewer, criteria=None, page=1, hide_liked=False, newest_first=False):
     )
     rows = db.session.execute(query).all()
     recent_after = now_utc() - RECENTLY_ACTIVE
+    # "3 fælles interesser" på kortene. Kun et tal til visning: det påvirker ikke rækkefølgen.
+    own = db.session.get(Profile, viewer.id)
+    own_interests = set(interests.labels(own.interest_tags)) if own else set()
     cards = [
         Card(
             handle=user.handle,
@@ -184,6 +192,8 @@ def search(viewer, criteria=None, page=1, hide_liked=False, newest_first=False):
             liked=is_liked,
             matched=is_matched,
             verified=user.photo_verified_at is not None,
+            shared_interests=0 if "interest_tags" in profile.hidden_fields
+            else len(own_interests & set(interests.labels(profile.interest_tags))),
         )
         for user, profile, kommune_name, row_bucket, image_id, seen, is_liked, is_matched in rows[:PAGE_SIZE]
     ]

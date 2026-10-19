@@ -40,6 +40,16 @@
         <fieldset class="field"><legend>{{ form.soeger.label.text }}</legend>
           <div class="chips">{% for o in form.soeger %}<label class="chip">{{ o() }} {{ o.label.text }}</label>{% endfor %}</div>
         </fieldset>
+        <details class="field interest-filter"{% if form.interesser.data %} open{% endif %}>
+          <summary>{{ form.interesser.label.text }}{% if form.interesser.data %} ({{ form.interesser.data | length }}){% endif %}</summary>
+          <p class="muted">Viser profiler med mindst én af de valgte interesser.</p>
+          {% for group, items in form.interest_groups %}
+            <p class="interest-group">{{ group }}</p>
+            <div class="chips">
+              {% for key, label in items %}{% for option in form.interesser if option.data == key %}<label class="chip">{{ option() }} {{ label }}</label>{% endfor %}{% endfor %}
+            </div>
+          {% endfor %}
+        </details>
         <div class="field checkbox"><label>{{ form.kun_billeder() }} {{ form.kun_billeder.label.text }}</label></div>
         {{ hide_liked_field() }}
         <div class="actions">
@@ -53,7 +63,7 @@
         {{ hide_liked_field() }}
         <div class="actions"><button type="submit" class="button">Vis profiler</button></div>
       </form>
-      <p>Filtrering på {% if show_distance %}afstand, {% endif %}alder, køn, hvad folk søger og billeder{% if show_distance and not newest_allowed %} og at se de nyeste profiler først{% endif %} kræver Premium eller Premium+.</p>
+      <p>Filtrering på {% if show_distance %}afstand, {% endif %}alder, køn, interesser, hvad folk søger og billeder{% if show_distance and not newest_allowed %} og at se de nyeste profiler først{% endif %} kræver Premium eller Premium+.</p>
       <p class="muted">Du kan stadig se alle profiler.</p>
     {% endif %}
   </details>
@@ -92,6 +102,7 @@
                 {{ card.distance_label or '' }}{% if card.distance_label and card.kommune %} · {% endif %}{{ card.kommune or '' }}
               </span>
               {% if card.recently_active %}<span class="active-dot">Aktiv for nylig</span>{% endif %}
+              {% if card.shared_interests %}<span class="card-shared">{{ card.shared_interests }} {{ 'fælles interesse' if card.shared_interests == 1 else 'fælles interesser' }}</span>{% endif %}
               {% if card.presentation %}<p class="card-text">{{ card.presentation }}</p>{% endif %}
             </div>
           </a>

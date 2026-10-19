@@ -3,7 +3,7 @@ from wtforms import BooleanField, IntegerField, SelectField, SelectMultipleField
 from wtforms.validators import DataRequired, Length, NumberRange, Optional, ValidationError
 
 from ..core import contact_info
-from . import choices
+from . import choices, interests
 from .fields import FIELDS, NOT_HIDEABLE
 
 
@@ -37,7 +37,9 @@ class ProfileForm(FlaskForm):
     exercise = SelectField("Motion", choices=_blank(choices.EXERCISE), validators=[Optional()])
     smoking = SelectField("Rygning", choices=_blank(choices.SMOKING), validators=[Optional()])
     alcohol = SelectField("Alkohol", choices=_blank(choices.ALCOHOL), validators=[Optional()])
-    interests = StringField("Interesser og hobbyer", filters=[_strip_or_none],
+    # Valgmulighederne sættes i __init__, fordi administrator kan ændre kataloget (profiles/interests.py).
+    interest_tags = MultiCheckboxField("Interesser", choices=[], validators=[Optional()])
+    interests = StringField("Mere om mine interesser", filters=[_strip_or_none],
                             validators=[Optional(), Length(max=300), contact_info.validator])
     travel = StringField("Rejser", filters=[_strip_or_none], validators=[Optional(), Length(max=300), contact_info.validator])
 
@@ -56,6 +58,15 @@ class ProfileForm(FlaskForm):
                                        + [("zodiac", "Stjernetegn")],
                                        validators=[Optional()])
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.interest_tags.choices = interests.choices()
+        self.interest_groups = interests.catalog()
+
+    def validate_interest_tags(self, field):
+        if len(field.data or []) > interests.MAX_PER_PROFILE:
+            raise ValidationError(f"Vælg højst {interests.MAX_PER_PROFILE} interesser.")
+
     def validate_age_max(self, field):
         if self.age_min.data and field.data and self.age_min.data > field.data:
             raise ValidationError("'Alder til' skal være mindst lige så høj som 'Alder fra'.")
@@ -70,6 +81,7 @@ class ProfileForm(FlaskForm):
             getattr(self, name).data = getattr(profile, name)
         for name in self.LIST_FIELDS:
             getattr(self, name).data = list(getattr(profile, name))
+        self.interest_tags.data = list(profile.interest_tags or [])
         self.preferred_distance_km.data = str(profile.preferred_distance_km or "")
         self.long_distance_ok.data = {True: "ja", False: "nej"}.get(profile.long_distance_ok, "")
 
@@ -78,6 +90,10 @@ class ProfileForm(FlaskForm):
             setattr(profile, name, getattr(self, name).data or None)
         for name in self.LIST_FIELDS:
             setattr(profile, name, getattr(self, name).data or [])
+        # Interesser, administrator har fjernet fra kataloget, vises ikke i formularen, men bevares på profilen.
+        current = {key for key, _ in self.interest_tags.choices}
+        profile.interest_tags = list(self.interest_tags.data or []) + [
+            key for key in profile.interest_tags or [] if key not in current]
         profile.preferred_distance_km = int(self.preferred_distance_km.data) if self.preferred_distance_km.data else None
         profile.long_distance_ok = {"ja": True, "nej": False}.get(self.long_distance_ok.data)
 

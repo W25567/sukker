@@ -1,4 +1,5 @@
 """Administrative handlinger. Alle ændringer af adgang, status og indstillinger skrives i revisionsloggen."""
+import re
 import secrets
 from datetime import datetime, time
 
@@ -7,7 +8,7 @@ from sqlalchemy import delete, select
 from ..auth.models import User
 from ..auth.passwords import hash_password
 from ..core import features
-from ..core.settings import SETTING_META, get_setting, set_setting
+from ..core.settings import SETTING_META, WORDLIST_META, get_setting, set_setting
 from ..location.services import kommuner_for_postcode
 from ..core.timeutil import DANISH_TZ, now_utc
 from ..extensions import db
@@ -99,9 +100,30 @@ def grants_for(user):
 # --- Indstillinger ---------------------------------------------------------------------------------------------
 
 
+def parse_wordlist(raw):
+    """Ét ord pr. linje eller adskilt med komma. Kun bogstaver (og tal, der ligner bogstaver, fx 1 for i)."""
+    from ..core.name_rules import normalize_word
+
+    words = []
+    for part in re.split(r"[\n,;]+", raw or ""):
+        part = part.strip()
+        if not part:
+            continue
+        if len(part) > 40:
+            raise AdminError(f"\"{part[:40]}…\" er for langt. Højst 40 tegn pr. ord.")
+        if not re.fullmatch(r"[^\W_]+(?:[ \-][^\W_]+)*", part):
+            raise AdminError(f"\"{part}\" må kun indeholde bogstaver og tal (og evt. mellemrum eller bindestreg).")
+        if not normalize_word(part):
+            raise AdminError(f"\"{part}\" indeholder ingen bogstaver.")
+        if part.lower() not in words:
+            words.append(part.lower())
+    return words
+
+
 def update_settings(admin, values):
     """Gemmer ændrede indstillinger. `values` er allerede validerede Python-værdier."""
-    for key, _, _ in SETTING_META:
+    keys = [key for key, _, _ in SETTING_META] + [key for key, _, _ in WORDLIST_META] + ["interest_catalog"]
+    for key in keys:
         if key in values and values[key] != get_setting(key):
             audit(admin, "setting", key=key, old=get_setting(key), new=values[key])
             set_setting(key, values[key])

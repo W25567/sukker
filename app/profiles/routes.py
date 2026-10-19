@@ -21,7 +21,9 @@ from ..media.models import PrivateAccess
 from ..media.processing import ACCEPT, ImageRejected
 from ..subscriptions.services import early_bird_open, grant_early_bird, has_early_bird
 from ..verification.services import latest as latest_verification
+from . import interests
 from .fields import completeness, visible_fields
+from .models import Profile
 from .forms import ExplorePreferenceForm, ProfileForm, VisibilityForm
 from .services import age_of, can_view_profile, find_user_by_handle, get_or_create_profile, is_interested_in
 from .zodiac import visible_zodiac, zodiac_for
@@ -33,6 +35,14 @@ class UploadForm(FlaskForm):
     # Flere billeder kan vælges på én gang. Med JavaScript sendes de ét ad gangen (static/js/upload.js),
     # så ingen forespørgsel bliver større end grænsen på 16 MB.
     image = MultipleFileField("Billeder")
+
+
+def _shared_interests(viewer, profile):
+    """Interesser, den besøgende og profilen har til fælles. Ingen, hvis profilen har skjult sine interesser."""
+    if "interest_tags" in profile.hidden_fields:
+        return []
+    own = db.session.get(Profile, viewer.id)
+    return interests.shared(own.interest_tags if own else [], profile.interest_tags)
 
 
 def _render_profile_view(user, *, preview):
@@ -53,6 +63,7 @@ def _render_profile_view(user, *, preview):
         recently_active=bool(profile.show_activity and last_seen and last_seen >= now_utc() - RECENTLY_ACTIVE),
         presentation=profile.presentation if "presentation" not in profile.hidden_fields else None,
         groups=visible_fields(profile, as_owner=False),
+        shared_interests=[] if preview else _shared_interests(g.user, profile),
         zodiac=visible_zodiac(user, profile),
         preview=preview,
         distance=None if preview or not distance_visible() else (
@@ -126,7 +137,8 @@ def edit():
         return redirect(url_for("profiles.me"))
     if not form.is_submitted():
         form.load(profile)
-    return render_template("profiles/edit.html", form=form, zodiac=zodiac_for(g.user.birthdate)), 400 if form.errors else 200
+    return (render_template("profiles/edit.html", form=form, zodiac=zodiac_for(g.user.birthdate),
+                            max_interests=interests.MAX_PER_PROFILE), 400 if form.errors else 200)
 
 
 @bp.route("/profil/synlighed", methods=["POST"])

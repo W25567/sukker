@@ -14,7 +14,9 @@ from ..moderation.models import DECISIONS, REASON_LABELS, STATUSES
 from ..profiles.zodiac import zodiac_for
 from ..auth.roles import admin_required
 from ..core import features
-from ..core.settings import SETTING_META, get_setting
+from ..core.name_rules import BUILT_IN as NAME_RULES_BUILT_IN
+from ..core.settings import SETTING_META, WORDLIST_META, get_setting
+from ..profiles import interests
 from ..core.timeutil import DANISH_TZ
 from ..extensions import db
 from ..subscriptions.services import TIER_LABELS, active_subscription, effective_tier
@@ -332,6 +334,11 @@ def settings():
             abort(400)
         try:
             values = {key: services.parse_setting(kind, request.form.get(key)) for key, _, kind in SETTING_META}
+            values.update({key: services.parse_wordlist(request.form.get(key)) for key, _, _ in WORDLIST_META})
+            try:
+                values["interest_catalog"] = interests.parse_text(request.form.get("interest_catalog"))
+            except interests.CatalogError as error:
+                raise services.AdminError(f"Interesser: {error}")
             mapping = {tier: [f for f in features.FEATURES if request.form.get(f"tier:{tier}:{f}")] for tier in features.TIERS}
             disabled = [f for f in features.FEATURES if request.form.get(f"disabled:{f}")]
             services.update_settings(g.user, values)
@@ -350,6 +357,10 @@ def settings():
         tier_labels=TIER_LABELS,
         mapping=features.tier_features(),
         disabled=features.disabled_features(),
+        wordlists=[(key, label, hint, "\n".join(get_setting(key) or []), NAME_RULES_BUILT_IN[key])
+                   for key, label, hint in WORDLIST_META],
+        interest_text=interests.to_text(get_setting("interest_catalog")) if get_setting("interest_catalog") else "",
+        default_interest_text=interests.to_text(interests.DEFAULT_CATALOG),
         form=FlaskForm(),
     )
 

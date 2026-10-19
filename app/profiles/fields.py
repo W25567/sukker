@@ -1,7 +1,7 @@
 """Én samlet beskrivelse af profilfelterne. Bruges til visning, skjulte felter og fuldstændighed."""
 from dataclasses import dataclass
 
-from . import choices
+from . import choices, interests
 
 
 @dataclass(frozen=True)
@@ -27,7 +27,8 @@ FIELDS = [
     ProfileField("exercise", "Motion", "Livsstil", choices.EXERCISE),
     ProfileField("smoking", "Rygning", "Livsstil", choices.SMOKING),
     ProfileField("alcohol", "Alkohol", "Livsstil", choices.ALCOHOL),
-    ProfileField("interests", "Interesser og hobbyer", "Livsstil"),
+    ProfileField("interest_tags", "Interesser", "Livsstil", multiple=True),
+    ProfileField("interests", "Mere om mine interesser", "Livsstil"),
     ProfileField("travel", "Rejser", "Livsstil"),
     ProfileField("relationship_types", "Søger", "Relation", choices.RELATIONSHIP_TYPES, multiple=True),
     ProfileField("age_range", "Aldersinterval", "Relation"),
@@ -52,6 +53,9 @@ def display_value(profile, field):
             return f"Op til {profile.age_max} år"
         return ""
     value = getattr(profile, field.name)
+    if field.name == "interest_tags":
+        # Kataloget kan ændres af administrator, så navnene slås op her (profiles/interests.py).
+        return ", ".join(interests.labels(value))
     if field.name == "height_cm":
         return f"{value} cm" if value else ""
     if field.name == "preferred_distance_km":

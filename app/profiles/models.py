@@ -34,6 +34,8 @@ class Profile(db.Model):
     exercise: Mapped[str | None] = mapped_column(String(20))
     smoking: Mapped[str | None] = mapped_column(String(20))
     alcohol: Mapped[str | None] = mapped_column(String(20))
+    # Interesser valgt fra kataloget (profiles/interests.py), gemt som koder. "interests" er brugerens egen tekst.
+    interest_tags: Mapped[list[str]] = mapped_column(ARRAY(String(40)), nullable=False, server_default="{}")
     interests: Mapped[str | None] = mapped_column(String(300))
     travel: Mapped[str | None] = mapped_column(String(300))
 

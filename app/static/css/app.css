@@ -284,6 +284,9 @@ body:has(.bottomnav) .page { padding-bottom: 88px; }
 .radio-list label { display: flex; gap: 10px; align-items: center; font-weight: 400; }
 .bubble-meta a { color: var(--muted); }
 
+.built-in { margin-top: 6px; font-size: 0.85rem; }
+.built-in p, .built-in pre { margin: 6px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; font-family: inherit; }
+
 .login-remember-hint { margin: -6px 0 16px; font-size: 0.85rem; }
 
 /* Pre-release indtil lanceringen (pages/prerelease.html) */
@@ -504,6 +507,12 @@ a.stat .stat-value { color: var(--accent); }
 .pv-fact dt { font-size: 0.78rem; color: var(--muted); }
 .pv-fact dd { margin: 0; overflow-wrap: anywhere; }
 .pv-tag { display: inline-block; margin: 2px 4px 0 0; padding: 1px 9px; border-radius: 999px; background: var(--info-bg); font-size: 0.85rem; }
+.pv-tag.shared { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
+.pv-shared { margin: 6px 0 0; font-size: 0.85rem; color: var(--accent); font-weight: 600; }
+.interest-group { margin: 12px 0 6px; font-size: 0.8rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.interest-filter summary { cursor: pointer; font-weight: 600; }
+.interest-filter[open] summary { margin-bottom: 6px; }
+.card-shared { display: block; font-size: 0.8rem; color: var(--accent); font-weight: 600; }
 .pv-safety { justify-content: flex-start; margin: 8px 0 0; }
 .preview-note p { margin: 0; }
 .confirm-delete-image { display: block; width: 160px; max-width: 100%; aspect-ratio: 3 / 4; object-fit: cover; border-radius: 10px; margin-bottom: 12px; }

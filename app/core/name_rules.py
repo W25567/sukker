@@ -13,10 +13,13 @@ Før kontrollen gøres navnet ensartet: små bogstaver, tal og tegn, der ligner 
 og et bogstav gentaget tre eller flere gange tælles som ét ("Fiiisse"). Ord deles ved mellemrum, tegn og store
 bogstaver midt i et ord ("SuperPik" → super, pik).
 
-Listen er ikke vandtæt. Det, der slipper igennem, kan administrator slette (moderation/content.py), og navne,
-der bliver afvist ved en fejl, tilføjes i ALLOWED_WORDS.
+Listen er ikke vandtæt. Det, der slipper igennem, kan administrator slette (moderation/content.py). Administrator
+kan udvide alle lister og tilføje navne, der altid er tilladt, under Administration → Indstillinger, uden at ændre i
+koden (indstillingerne name_*). Listerne her i koden er grundstammen og gælder altid.
 """
 import re
+
+from flask import has_app_context
 
 # Navne, der kan forveksles med Sukker.nu selv eller administrationen. Må ikke stå nogen steder i navnet.
 RESERVED = ("admin", "moderator", "support", "kundeservice", "systembesked", "system")
@@ -62,22 +65,46 @@ def _spelled(words):
     return runs
 
 
+def normalize_word(word):
+    """Et ord fra administratorens lister i samme form som ordene i et navn (små bogstaver, 1 → i osv.)."""
+    words = _words(word, camel=False)
+    return "".join(words)
+
+
+def _lists():
+    """(reserveret, overalt, hele ord, starten af ord, altid tilladt): kodens lister plus administratorens."""
+    extra = {key: () for key in ("name_reserved", "name_blocked_anywhere", "name_blocked_exact",
+                                 "name_blocked_prefix", "name_allowed")}
+    if has_app_context():
+        from .settings import get_setting
+
+        extra = {key: tuple(normalize_word(w) for w in get_setting(key) or () if normalize_word(w)) for key in extra}
+    return (RESERVED + extra["name_reserved"], ANYWHERE + extra["name_blocked_anywhere"],
+            EXACT + extra["name_blocked_exact"], PREFIX + extra["name_blocked_prefix"],
+            ALLOWED_WORDS | set(extra["name_allowed"]))
+
+
 def problem(name):
     """"reserved", "offensive" eller None."""
     if not name:
         return None
+    reserved, anywhere, exact, prefix, allowed = _lists()
     # Ord delt ved tegn og mellemrum ("PlayBoy" er ét ord) og desuden ved store bogstaver ("SuperPik" → super, pik).
-    plain = [word for word in _words(name, camel=False) if word not in ALLOWED_WORDS]
-    words = [word for word in _words(name) if word not in ALLOWED_WORDS]
+    plain = [word for word in _words(name, camel=False) if word not in allowed]
+    words = [word for word in _words(name) if word not in allowed]
     # Søges inde i hvert ord, ikke på tværs af ord, så fx "Lu Derek" ikke bliver til "luder" og "Ad Mina" ikke til
     # "admin". Kun sidens eget navn søges på tværs ("Sukker.nu", "Sukker Nu").
-    if any(term in word for word in plain + _spelled(plain) for term in RESERVED) or SITE_NAME in "".join(plain):
+    if any(term in word for word in plain + _spelled(plain) for term in reserved) or SITE_NAME in "".join(plain):
         return "reserved"
-    if any(term in word for word in plain + _spelled(plain) for term in ANYWHERE):
+    if any(term in word for word in plain + _spelled(plain) for term in anywhere):
         return "offensive"
-    if any(word in EXACT for word in words) or any(word.startswith(PREFIX) for word in words):
+    if any(word in exact for word in words) or any(word.startswith(prefix) for word in words):
         return "offensive"
     return None
+
+
+BUILT_IN = {"name_reserved": RESERVED, "name_blocked_anywhere": ANYWHERE, "name_blocked_exact": EXACT,
+            "name_blocked_prefix": PREFIX, "name_allowed": tuple(sorted(ALLOWED_WORDS))}
 
 
 MESSAGES = {

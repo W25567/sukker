@@ -52,6 +52,18 @@
       {{ field(form.exercise) }}{{ hide_toggle('exercise') }}
       {{ field(form.smoking) }}{{ hide_toggle('smoking') }}
       {{ field(form.alcohol) }}{{ hide_toggle('alcohol') }}
+      <fieldset class="field interest-picker{% if form.interest_tags.errors %} has-error{% endif %}" id="interesser">
+        <legend>{{ form.interest_tags.label.text }}</legend>
+        <small class="hint">Vælg op til {{ max_interests }}. Andre kan se, hvilke interesser I har til fælles.</small>
+        {% for group, items in form.interest_groups %}
+          <p class="interest-group">{{ group }}</p>
+          <div class="chips">
+            {% for key, label in items %}{% for option in form.interest_tags if option.data == key %}<label class="chip">{{ option() }} {{ label }}</label>{% endfor %}{% endfor %}
+          </div>
+        {% endfor %}
+        {% for error in form.interest_tags.errors %}<small class="error">{{ error }}</small>{% endfor %}
+      </fieldset>
+      {{ hide_toggle('interest_tags') }}
       {{ field(form.interests) }}{{ hide_toggle('interests') }}
       {{ field(form.travel) }}{{ hide_toggle('travel') }}
     </section>
