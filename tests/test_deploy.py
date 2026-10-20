@@ -73,6 +73,10 @@ def test_other_brands_get_their_own_resources():
     assert (staging["service"], staging["database"], staging["basic_auth"]) == ("nogen-staging", "nogen_staging", True)
     assert (production["service"], production["app_root"], production["backup_enabled"]) == ("nogen", "/opt/nogen", True)
     assert production["env_settings"]["SUKKER_BRAND"] == "nogen" and not production["basic_auth"]
+    # Appen kender kun konfigurationerne production og staging (app/config.py)
+    assert staging["env_settings"]["SUKKER_ENV"] == "staging" and production["env_settings"]["SUKKER_ENV"] == "production"
+    from app.config import CONFIGS
+    assert all(deploy.resolve(n, e)["env_settings"]["SUKKER_ENV"] in CONFIGS for n, e in envs.items())
     assert all(deploy.validate(name, envs) == [] for name in envs)
     # Produktion for et andet brand kræver også krypteret backup uden for serveren
     envs["nogen"]["backup_remote"] = ""

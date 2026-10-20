@@ -111,7 +111,9 @@ def resolve(env_name, raw):
         "backup_age_recipients": list(raw.get("backup_age_recipients", [])),
     }
     cfg["env_settings"] = {
-        "SUKKER_ENV": env_name,
+        # Appens konfiguration (app/config.py): production eller staging. Miljøets navn (fx nogen-staging) og brandet
+        # står i SUKKER_SERVICE_NAME og SUKKER_BRAND.
+        "SUKKER_ENV": "production" if production else "staging",
         "SUKKER_BRAND": brand,
         "SUKKER_BASE_URL": f"https://{raw['domain']}",
         "SUKKER_SITE_DOMAIN": raw["domain"],
