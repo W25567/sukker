@@ -1,6 +1,7 @@
 from flask import Blueprint, abort, flash, g, redirect, render_template, request, url_for
 
 from ..auth.forms import ActionForm
+from ..brands import current_brand
 from ..auth.sessions import login_required, safe_next_url
 from ..extensions import db, limiter
 from ..media.services import avatar_ids
@@ -38,7 +39,7 @@ def like(handle):
             flash(str(refusal), "error")
         else:
             if result.matched:
-                flash(f"Det er et match! Du og {target.display_name} kan lide hinanden.", "success")
+                flash(current_brand().words["matched_flash"].format(name=target.display_name), "success")
     return _back(handle)
 
 
@@ -87,6 +88,6 @@ def remove(handle):
     if form.validate_on_submit():
         services.remove_match(g.user, other)
         db.session.commit()
-        flash(f"Matchet med {other.display_name} er fjernet.", "info")
+        flash(f"{current_brand().words['the_match'].capitalize()} med {other.display_name} er fjernet.", "info")
         return redirect(url_for("matches.index"))
     return render_template("matches/confirm_remove.html", other=other, form=form)

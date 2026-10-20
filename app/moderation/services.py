@@ -12,7 +12,7 @@ from ..core.timeutil import now_utc, today_local
 from ..extensions import db
 from ..media import storage
 from ..media.services import list_images
-from ..profiles.fields import FIELDS, display_value
+from ..profiles.fields import display_value, profile_fields
 from ..profiles.models import Profile
 from ..profiles.services import age_of
 from .models import HIGH_PRIORITY, CaseEvent, ModerationCase, ModeratorAccessLog
@@ -127,7 +127,7 @@ def case_events(case):
 
 def profile_evidence(user):
     profile = db.session.get(Profile, user.id)
-    fields = {f.label: display_value(profile, f) for f in FIELDS if profile and display_value(profile, f)}
+    fields = {f.label: display_value(profile, f) for f in profile_fields() if profile and display_value(profile, f)}
     return {
         "type": "profile",
         "user_id": user.id,

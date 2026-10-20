@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{# Nogen.nu's brugervilkår. Overstyrer templates/pages/terms.html (app/brands). Bygget på de fælles vilkår, men uden
+   dating, Premium, tidlige fugle og privat album. UDKAST: skal gennemlæses og godkendes af ejeren før lancering
+   (README, "Nogen.nu"). Ændres vilkårene væsentligt, skal TERMS_VERSION i pages/legal.py også ændres. #}
+{% block page_class %}public{% endblock %}
+{% block content %}
+  <article class="prose legal">
+    <h1>Brugervilkår</h1>
+    <p class="muted">Gældende fra {{ effective.strftime('%d-%m-%Y') }}</p>
+
+    <h2>1. Om vilkårene</h2>
+    <p>Vilkårene gælder for din brug af {{ brand.name }}{% if company.name %}, som drives af {{ company.name }}{% endif %}. Når du opretter en profil, accepterer du vilkårene og <a href="{{ url_for('pages.privacy') }}">privatlivspolitikken</a>.</p>
+    {% if prerelease_label %}
+      <p><strong>Pre-release:</strong> Indtil den officielle lancering {{ prerelease_label }} er {{ brand.name }} i pre-release. Du skal acceptere det, før du bruger siden. I perioden kan der være fejl og få profiler, og funktioner kan ændre sig uden varsel. Vilkårene og privatlivspolitikken gælder fuldt ud, også i pre-release, og din profil fortsætter efter lanceringen.</p>
+    {% endif %}
+
+    <h2>2. Hvem kan bruge {{ brand.name }}</h2>
+    <ul>
+      <li>Du skal være mindst 18 år.</li>
+      <li>Du må kun have én profil, og den skal være din egen.</li>
+      <li>De oplysninger, du giver ved oprettelsen, skal være korrekte – især din fødselsdato.</li>
+      <li>Du må ikke oprette en ny profil, hvis din tidligere profil er blevet lukket af os.</li>
+    </ul>
+
+    <h2>3. Din konto</h2>
+    <p>Hold dit password hemmeligt, og log ud på enheder, du deler med andre. Du kan se og afslutte dine aktive logins under Konto. Har du mistanke om, at andre har adgang til din konto, så skift password med det samme.</p>
+
+    <h2>4. Sådan opfører du dig</h2>
+    <p>{{ brand.name }} er til venskab og fællesskab mellem voksne. Det er ikke tilladt at:</p>
+    <ul>
+      <li>chikanere, true, presse eller nedgøre andre</li>
+      <li>udgive sig for at være en anden eller oprette falske profiler</li>
+      <li>svindle, bede om penge, gavekort eller betalingsoplysninger eller lokke andre til falske sider (phishing)</li>
+      <li>tilbyde, formidle eller købe seksuelle ydelser</li>
+      <li>dele seksuelt indhold eller sende seksuelle henvendelser</li>
+      <li>dele indhold, der viser eller seksualiserer mindreårige</li>
+      <li>dele andres billeder eller private oplysninger uden deres samtykke</li>
+      <li>sende spam, reklame eller kædebeskeder</li>
+      <li>bruge {{ brand.name }} til andet end at finde nogen at være sammen med, fx markedsføring, salg, reklame for produkter,
+        tjenester eller andre sider, hvervning til foreninger, bevægelser eller trossamfund eller indsamling af kontakter</li>
+      <li>bruge et vist navn, der er groft, krænkende eller seksuelt, eller som kan forveksles med {{ brand.name }} eller administrationen, fx "Admin" eller "Moderator"</li>
+      <li>skrive e-mail, telefonnummer, links eller andre kontaktoplysninger, fx brugernavne på sociale medier, i din profil –
+        hverken i profilteksten, dit viste navn eller andre felter</li>
+      <li>indsamle oplysninger om andre brugere automatisk, bruge robotter eller omgå sikkerhedsforanstaltninger og begrænsninger</li>
+      <li>dele indhold, der i øvrigt er ulovligt</li>
+    </ul>
+
+    <h2>5. Dit indhold</h2>
+    <p>Du bevarer rettighederne til de tekster og billeder, du deler. Du giver os ret til at opbevare og vise dem på {{ brand.name }} for de brugere, du har valgt, så længe din profil findes. Du må kun uploade billeder, du selv har rettighederne til, og som ikke viser andre uden deres samtykke. Vi kan fjerne indhold, der overtræder vilkårene.</p>
+
+    <h2>6. Moderation</h2>
+    <p>Alle kan anmelde profiler, samtaler og beskeder. Anmeldelser behandles af moderatorer. For at afdække misbrug, svindel og phishing kan en moderator få adgang til de oplysninger, der er gemt om en konto, herunder beskeder og billeder. Det sker kun med en begrundelse, og al adgang logges.</p>
+    <p>Overtræder en bruger vilkårene, kan vi fjerne indhold, begrænse kontoen midlertidigt eller lukke den. Er der mistanke om, at en bruger er under 18 år, begrænses kontoen straks, indtil sagen er afklaret. Ved mistanke om strafbare forhold kan vi anmelde det til politiet.</p>
+    <p>Er du uenig i en afgørelse, der vedrører dig, kan du <a href="{{ url_for('moderation.appeal') }}">klage</a> og få sagen vurderet igen af en anden.</p>
+
+    <h2>7. Pris</h2>
+    <p>{{ brand.name }} er gratis. Alle funktioner er gratis for alle, og der er ingen abonnementer eller køb på siden.</p>
+
+    <h2>8. Sletning og ophør</h2>
+    <p>Du kan til enhver tid slette din profil under Konto. Kontoen lukkes med det samme, og din profil, dine billeder, {{ brand.words.likes }} og {{ brand.words.matches }} kan ikke længere ses af andre. Beskeder, du har sendt, bliver stående hos modtageren med afsenderen vist som "Slettet bruger". Af hensyn til sikkerhed, anmeldelser og eventuelle henvendelser fra politiet gemmer vi oplysningerne skjult i en periode, før de slettes endeligt. Det står i <a href="{{ url_for('pages.privacy') }}">privatlivspolitikken</a>. Vi kan lukke en konto, der overtræder vilkårene (afsnit 6).</p>
+
+    <h2>9. Ansvar</h2>
+    <p>Vi kontrollerer ikke brugernes identitet eller alder. Mærket "Verificeret" betyder kun, at en moderator har sammenlignet en selfie med profilbillederne. Vi kan ikke stå inde for, at andre brugeres oplysninger er korrekte. Vær forsigtig, når du deler oplysninger og mødes med nogen. Vi gør vores bedste for, at siden er tilgængelig og sikker, men kan ikke garantere, at den altid er fejlfri. Vi er ikke ansvarlige for andre brugeres handlinger, heller ikke når I mødes uden for siden, i det omfang loven tillader det.</p>
+
+    <h2>10. Ændringer af vilkårene</h2>
+    <p>Ændrer vi vilkårene væsentligt, får du besked, og du skal acceptere de nye vilkår, næste gang du logger ind. Vil du ikke acceptere dem, kan du slette din profil.</p>
+
+    <h2>11. Lovvalg og kontakt</h2>
+    <p>Vilkårene er underlagt dansk ret. Har du spørgsmål, så skriv til <a href="mailto:{{ contact_email }}">{{ contact_email }}</a>.</p>
+  </article>
+{% endblock %}

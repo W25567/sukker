@@ -5,6 +5,7 @@ from sqlalchemy import delete, or_, select, update
 from sqlalchemy.orm import aliased
 
 from ..auth.models import User
+from ..brands import current_brand
 from ..core.settings import get_setting
 from ..core.timeutil import now_utc
 from ..extensions import db
@@ -46,21 +47,22 @@ def _lock_pair(a_id, b_id):
 
 
 def like(liker, target):
+    words = current_brand().words  # "like" eller "hilse på" (app/brands)
     if liker.id == target.id:
-        raise LikeRefused("Du kan ikke like dig selv.")
+        raise LikeRefused(f"Du kan ikke {words['to_like']} dig selv.")
     if not liker.is_verified:
-        raise LikeRefused("Bekræft din e-mail, før du kan give likes.")
+        raise LikeRefused(f"Bekræft din e-mail, før du kan {words['give_likes']}.")
     if not liker.is_active_account:
         raise LikeRefused("Din konto er midlertidigt begrænset, mens en sag behandles.")
     profile = db.session.get(Profile, liker.id)
     if profile is not None and profile.is_paused:
-        raise LikeRefused("Din profil er på pause. Aktivér den for at give likes.")
+        raise LikeRefused(f"Din profil er på pause. Aktivér den for at {words['give_likes']}.")
     if not can_view_profile(liker, target):
         raise LikeRefused("Profilen findes ikke.")
     # Søger profilen kun bestemte køn, kan kun de køn like den (gensidig præference). Et like tilbage til
     # en, der allerede har liket en, er altid muligt, så et match aldrig blokeres af ens egne valg.
     if not is_interested_in(target, liker) and not has_liked(target.id, liker.id):
-        raise LikeRefused("Profilen søger ikke kontakt med dit køn.")
+        raise LikeRefused(f"{words['not_interested']}.")
 
     _lock_pair(liker.id, target.id)
     if has_liked(liker.id, target.id):
@@ -71,7 +73,8 @@ def like(liker, target):
     limit = match_limit(liker)
     if limit is not None and active_match_count(liker.id) >= limit:
         raise LikeRefused(
-            f"Du har nået grænsen på {limit} matches. Fjern et match eller opgradér for at give nye likes."
+            f"Du har nået grænsen på {limit} {words['matches']}. Fjern {words['a_match']} eller opgradér for at give "
+            f"nye {words['likes']}."
         )
 
     db.session.add(Like(liker_id=liker.id, likee_id=target.id))

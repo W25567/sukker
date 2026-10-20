@@ -112,7 +112,25 @@ BRAND_PAGES = {
         "pages.faq": ("Ofte stillede spørgsmål om {site}",
                       "Svar på de mest stillede spørgsmål om {site}: synlighed, afstand, forbindelser, beskeder, "
                       "blokering og sletning af profil."),
+        "pages.terms": ("Brugervilkår for {site}",
+                        "Brugervilkårene for {site}: hvem kan bruge siden, regler for opførsel, moderation og "
+                        "sletning af profil."),
     },
+}
+
+
+# Brands med egne spørgsmål øverst i FAQ (app/brands). Resten er de fælles spørgsmål i _faq_items.
+BRAND_FAQ = {
+    "nogen": [
+        ("Er {site} en datingside?",
+         "Nej. {site} er til venskab og fællesskab: at finde nogen at gå en tur med, drikke en kop kaffe med, tale "
+         "med eller lave noget sammen med. Vil du på date, er det ikke her, du skal lede."),
+        ("Hvem er {site} for?",
+         "For alle over 18, der savner nogen at være sammen med – fx fordi du er flyttet, har mistet nogen, er gået "
+         "på pension eller bare gerne vil møde nye mennesker. På din profil kan du fortælle, hvad du har lyst til, "
+         "og under \"Jeg vil helst møde\" kan du vælge, hvem du helst vil møde. Lader du feltet stå tomt, møder du "
+         "alle."),
+    ],
 }
 
 
@@ -191,23 +209,31 @@ def _faq_items(months, early_bird, bonus):
          "uploader et billede, får du Premium for livstid som tak, fordi du er med fra starten. Det kræver ingen "
          "betaling og intet abonnement."),
     ] if early_bird else []
-    if not current_brand().premium:
-        # Uden Premium er alt gratis for alle (app/brands).
-        return [
+    brand = current_brand()
+    if not brand.premium:
+        # Uden Premium er alt gratis for alle (app/brands). Ordene er brandets, fx "hilse på" og "forbindelse".
+        w = brand.words
+        return BRAND_FAQ.get(brand.key, []) + [
             ("Hvad koster {site}?", "Ingenting. Alle funktioner er gratis for alle, og det bliver de ved med at være."),
             ("Hvem kan se min profil?",
              "Kun brugere, der er logget ind. Besøgende uden login kan hverken se profiler eller billeder, og profiler "
              "vises aldrig i søgemaskiner. Du kan skjule enkelte felter, holde pause eller kun være synlig for dem, "
-             "du har forbindelse med."),
+             f"du har {w['a_match']} med."),
+            ("Kan andre se, hvor jeg bor?",
+             "Nej. Dit postnummer bruges kun til at finde din kommune og vises aldrig. Andre ser en omtrentlig afstand, "
+             "fx \"I nærheden\" eller \"ca. 40 km\". Kommunens navn vises kun, hvis du selv tillader det."),
             ("Hvordan kommer jeg i kontakt med nogen?",
-             "Når I begge har sagt, at I gerne vil i kontakt, kan I skrive sammen. Forbindelsen kan altid fjernes "
-             "igen af begge."),
+             f"Når I begge har trykket \"{w['like']}\", har I {w['a_match']}, og så kan I skrive sammen. Ingen kan "
+             f"skrive til dig, før I begge har sagt ja. {w['the_match'].capitalize()} kan altid fjernes igen af begge."),
             ("Hvad er forskellen på at skjule og blokere?",
-             "Skjul fjerner en profil fra det, du ser i Udforsk. Blokér forhindrer al kontakt i begge retninger. "
-             "Ingen af dem giver den anden besked."),
+             "Skjul fjerner en profil fra det, du ser i Udforsk. Blokér forhindrer al kontakt i begge retninger og "
+             f"fjerner {w['any_match']}. Ingen af dem giver den anden besked."),
+            ("Hvordan anmelder jeg en profil eller en besked?",
+             "Brug Anmeld på profilen, i samtalen eller ved den enkelte besked. Anmeldelsen behandles af en moderator, "
+             "og den anmeldte får ikke at vide, hvem der har anmeldt."),
             ("Hvordan sletter jeg min profil?",
-             "Under Konto kan du slette din profil. Beskeder, du har sendt, bliver stående hos modtageren med "
-             "afsenderen vist som \"Slettet bruger\"."),
+             f"Under Konto kan du slette din profil. Profil, billeder, {w['likes']} og {w['matches']} slettes. "
+             "Beskeder, du har sendt, bliver stående hos modtageren med afsenderen vist som \"Slettet bruger\"."),
             ("Hvor gammel skal man være?", "{site} er kun for personer på 18 år eller derover."),
         ]
     return early_bird_items + [

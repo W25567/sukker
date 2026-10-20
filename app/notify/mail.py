@@ -35,10 +35,10 @@ MAX_AGE = timedelta(days=3)  # ældre nyheder giver ingen mail (fx efter en læn
 PREMIUM_STEPS = (("premium_14", 14), ("premium_3", 3))
 INACTIVE_WARNING = timedelta(days=7)  # varsel en uge før en inaktiv profil skjules fra Udforsk
 
-# Rækkefølgen er rækkefølgen i mailen.
+# Rækkefølgen er rækkefølgen i mailen. {ord} er brandets ord (app/brands), fx "et nyt match".
 LINES = {
     "message": "Du har nye beskeder.",
-    "match": "Du har et nyt match.",
+    "match": "Du har {a_new_match}.",
     "request": "Nogen har bedt om at se dine private billeder.",
     "grant": "Du har fået adgang til private billeder.",
     "admin": "Du har en besked fra Administrator.",
@@ -163,7 +163,8 @@ def _site_url(endpoint, **values):
 def _send_news(user, kinds):
     return send_mail(user.email, f"Der er nyt til dig på {current_brand().name}", "mail/notify.txt",
                      headers=mail_headers(user, "news"), name=user.display_name,
-                     lines=[LINES[kind] for kind in kinds], login_url=_site_url("auth.login"),
+                     lines=[LINES[kind].format(**current_brand().words) for kind in kinds],
+                     login_url=_site_url("auth.login"),
                      settings_url=_site_url("account.overview") + "#notifikationer",
                      unsubscribe_url=unsubscribe_url(user, "news"))
 

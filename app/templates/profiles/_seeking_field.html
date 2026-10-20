@@ -1,9 +1,10 @@
-{# "Interesseret i" som afkrydsningsfelter. Bruges ved oprettelse og når et køn skal vælges. #}
+{# "Interesseret i" som afkrydsningsfelter. Bruges ved oprettelse og når et køn skal vælges. Navn og hjælpetekst er
+   brandets (app/brands): "Interesseret i" eller "Jeg vil helst møde". #}
 <fieldset class="field{% if form.seeking_genders.errors %} has-error{% endif %}">
-  <legend>{{ form.seeking_genders.label.text }} <span class="muted">(valgfrit)</span></legend>
+  <legend>{{ brand.words.seeking_genders }} <span class="muted">(valgfrit)</span></legend>
   <div class="chips">
     {% for option in form.seeking_genders %}<label class="chip">{{ option() }} {{ option.label.text }}</label>{% endfor %}
   </div>
-  <small class="hint">Du ser kun de køn, du vælger, og kun de køn kan se og like dig. Vælger du ingen, er alle velkomne.</small>
+  <small class="hint">{{ brand.words.seeking_hint }}</small>
   {% for error in form.seeking_genders.errors %}<small class="error">{{ error }}</small>{% endfor %}
 </fieldset>

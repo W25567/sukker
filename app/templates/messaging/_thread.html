@@ -1,7 +1,7 @@
 {# Beskederne i en samtale. Bruges både af siden og af den automatiske opdatering (messaging.updates). #}
 {% for item in items %}
   {% if item.kind == 'match_removed' %}
-    <li class="thread-marker">Match fjernet · {{ item.at | local_datetime }}</li>
+    <li class="thread-marker">{{ brand.words.match | capitalize }} fjernet · {{ item.at | local_datetime }}</li>
   {% else %}
     <li class="bubble{% if item.mine %} mine{% endif %}">
       {% if not item.mine and (not item.message.sender_id or other_deleted) %}<span class="sender">{{ deleted_user }}</span>{% endif %}

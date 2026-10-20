@@ -11,7 +11,7 @@ from ..matches.models import Like, Match
 from ..media.models import PrivateAccess, ProfileImage
 from ..media.services import list_images
 from ..messaging.models import Conversation, ConversationMember, Message, MessageDeletion
-from ..profiles.fields import FIELDS, display_value
+from ..profiles.fields import display_value, profile_fields
 from ..profiles.models import Profile
 from ..profiles.services import age_of
 from ..safety.models import UserBlock
@@ -75,7 +75,7 @@ def collect(user):
         "age": age_of(user),
         "kommune": kommune_name(user.kommune_code),
         "profile": profile,
-        "fields": [(f.label, display_value(profile, f), f.name in profile.hidden_fields) for f in FIELDS] if profile else [],
+        "fields": [(f.label, display_value(profile, f), f.name in profile.hidden_fields) for f in profile_fields()] if profile else [],
         "images": {"public": list_images(user.id, "public"), "private": list_images(user.id, "private"),
                    # Fjernet af en moderator eller administrator, men ikke slettet af brugeren endnu.
                    "removed": db.session.scalars(select(ProfileImage).where(

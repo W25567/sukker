@@ -96,11 +96,29 @@ def faq():
     return _render("pages/faq.html", "pages.faq", items=items, structured=structured)
 
 
-@bp.route("/hvorfor-sukker")
 @public_page
 def purpose():
-    """Formålet med Sukker.nu: ærlig dating uden falske profiler, rimelige priser og et menneske at tale med."""
+    """Formålet med siden, fx for Sukker.nu: ærlig dating uden falske profiler, rimelige priser og et menneske at
+    tale med. Adressen er brandets (Brand.purpose_path) og registreres i _register_purpose."""
     return _render("pages/purpose.html", "pages.purpose", **_legal_context())
+
+
+@public_page
+def purpose_alias():
+    """Den fælles kodes første adresse for formålssiden. Har brandet sin egen, sendes man videre dertil."""
+    return redirect(url_for("pages.purpose"), 301)
+
+
+def _register_purpose(state):
+    from ..brands import DEFAULT_PURPOSE_PATH, brand_for
+
+    path = brand_for(state.app.config["BRAND"]).purpose_path
+    state.add_url_rule(path, "purpose", purpose)
+    if path != DEFAULT_PURPOSE_PATH:
+        state.add_url_rule(DEFAULT_PURPOSE_PATH, "purpose_alias", purpose_alias)
+
+
+bp.record(_register_purpose)
 
 
 @bp.route("/om")

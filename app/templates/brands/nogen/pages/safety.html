@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{# Nogen.nu's side om tryghed. Overstyrer templates/pages/safety.html (app/brands). #}
+{% block page_class %}public{% endblock %}
+{% block content %}
+  <article class="prose">
+    <h1>Tryghed og sikkerhed</h1>
+    <p class="lead">Det kræver tillid at møde nye mennesker. Derfor er {{ brand.name }} bygget, så du selv bestemmer, hvem der ser hvad – og så du hurtigt kan sige fra.</p>
+
+    <h2>Kun medlemmer kan se profiler</h2>
+    <p>Profiler og billeder kan kun ses af brugere, der er logget ind. Besøgende uden login ser ingenting, og profiler vises aldrig i Google eller andre søgemaskiner. Billeder leveres kun gennem en adgangskontrol og har ingen offentlige adresser.</p>
+
+    <h2>Kontakt kun, når begge vil</h2>
+    <p>Ingen kan skrive til dig, før I begge har hilst på hinanden. Vil du ikke længere være forbundet med nogen, kan du fjerne forbindelsen, og så skjules jeres samtale for jer begge.</p>
+
+    <h2>Du bestemmer synligheden</h2>
+    <ul>
+      <li>Skjul de felter på din profil, du ikke vil vise.</li>
+      <li>Sæt profilen på pause, når du har brug for en pause.</li>
+      <li>Vær kun synlig for dem, du er forbundet med, eller hold dig ude af søgningen.</li>
+      <li>Vælg selv, om {% if kommune_visible() %}din kommune og {% endif %}din seneste aktivitet vises.</li>
+    </ul>
+
+    {% if distance_visible() %}
+      <h2>Ingen adresse, kun omtrentlig afstand</h2>
+      <p>Dit postnummer bruges kun til at finde din kommune og vises aldrig. Andre ser en omtrentlig afstand beregnet fra kommune til kommune, fx "I nærheden" eller "ca. 40 km" – aldrig præcise kilometertal.</p>
+    {% else %}
+      <h2>Ingen adresse og ingen afstand</h2>
+      <p>Dit postnummer vises aldrig, og andre kan ikke se, hvor langt der er til dig.</p>
+    {% endif %}
+
+    <h2>Skjul, blokér og anmeld</h2>
+    <dl>
+      <dt>Skjul</dt>
+      <dd>Fjerner en profil fra det, du ser. Den anden får intet at vide, og eksisterende samtaler fortsætter.</dd>
+      <dt>Blokér</dt>
+      <dd>Ingen af jer kan kontakte den anden. En eventuel forbindelse ophører, og samtalen skjules. Den anden får intet at vide.</dd>
+      <dt>Anmeld</dt>
+      <dd>Anmeld en profil, en samtale eller en enkelt besked. Anmeldelsen behandles af en moderator, og den anmeldte får ikke at vide, hvem der har anmeldt.</dd>
+    </dl>
+    <p>Profiler med mærket <strong>Verificeret</strong> har sendt en selfie, som en moderator har sammenlignet med profilbillederne.</p>
+
+    <h2>Moderation</h2>
+    <p>Moderatorer behandler anmeldelser og kan begrænse eller lukke konti, der overtræder <a href="{{ url_for('pages.terms') }}">brugervilkårene</a>. For at afdække misbrug, svindel og phishing kan en moderator få adgang til de oplysninger, der er gemt om en konto, herunder beskeder og billeder. Det sker kun med en begrundelse, og al adgang logges. Er du uenig i en afgørelse, kan du klage og få sagen vurderet igen.</p>
+
+    <h2>Gode råd, når I mødes</h2>
+    <ul>
+      <li>Mød første gang et offentligt sted, fx en café, et bibliotek eller en sti med andre mennesker.</li>
+      <li>Fortæl en, du kender, hvor du skal hen, og hvem du skal møde.</li>
+      <li>Sørg selv for at komme hjem, og gå, hvis noget føles forkert. Du skylder ingen at blive.</li>
+      <li>Del aldrig passwords, koder, MitID eller bankoplysninger – heller ikke med en, du har skrevet med længe.</li>
+      <li>Send aldrig penge eller gavekort til en, du kun kender fra nettet.</li>
+      <li>Anmeld profiler, der virker falske, eller som beder om penge eller links til andre sider.</li>
+    </ul>
+
+    <h2>Dine data</h2>
+    <p>Du kan hente en kopi af dine data og slette din profil, når du vil. Skjulte og slettede data slettes endeligt senest {{ retention_months }} måneder efter. <a href="{{ url_for('pages.privacy') }}">Læs privatlivspolitikken</a>.</p>
+  </article>
+{% endblock %}

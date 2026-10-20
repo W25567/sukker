@@ -36,8 +36,8 @@
             <div class="inbox-item removed-item">
               {{ avatar(item.other) }}
               <span class="inbox-text">
-                <span class="inbox-name">{{ item.other.display_name }} <span class="lock-badge">Match fjernet</span></span>
-                <span class="muted inbox-preview">Matchet blev fjernet {{ item.activity_at | local_datetime }}. Samtalen kan ikke længere læses.</span>
+                <span class="inbox-name">{{ item.other.display_name }} <span class="lock-badge">{{ brand.words.match | capitalize }} fjernet</span></span>
+                <span class="muted inbox-preview">{{ brand.words.the_match | capitalize }} blev fjernet {{ item.activity_at | local_datetime }}. Samtalen kan ikke længere læses.</span>
                 <form method="post" action="{{ url_for('messaging.dismiss_removed', conversation_id=item.conversation.id) }}" class="inline">
                   {{ action_form.hidden_tag() }}
                   <button type="submit" class="link small-link">Fjern fra listen</button>
@@ -58,7 +58,7 @@
                   {% if item.last_message %}
                     {% if item.last_message.sender_id == current_user.id %}Du: {% endif %}{{ item.last_message.body | truncate(80) }}
                   {% else %}
-                    Nyt match. Sig hej!
+                    {{ brand.words.new_match | capitalize }}. Sig hej!
                   {% endif %}
                 </span>
               </span>
@@ -69,7 +69,7 @@
     </ul>
   {% else %}
     <div class="card">
-      <p>{{ 'Du har ingen arkiverede samtaler.' if archived else 'Du har ingen samtaler endnu. Når du får et match, kan I skrive sammen her.' }}</p>
+      <p>{{ 'Du har ingen arkiverede samtaler.' if archived else 'Du har ingen samtaler endnu. Når du får ' ~ brand.words.a_match ~ ', kan I skrive sammen her.' }}</p>
     </div>
   {% endif %}
 {% endblock %}

@@ -109,7 +109,7 @@
             {% if can_like or liked or matched %}
               {{ like_button(user.handle, liked, matched, request.full_path) }}
             {% else %}
-              <span class="action-note muted">Profilen søger ikke kontakt med dit køn</span>
+              <span class="action-note muted">{{ brand.words.not_interested }}</span>
             {% endif %}
             {% if matched %}<a class="button action-button" href="{{ url_for('messaging.start', handle=user.handle) }}">Skriv besked</a>{% endif %}
           </div>
@@ -124,7 +124,7 @@
         {% endif %}
 
         <div class="pv-details">
-        {% set titles = {'Grundlæggende': 'Om mig', 'Livsstil': 'Livsstil', 'Relation': 'Relation'} %}
+        {% set titles = {'Grundlæggende': 'Om mig', 'Livsstil': 'Livsstil', 'Relation': brand.words.relation_group} %}
         {% for group, items in groups %}
           {% set facts = items | rejectattr('0.name', 'equalto', 'presentation') | list %}
           {% if facts %}
@@ -154,7 +154,7 @@
 
         {% if not preview %}
           <div class="safety-actions pv-safety">
-            {% if matched %}<a href="{{ url_for('matches.remove', handle=user.handle) }}">Fjern match</a>{% endif %}
+            {% if matched %}<a href="{{ url_for('matches.remove', handle=user.handle) }}">Fjern {{ brand.words.match }}</a>{% endif %}
             <form method="post" action="{{ url_for('safety.hide', handle=user.handle) }}" class="inline">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <button type="submit" class="link">Skjul</button>

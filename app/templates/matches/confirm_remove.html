@@ -1,15 +1,16 @@
 {% extends "base.html" %}
-{% block title %}Fjern match – {{ brand.name }}{% endblock %}
+{% set w = brand.words %}
+{% block title %}Fjern {{ w.match }} – {{ brand.name }}{% endblock %}
 {% block content %}
-  <h1>Fjern match med {{ other.display_name }}?</h1>
+  <h1>Fjern {{ w.match }} med {{ other.display_name }}?</h1>
   <div class="card">
     <p>Samtalen forsvinder for jer begge, og I kan ikke længere skrive sammen.</p>
-    <p><strong>Historikken slettes ikke.</strong> Den gemmes skjult i op til 12 måneder. Matcher I igen, kommer samtalen tilbage med den tidligere historik.</p>
-    <p class="muted">For at matche igen skal I begge like hinanden på ny.</p>
+    <p><strong>Historikken slettes ikke.</strong> Den gemmes skjult i op til 12 måneder. {{ w.matched_again }}, kommer samtalen tilbage med den tidligere historik.</p>
+    <p class="muted">For at {{ w.to_match }} igen skal I begge {{ w.to_like }} hinanden på ny.</p>
   </div>
   <form method="post" class="actions">
     {{ form.hidden_tag() }}
-    <button type="submit" class="button">Fjern match</button>
-    <a class="button secondary" href="{{ url_for('matches.index') }}">Behold match</a>
+    <button type="submit" class="button">Fjern {{ w.match }}</button>
+    <a class="button secondary" href="{{ url_for('matches.index') }}">Behold {{ w.match }}</a>
   </form>
 {% endblock %}

@@ -44,12 +44,12 @@
           {% for kind in notification_kinds %}
             {% set choice = notification_choices[kind.key] %}
             <tr>
-              <th scope="row">{{ kind.label }}<span class="muted">{{ kind.hint }}</span></th>
+              <th scope="row">{{ kind.label_text() }}<span class="muted">{{ kind.hint_text() }}</span></th>
               {% for channel in ['app', 'mail'] %}
                 <td>
                   {% if choice[channel] is none %}<span class="muted" aria-label="Findes ikke">–</span>
                   {% else %}<input type="checkbox" name="{{ channel }}_{{ kind.key }}" value="1"{% if choice[channel] %} checked{% endif %}
-                    aria-label="{{ kind.label }}: {{ 'på siden' if channel == 'app' else 'e-mail' }}">{% endif %}
+                    aria-label="{{ kind.label_text() }}:{{ 'på siden' if channel == 'app' else 'e-mail' }}">{% endif %}
                 </td>
               {% endfor %}
             </tr>
@@ -102,7 +102,7 @@
 
   <section class="card">
     <h2>Hent mine data</h2>
-    <p class="muted">Download en kopi af de oplysninger, vi har om dig: konto, profil, billeder, likes, matches, sendte beskeder og logins. <a href="{{ url_for('pages.privacy') }}">Læs privatlivspolitikken</a>.</p>
+    <p class="muted">Download en kopi af de oplysninger, vi har om dig: konto, profil, billeder, {{ brand.words.likes }}, {{ brand.words.matches }}, sendte beskeder og logins. <a href="{{ url_for('pages.privacy') }}">Læs privatlivspolitikken</a>.</p>
     <form method="post" action="{{ url_for('account.export_data') }}">
       {{ action_form.hidden_tag() }}
       <button type="submit" class="button secondary">Hent mine data (JSON)</button>
@@ -111,7 +111,7 @@
 
   <section class="card">
     <h2>Slet profil</h2>
-    <p class="muted">Sletter din profil, dine billeder, likes og matches. Det kan ikke fortrydes.</p>
+    <p class="muted">Sletter din profil, dine billeder, {{ brand.words.likes }} og {{ brand.words.matches }}. Det kan ikke fortrydes.</p>
     <a class="button secondary danger" href="{{ url_for('account.delete') }}">Slet min profil</a>
   </section>
   </div>

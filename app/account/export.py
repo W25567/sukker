@@ -15,7 +15,7 @@ from ..media.models import PrivateAccess, ProfileImage
 from ..messaging.admin_threads import messages as admin_messages
 from ..messaging.models import Message, MessageDeletion
 from ..notify import prefs as notification_prefs
-from ..profiles.fields import FIELDS, display_value
+from ..profiles.fields import display_value, profile_fields
 from ..profiles.models import Profile
 from ..safety.models import UserBlock, UserHide
 from ..subscriptions.models import Subscription
@@ -66,8 +66,8 @@ def export_user_data(user):
             "pre_release_accepteret": _iso(user.prerelease_accepted_at),
         },
         "profil": {
-            "felter": {f.label: display_value(profile, f) for f in FIELDS if display_value(profile, f)},
-            "skjulte_felter": [f.label for f in FIELDS if f.name in profile.hidden_fields],
+            "felter": {f.label: display_value(profile, f) for f in profile_fields() if display_value(profile, f)},
+            "skjulte_felter": [f.label for f in profile_fields() if f.name in profile.hidden_fields],
             "paa_pause": profile.paused_at is not None,
             "skjult_fra_soegning": profile.hidden_from_search,
             "kun_for_matches": profile.matches_only,

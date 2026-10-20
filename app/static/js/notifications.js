@@ -9,6 +9,7 @@
     return;
   }
   var url = box.getAttribute("data-url");
+  var matchText = box.getAttribute("data-match-text") || "Nyt match med";  // brandets ord (app/brands)
   var inChat = document.getElementById("thread") !== null;
   var INTERVAL = 10000;
   var MAX_DELAY = 120000;
@@ -73,7 +74,7 @@
     };
     if (known !== null && !inChat) {
       if (latest.match > known.match) {
-        toast("Nyt match med", data.latest_match.name, data.latest_match.url);
+        toast(matchText, data.latest_match.name, data.latest_match.url);
       }
       if (latest.message > known.message) {
         toast("Ny besked fra", data.latest_message.name, data.latest_message.url);

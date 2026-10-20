@@ -1,6 +1,11 @@
-"""Én samlet beskrivelse af profilfelterne. Bruges til visning, skjulte felter og fuldstændighed."""
-from dataclasses import dataclass
+"""Én samlet beskrivelse af profilfelterne. Bruges til visning, skjulte felter og fuldstændighed.
 
+FIELDS er alle felter. Brandet (app/brands) bestemmer, hvilke der bruges, og hvad nogle af dem hedder, så koden
+spørger profile_fields() og ikke FIELDS direkte.
+"""
+from dataclasses import dataclass, replace
+
+from ..brands import current_brand
 from . import choices, interests
 
 
@@ -40,6 +45,25 @@ FIELDS = [
 FIELD_NAMES = {f.name for f in FIELDS}
 # Felter, der altid vises: kønnet bruges til at matche, så det giver ikke mening at skjule det.
 NOT_HIDEABLE = {"gender"}
+# Felter, der kun giver mening på en datingside (Brand.dating_fields). Kolonnerne findes stadig i databasen.
+DATING_FIELDS = {"wants_children", "age_range", "preferred_distance_km", "long_distance_ok", "expectations"}
+
+
+def profile_fields():
+    """Felterne for det kørende brand: uden datingfelterne, hvis brandet ikke har dem, og med brandets navne for
+    "Interesseret i" og "Søger"."""
+    brand = current_brand()
+    looking_for = choices.looking_for()
+    result = []
+    for f in FIELDS:
+        if f.name in DATING_FIELDS and not brand.dating_fields:
+            continue
+        if f.name == "seeking_genders":
+            f = replace(f, label=brand.words["seeking_genders"])
+        elif f.name == "relationship_types":
+            f = replace(f, label=looking_for.label, choices=looking_for.choices)
+        result.append(f)
+    return result
 
 
 def display_value(profile, field):
@@ -72,7 +96,7 @@ def display_value(profile, field):
 def visible_fields(profile, *, as_owner):
     """Udfyldte felter grupperet til visning. Andre ser ikke felter, ejeren har skjult."""
     groups = {g: [] for g in GROUPS}
-    for field in FIELDS:
+    for field in profile_fields():
         if not as_owner and field.name in profile.hidden_fields and field.name not in NOT_HIDEABLE:
             continue
         value = display_value(profile, field)
@@ -83,6 +107,7 @@ def visible_fields(profile, *, as_owner):
 
 def completeness(profile, image_count):
     """Diskret indikator for profilens fuldstændighed (specifikation 2.2). Billeder tæller som ét felt."""
-    filled = sum(1 for f in FIELDS if display_value(profile, f))
-    total = len(FIELDS) + 1
+    fields = profile_fields()
+    filled = sum(1 for f in fields if display_value(profile, f))
+    total = len(fields) + 1
     return round(100 * (filled + (1 if image_count else 0)) / total)

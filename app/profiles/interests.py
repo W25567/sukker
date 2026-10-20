@@ -2,7 +2,7 @@
 ("I har 3 interesser til fælles").
 
 Kataloget kan redigeres af administrator under Administration → Indstillinger (indstillingen interest_catalog) uden
-at ændre i koden. Uden en gemt udgave bruges DEFAULT_CATALOG. Profilen gemmer en kode pr. interesse (slug af
+at ændre i koden. Uden en gemt udgave bruges brandets standard (DEFAULT_CATALOGS). Profilen gemmer en kode pr. interesse (slug af
 navnet). Fjernes en interesse fra kataloget, vises den ikke længere, men den bliver liggende på profilerne og kommer
 frem igen, hvis den tilføjes igen med samme navn. Omdøbes en interesse, er det en ny interesse.
 
@@ -27,6 +27,30 @@ DEFAULT_CATALOG = [
     ("Fællesskab", ["Frivilligt arbejde", "Foreningsliv", "Sprog", "Nye mennesker"]),
 ]
 
+# Til venskab (Nogen.nu): det, man kan mødes om. Samme regler som ovenfor – heller ikke tro, politik eller helbred.
+FRIENDSHIP_CATALOG = [
+    ("Mødes over", ["Kaffe", "Gåture", "Madlavning", "Brætspil", "Quiz", "Hygge derhjemme", "Fællesspisning"]),
+    ("Ud i naturen", ["Vandring", "Cykling", "Havet", "Svampe og bær", "Fuglekiggeri", "Camping",
+                      "Natur og friluftsliv"]),
+    ("Bevægelse", ["Løb", "Svømning", "Vinterbadning", "Yoga", "Dans", "Fitness", "Petanque", "Padel"]),
+    ("Kultur", ["Musik", "Koncerter", "Teater", "Film og serier", "Museer", "Bøger", "Læseklub", "Historie",
+                "Fotografi", "Kunst"]),
+    ("Hobby", ["Have", "Håndarbejde", "Kreative hobbyer", "Gør det selv", "Hunde", "Katte", "Gaming",
+               "Teknologi"]),
+    ("Ud at opleve", ["Rejser", "Udflugter", "Loppemarkeder", "Festivaler", "Restauranter", "Sommerhus"]),
+    ("Fællesskab", ["Frivilligt arbejde", "Foreningsliv", "Sprog", "Ny i byen", "Nye mennesker", "Online snak"]),
+]
+
+# Standardkataloget pr. brand (app/brands, Brand.interest_catalog).
+DEFAULT_CATALOGS = {"dating": DEFAULT_CATALOG, "venskab": FRIENDSHIP_CATALOG}
+
+
+def default_catalog():
+    """Det kørende brands standardkatalog, som det bruges, når administrator ikke har gemt sit eget."""
+    from ..brands import current_brand
+
+    return DEFAULT_CATALOGS[current_brand().interest_catalog]
+
 _FOLD = str.maketrans({"æ": "ae", "ø": "oe", "å": "aa", "é": "e", "ü": "u", "ö": "o", "ä": "a"})
 
 
@@ -40,7 +64,7 @@ def catalog():
     from ..core.settings import get_setting
 
     stored = get_setting("interest_catalog")
-    groups = stored if stored else DEFAULT_CATALOG
+    groups = stored if stored else default_catalog()
     return [(group, [(key_for(label), label) for label in labels]) for group, labels in groups]
 
 

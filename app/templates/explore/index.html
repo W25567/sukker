@@ -11,7 +11,7 @@
      "vis", når feltet ikke er krydset af, så et fravalg også virker, når standardvalget under Min profil er "skjul". #}
   {% macro hide_liked_field() %}
     <input type="hidden" name="likede" value="vis">
-    <div class="field checkbox"><label><input type="checkbox" name="likede" value="skjul"{% if hide_liked %} checked{% endif %}> Skjul profiler, jeg har liket</label></div>
+    <div class="field checkbox"><label><input type="checkbox" name="likede" value="skjul"{% if hide_liked %} checked{% endif %}> Skjul profiler, jeg har {{ brand.words.liked }}</label></div>
   {% endmacro %}
   {# Rækkefølgen kan kun vælges med Premium. Uden valget er den altid afstand og derefter nyeste profil. #}
   {% macro sort_field() %}
@@ -70,9 +70,9 @@
 
   <p class="muted">
     {% if seeking %}
-      Viser {% if seeking | length > 1 %}{{ seeking[:-1] | join(', ') }} og {{ seeking[-1] }}{% else %}{{ seeking[0] }}{% endif %}, som du har valgt under "Interesseret i".
+      Viser {% if seeking | length > 1 %}{{ seeking[:-1] | join(', ') }} og {{ seeking[-1] }}{% else %}{{ seeking[0] }}{% endif %}, som du har valgt under "{{ brand.words.seeking_genders }}".
     {% else %}
-      Vælg under "Interesseret i", hvem du vil se.
+      Vælg under "{{ brand.words.seeking_genders }}", hvem du vil se.
     {% endif %}
     <a href="{{ url_for('profiles.edit') }}">Ret på din profil</a>
   </p>
@@ -116,7 +116,7 @@
   {% else %}
     <div class="card">
       <p>{{ 'Ingen profiler matcher dine filtre.' if filters_active or hide_liked else 'Der er ingen profiler at vise endnu.' }}</p>
-      {% if hide_liked %}<p class="muted">Profiler, du har liket, er skjult. <a href="{{ url_for('explore.index', **toggle_args) }}">Vis dem</a></p>{% endif %}
+      {% if hide_liked %}<p class="muted">Profiler, du har {{ brand.words.liked }}, er skjult. <a href="{{ url_for('explore.index', **toggle_args) }}">Vis dem</a></p>{% endif %}
     </div>
   {% endif %}
 {% endblock %}

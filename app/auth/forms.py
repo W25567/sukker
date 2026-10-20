@@ -5,6 +5,7 @@ from markupsafe import Markup, escape
 from wtforms import BooleanField, EmailField, Field, PasswordField, SelectField, SelectMultipleField, StringField, widgets
 from wtforms.validators import DataRequired, Email, EqualTo, Length, Regexp, StopValidation, ValidationError
 
+from ..brands import current_brand
 from ..core import contact_info, name_rules
 from ..core.timeutil import age_on, today_local
 from ..profiles import choices
@@ -227,10 +228,14 @@ class ChangePasswordForm(FlaskForm):
 
 class DeleteAccountForm(FlaskForm):
     password = PasswordField("Dit password", validators=[DataRequired("Skriv dit password for at bekræfte.")])
-    confirm = BooleanField(
-        "Jeg forstår, at min profil, mine billeder, likes og matches slettes, og at det ikke kan fortrydes",
-        validators=[DataRequired("Bekræft, at du vil slette din profil.")],
-    )
+    # Teksten sættes i __init__ med brandets ord (app/brands).
+    confirm = BooleanField("", validators=[DataRequired("Bekræft, at du vil slette din profil.")])
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        words = current_brand().words
+        self.confirm.label.text = (f"Jeg forstår, at min profil, mine billeder, {words['likes']} og {words['matches']} "
+                                   "slettes, og at det ikke kan fortrydes")
 
 
 class ActionForm(FlaskForm):

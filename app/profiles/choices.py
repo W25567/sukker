@@ -1,4 +1,5 @@
 """Faste valgmuligheder til profilfelterne (specifikation 3.1). Koderne gemmes, teksterne vises."""
+from dataclasses import dataclass
 
 GENDERS = [
     ("kvinde", "Kvinde"),
@@ -22,6 +23,36 @@ RELATIONSHIP_TYPES = [
     ("uforpligtende", "Noget uforpligtende"),
     ("ved_ikke", "Ved ikke endnu"),
 ]
+
+# Til venskab (Nogen.nu): hvad man har lyst til at lave sammen. Koderne er højst 20 tegn som RELATIONSHIP_TYPES.
+ACTIVITIES = [
+    ("kaffe", "En kop kaffe"),
+    ("gaatur", "Gåture"),
+    ("samtaler", "Gode samtaler"),
+    ("aktiviteter", "Aktiviteter sammen"),
+    ("online", "Online snak"),
+]
+
+
+@dataclass(frozen=True)
+class LookingFor:
+    label: str  # på profilen
+    filter_label: str  # i filtrene i Udforsk
+    choices: list
+
+
+# Hvad feltet relationship_types spørger om. Brandet vælger (app/brands, Brand.looking_for). Hvert brand har sin
+# egen database, så de to slags koder blandes aldrig. Koder fra den anden liste vises ikke og fjernes ved næste gem.
+LOOKING_FOR = {
+    "relationship": LookingFor("Søger", "Søger", RELATIONSHIP_TYPES),
+    "activities": LookingFor("Hvad har du lyst til", "Har lyst til", ACTIVITIES),
+}
+
+
+def looking_for():
+    from ..brands import current_brand
+
+    return LOOKING_FOR[current_brand().looking_for]
 
 EDUCATION = [
     ("grundskole", "Grundskole"),

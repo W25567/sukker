@@ -104,6 +104,29 @@ Nginx-sitet (M9) sender http og www videre til `https://sukker.nu` med 301, komp
 statiske filer i et år. Det er sikkert, fordi alle statiske URL'er har `?v=<indholdshash>`. Staging kræver
 adgangskode. Google Search Console og evt. cookiefri besøgsstatistik sættes op ved lancering.
 
+## Nogen.nu
+
+Samme kode driver Nogen.nu, en gratis side for venskab og fællesskab (`SUKKER_BRAND=nogen`, egen database og
+egen installation, `python deploy.py --env nogen-staging`). Alle forskelle står i `app/brands/__init__.py`, og
+skabeloner i `app/templates/brands/nogen/` overstyrer de fælles med samme sti. Koden spørger brandet ("er
+modulet slået til?", "hvad hedder det?"), aldrig "er det Nogen.nu?".
+
+- **Ord:** `Brand.words` – "Like" og "Match" hedder "Hils på" og "Forbindelse" på Nogen.nu. Nye tekster om likes
+  og matches i fælles skabeloner skal bruge ordbogen (`{{ brand.words.match }}`), ellers står der "match" på Nogen.nu.
+- **Profil:** `dating_fields=False` skjuler Ønsker børn, Aldersinterval, Afstand, Langdistance og Forventninger.
+  "Søger" (kæreste, dating …) er erstattet af "Hvad har du lyst til" (kaffe, gåture, samtaler, aktiviteter, online
+  snak) via `Brand.looking_for` og `profiles/choices.LOOKING_FOR`. Valgene gemmes i den eksisterende kolonne
+  `relationship_types`, så der er ingen migration. "Interesseret i" hedder "Jeg vil helst møde".
+- **Interesser:** eget standardkatalog (`profiles/interests.FRIENDSHIP_CATALOG`), som administrator kan ændre.
+- **Formålssiden** ligger på `/hvorfor` (`Brand.purpose_path`). `/hvorfor-sukker` sender videre dertil.
+- **Egne tekster:** forside, formål, Sådan virker det, Tryghed, Om, velkomst, FAQ (`pages/content.BRAND_FAQ`),
+  brugervilkår og privatlivspolitik.
+
+> **Skal gennemlæses af ejeren før lancering:** `app/templates/brands/nogen/pages/terms.html` og
+> `privacy.html` er udkast, bygget på Sukker.nu's vilkår og politik uden afsnittene om dating, Premium, tidlige
+> fugle og privat album. De er ikke juridisk gennemgået. Tjek især afsnit 4 (opførsel) og 7 (pris) i vilkårene og
+> afsnit 2–3 (oplysninger og grundlag) i privatlivspolitikken.
+
 ## Drift og udgivelse
 
 Udgivelse, backup, overvågning og gendannelse er beskrevet i [deployment/README.md](deployment/README.md).

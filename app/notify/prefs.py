@@ -15,16 +15,26 @@ from ..extensions import db
 @dataclass(frozen=True)
 class Kind:
     key: str
-    label: str
+    label: str  # {ord} er brandets ord (app/brands), fx "Nye {matches}"
     hint: str
     app: bool | None  # standard på siden. None = findes ikke som besked på siden
     mail: bool | None  # standard pr. e-mail. None = sendes ikke pr. e-mail
     admin_only: bool = False
 
+    def label_text(self):
+        from ..brands import current_brand
+
+        return self.label.format(**current_brand().words)
+
+    def hint_text(self):
+        from ..brands import current_brand
+
+        return self.hint.format(**current_brand().words)
+
 
 KINDS = [
-    Kind("message", "Nye beskeder", "Fra dine matches.", True, True),
-    Kind("match", "Nye matches", "Når en, du har liket, liker dig tilbage.", True, True),
+    Kind("message", "Nye beskeder", "Fra dine {matches}.", True, True),
+    Kind("match", "Nye {matches}", "Når en, du har {liked}, {likes_you_back}.", True, True),
     Kind("request", "Anmodninger om private billeder", "Når nogen beder om at se dit private album.", True, True),
     Kind("grant", "Adgang til private billeder", "Når nogen giver dig adgang til deres private billeder.", True, True),
     Kind("admin", "Beskeder fra Administrator", "Fx svar på en henvendelse eller besked om en afgørelse.", True, True),

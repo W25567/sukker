@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{# Nogen.nu's "Om". Overstyrer templates/pages/about.html (app/brands). #}
+{% block page_class %}public{% endblock %}
+{% block content %}
+  <article class="prose">
+    <h1>Om {{ brand.name }}</h1>
+    <p class="lead">{{ brand.name }} er en dansk side for venskab og fællesskab. Målet er at gøre det lettere at finde nogen at gå en tur med, drikke en kop kaffe med eller bare tale med – gratis og uden at du skal dele mere, end du har lyst til.</p>
+
+    <h2>Det tror vi på</h2>
+    <ul>
+      <li><strong>Gratis for alle.</strong> Ingen skal betale for at finde nogen at være sammen med.</li>
+      <li><strong>Enkelhed.</strong> Du kommer i gang på få minutter og udfylder resten, når du vil.</li>
+      <li><strong>Tryghed.</strong> Kontakt kun, når begge vil. Blokering, anmeldelse og moderation er en fast del af siden.</li>
+      <li><strong>Ærlighed.</strong> Vi bruger aldrig falske profiler eller opdigtede tal for at få siden til at se travlere ud.</li>
+    </ul>
+    <p>{{ brand.name }} er kun for personer på 18 år eller derover og er til venskab og fællesskab. Siden er ikke en datingside, og den må ikke bruges til at sælge noget, hverve til noget eller formidle eller købe seksuelle ydelser.</p>
+
+    <h2>Kontakt</h2>
+    <p>Skriv til <a href="mailto:{{ contact_email }}">{{ contact_email }}</a>. Vil du anmelde en profil eller en besked, så brug Anmeld på siden – så kommer sagen hurtigst frem til en moderator.</p>
+    {% if company.name %}
+      <p>
+        {{ company.name }}{% if company.cvr %}<br>CVR-nr. {{ company.cvr }}{% endif %}
+        {% if company.address %}<br>{{ company.address }}{% endif %}
+      </p>
+    {% endif %}
+  </article>
+{% endblock %}

@@ -19,13 +19,17 @@ class FilterForm(Form):
     alder_fra = IntegerField("Alder fra", validators=[Optional(), NumberRange(18, 99)])
     alder_til = IntegerField("Alder til", validators=[Optional(), NumberRange(18, 99)])
     koen = MultiCheckboxField("Køn", choices=choices.GENDERS, validators=[Optional()])
-    soeger = MultiCheckboxField("Søger", choices=choices.RELATIONSHIP_TYPES, validators=[Optional()])
+    # Navn og valg sættes i __init__ efter brandet: "Søger" eller "Har lyst til" (profiles/choices.LOOKING_FOR).
+    soeger = MultiCheckboxField("Søger", choices=[], validators=[Optional()])
     kun_billeder = BooleanField("Kun profiler med billeder")
     # Valgmulighederne sættes i __init__, fordi administrator kan ændre kataloget (profiles/interests.py).
     interesser = MultiCheckboxField("Interesser", choices=[], validators=[Optional()])
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        looking_for = choices.looking_for()
+        self.soeger.label.text = looking_for.filter_label
+        self.soeger.choices = looking_for.choices
         self.interesser.choices = interests.choices()
         self.interest_groups = interests.catalog()
 
@@ -38,7 +42,7 @@ class FilterForm(Form):
             "age_min": self.alder_fra.data if valid("alder_fra") else None,
             "age_max": self.alder_til.data if valid("alder_til") else None,
             "genders": [g for g in self.koen.data or [] if g in dict(choices.GENDERS)],
-            "relationship_types": [r for r in self.soeger.data or [] if r in dict(choices.RELATIONSHIP_TYPES)],
+            "relationship_types": [r for r in self.soeger.data or [] if r in dict(self.soeger.choices)],
             "photos_only": bool(self.kun_billeder.data),
             "interests": [i for i in self.interesser.data or [] if i in dict(self.interesser.choices)],
         }

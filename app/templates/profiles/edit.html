@@ -8,12 +8,13 @@
   {% endfor %}
 {% endmacro %}
 
-{% macro checkboxes(f) %}
+{% macro checkboxes(f, hint='') %}
   <fieldset class="field{% if f.errors %} has-error{% endif %}">
     <legend>{{ f.label.text }}</legend>
     <div class="chips">
       {% for option in f %}<label class="chip">{{ option() }} {{ option.label.text }}</label>{% endfor %}
     </div>
+    {% if hint %}<small class="hint">{{ hint }}</small>{% endif %}
     {% for error in f.errors %}<small class="error">{{ error }}</small>{% endfor %}
   </fieldset>
 {% endmacro %}
@@ -39,7 +40,7 @@
       {{ hide_toggle('zodiac') }}
       {{ field(form.presentation) }}{{ hide_toggle('presentation') }}
       {{ field(form.gender) }}
-      {{ checkboxes(form.seeking_genders) }}{{ hide_toggle('seeking_genders') }}
+      {{ checkboxes(form.seeking_genders, brand.words.seeking_edit_hint) }}{{ hide_toggle('seeking_genders') }}
       {{ field(form.height_cm) }}{{ hide_toggle('height_cm') }}
       {{ field(form.occupation) }}{{ hide_toggle('occupation') }}
       {{ field(form.education) }}{{ hide_toggle('education') }}
@@ -48,7 +49,7 @@
     <section class="card">
       <h2>Livsstil</h2>
       {{ field(form.children) }}{{ hide_toggle('children') }}
-      {{ field(form.wants_children) }}{{ hide_toggle('wants_children') }}
+      {% if brand.dating_fields %}{{ field(form.wants_children) }}{{ hide_toggle('wants_children') }}{% endif %}
       {{ field(form.exercise) }}{{ hide_toggle('exercise') }}
       {{ field(form.smoking) }}{{ hide_toggle('smoking') }}
       {{ field(form.alcohol) }}{{ hide_toggle('alcohol') }}
@@ -69,8 +70,10 @@
     </section>
 
     <section class="card">
-      <h2>Relation</h2>
+      <h2>{{ brand.words.relation_group }}</h2>
       {{ checkboxes(form.relationship_types) }}{{ hide_toggle('relationship_types') }}
+      {# Datingfelterne findes kun, når brandet har dem (app/brands, profiles/fields.DATING_FIELDS). #}
+      {% if brand.dating_fields %}
       <div class="row">
         {{ field(form.age_min) }}
         {{ field(form.age_max) }}
@@ -79,6 +82,7 @@
       {{ field(form.preferred_distance_km) }}{{ hide_toggle('preferred_distance_km') }}
       {{ field(form.long_distance_ok) }}{{ hide_toggle('long_distance_ok') }}
       {{ field(form.expectations) }}{{ hide_toggle('expectations') }}
+      {% endif %}
     </section>
     </div>
 

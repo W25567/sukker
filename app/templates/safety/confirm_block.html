@@ -5,11 +5,11 @@
   <div class="card">
     <ul>
       <li>I kan ikke længere se hinandens profiler eller kontakte hinanden.</li>
-      <li>Et eventuelt match ophører, og jeres samtale forsvinder fra indbakken.</li>
+      <li>{{ brand.words.any_match | capitalize }} ophører, og jeres samtale forsvinder fra indbakken.</li>
       <li>I bliver ikke foreslået til hinanden igen.</li>
       <li>{{ target.display_name }} får ikke besked om blokeringen.</li>
     </ul>
-    <p class="muted">Du kan ophæve blokeringen under Konto. Et ophørt match kommer ikke igen af sig selv.</p>
+    <p class="muted">Du kan ophæve blokeringen under Konto. {{ brand.words.ended_match | capitalize }} kommer ikke igen af sig selv.</p>
   </div>
   <form method="post" class="actions">
     {{ form.hidden_tag() }}

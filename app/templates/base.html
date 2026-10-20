@@ -71,7 +71,7 @@
 
   {% if current_user and current_user.status == 'restricted' %}
     <div class="notice">
-      <span>Din konto er midlertidigt begrænset, mens en sag behandles. Du kan ikke ses af andre, like eller skrive.</span>
+      <span>Din konto er midlertidigt begrænset, mens en sag behandles. Du kan ikke ses af andre, {{ brand.words.to_like }} eller skrive.</span>
       <a href="{{ url_for('moderation.appeal') }}">Klag over afgørelsen</a>
     </div>
   {% endif %}
@@ -112,8 +112,8 @@
       <a href="{{ url_for('explore.index') }}"{% if here.startswith('explore.') %} aria-current="page"{% endif %}>Udforsk</a>
       {# Tallene i de røde bobler opdateres automatisk (static/js/notifications.js). #}
       <a href="{{ url_for('matches.index') }}"{% if here.startswith('matches.') %} aria-current="page"{% endif %}>
-        Likes<span class="nav-badge" data-badge="matches" data-label="nye matches"{% if not new_matches %} hidden{% endif %}
-                   aria-label="{{ new_matches }} nye matches">{{ new_matches }}</span>
+        {{ brand.words.nav }}<span class="nav-badge" data-badge="matches" data-label="nye {{ brand.words.matches }}"{% if not new_matches %} hidden{% endif %}
+                   aria-label="{{ new_matches }} nye {{ brand.words.matches }}">{{ new_matches }}</span>
       </a>
       <a href="{{ url_for('messaging.inbox') }}"{% if here.startswith('messaging.') %} aria-current="page"{% endif %}>
         Beskeder<span class="nav-badge" data-badge="messages" data-label="ulæste"{% if not unread_messages %} hidden{% endif %}
@@ -125,7 +125,8 @@
       </a>
     </nav>
     {# Midlertidige beskeder om nye beskeder og matches, nederst til højre. #}
-    <div class="toasts" id="toasts" aria-live="polite" data-url="{{ url_for('core.notifications') }}"></div>
+    <div class="toasts" id="toasts" aria-live="polite" data-url="{{ url_for('core.notifications') }}"
+         data-match-text="{{ brand.words.new_match | capitalize }} med"></div>
     <script src="{{ url_for('static', filename='js/notifications.js') }}" defer></script>
     {# Bekræftelse før handlinger, der ikke kan fortrydes (formularer med data-confirm). #}
     <script src="{{ url_for('static', filename='js/confirm.js') }}" defer></script>

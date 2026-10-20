@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{# Nogen.nu's velkomst. Overstyrer templates/pages/welcome.html (app/brands). Ingen Premium og ingen tidlige fugle. #}
+{% block title %}Velkommen – {{ brand.name }}{% endblock %}
+{% block content %}
+  <section class="welcome">
+    <h1>Velkommen, {{ current_user.display_name }}</h1>
+    <p class="lead">{{ brand.name }} er helt ny. Der er endnu ikke så mange profiler, og nogle steder i landet kan der gå lidt tid, før du finder nogen i nærheden. Det bliver bedre for hver ny, der kommer til – også takket være dig.</p>
+
+    <h2>Kom godt i gang</h2>
+    <ol class="steps">
+      <li><strong>Fortæl, hvad du har lyst til</strong><span>Kaffe, gåture, gode samtaler, aktiviteter eller en snak online – så andre ved, hvad I kan mødes om.</span></li>
+      <li><strong>Vælg dine interesser</strong><span>Så kan du se, hvad du har til fælles med andre.</span></li>
+      <li><strong>Skriv et par linjer om dig selv</strong><span>En kort præsentation gør det lettere at sige hej.</span></li>
+      <li><strong>Tilføj gerne et billede</strong><span>Det gør det lettere for andre at få et indtryk af dig. Du bestemmer selv, hvad du viser.</span></li>
+      <li><strong>Fortæl andre om {{ brand.name }}</strong><span>Jo flere vi er, jo større er chancen for at finde nogen i nærheden.</span></li>
+    </ol>
+    <p class="muted">Under "{{ brand.words.seeking_genders }}" kan du vælge, hvem du helst vil møde. Lader du feltet stå tomt, møder du alle.</p>
+
+    <form method="post" class="form actions">
+      {{ form.hidden_tag() }}
+      <button type="submit" name="goto" value="profil" class="button">Udfyld min profil</button>
+      <button type="submit" name="goto" value="senere" class="button secondary">Senere</button>
+    </form>
+  </section>
+{% endblock %}

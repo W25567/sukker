@@ -99,7 +99,7 @@
       </ul>
     {% endif %}
     {% if not images %}
-      <p class="muted">Du har ingen billeder endnu. Profiler med billeder får flere likes.</p>
+      <p class="muted">Du har ingen billeder endnu. Profiler med billeder får flere {{ brand.words.likes }}.</p>
     {% endif %}
 
     {% if brand.private_album %}
@@ -173,7 +173,7 @@
       <div class="field checkbox"><label>{{ explore_form.hide_liked() }} {{ explore_form.hide_liked.label.text }}</label></div>
       <button type="submit" class="button secondary">Gem standardvalg</button>
     </form>
-    <p class="muted">Dit standardvalg. Du kan altid slå det til og fra under Filtre i Udforsk. Et match vises altid.</p>
+    <p class="muted">Dit standardvalg. Du kan altid slå det til og fra under Filtre i Udforsk. {{ brand.words.a_match | capitalize }} vises altid.</p>
   </section>
 
   <section class="card" id="verificering">
@@ -190,7 +190,7 @@
 
   <section class="card">
     <h2>Pause</h2>
-    <p class="muted">På pause forsvinder profilen fra Udforsk, men dine matches og samtaler bevares.</p>
+    <p class="muted">På pause forsvinder profilen fra Udforsk, men dine {{ brand.words.matches }} og samtaler bevares.</p>
     <form method="post" action="{{ url_for('profiles.toggle_pause') }}">
       {{ action_form.hidden_tag() }}
       <button type="submit" class="button secondary">{{ 'Aktivér profilen igen' if profile.is_paused else 'Sæt profilen på pause' }}</button>

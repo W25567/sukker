@@ -360,7 +360,7 @@ def settings():
         wordlists=[(key, label, hint, "\n".join(get_setting(key) or []), NAME_RULES_BUILT_IN[key])
                    for key, label, hint in WORDLIST_META],
         interest_text=interests.to_text(get_setting("interest_catalog")) if get_setting("interest_catalog") else "",
-        default_interest_text=interests.to_text(interests.DEFAULT_CATALOG),
+        default_interest_text=interests.to_text(interests.default_catalog()),
         form=FlaskForm(),
     )
 

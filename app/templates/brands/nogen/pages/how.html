@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{# Nogen.nu's "Sådan virker det". Overstyrer templates/pages/how.html (app/brands). #}
+{% block page_class %}public{% endblock %}
+{% block content %}
+  <article class="prose">
+    <h1>Sådan virker {{ brand.name }}</h1>
+    <p class="lead">{{ brand.name }} er bygget til at være enkel. Du kommer i gang på få minutter og udfylder resten, når du har lyst. Alt er gratis.</p>
+
+    <h2>1. Opret en profil</h2>
+    <p>Du skal kun bruge et navn, din fødselsdato, dit postnummer, en e-mailadresse og et password. Navnet, andre ser, behøver ikke være dit rigtige navn. Fødselsdatoen bruges til at vise din alder, og postnummeret bruges til at finde din kommune – ingen af dem vises for andre.</p>
+    <p>Når du har bekræftet din e-mail, er profilen klar.</p>
+
+    <h2>2. Fortæl, hvad du har lyst til</h2>
+    <p>Skriv et par linjer om dig selv, vælg dine interesser, og fortæl, hvad du har lyst til: en kop kaffe, en gåtur, gode samtaler, aktiviteter sammen eller en snak online. Under "{{ brand.words.seeking_genders }}" kan du vælge, hvem du helst vil møde – lader du feltet stå tomt, møder du alle. Alt er frivilligt, og du kan skjule de felter, du ikke vil vise.</p>
+
+    {% if distance_visible() %}
+      <h2>3. Find nogen i nærheden</h2>
+      <p>Under Udforsk ser du andre profiler sorteret efter omtrentlig afstand og derefter nyeste profil. Afstanden beregnes fra kommune til kommune og vises som "I nærheden" eller fx "ca. 40 km". Du kan filtrere på afstand, alder, interesser og hvad folk har lyst til, og du kan se, hvilke interesser I har til fælles.</p>
+    {% else %}
+      <h2>3. Find nogen</h2>
+      <p>Under Udforsk ser du andre profiler med de nyeste først. Ingen algoritme bestemmer, hvem du ser. Du kan filtrere på alder, interesser og hvad folk har lyst til, og du kan se, hvilke interesser I har til fælles.</p>
+    {% endif %}
+
+    <h2>4. Hils på</h2>
+    <p>Har du lyst til at mødes med nogen, så tryk <strong>{{ brand.words.like }}</strong>. Hilser den anden igen, er I forbundet. Ingen kan skrive til dig, før I begge har hilst. En forbindelse kan altid fjernes igen, og så skjules jeres samtale for jer begge.</p>
+
+    <h2>5. Skriv sammen og mødes</h2>
+    <p>Når I er forbundet, kan I skrive sammen. Beskederne er private mellem jer. Tag den tid, I har brug for, og mød første gang et offentligt sted.</p>
+
+    <h2>Hvis noget føles forkert</h2>
+    <p>Du kan altid skjule en profil, blokere en person eller anmelde en profil, en samtale eller en enkelt besked. <a href="{{ url_for('pages.safety') }}">Læs mere om tryghed og sikkerhed</a>.</p>
+
+    <p><a class="button" href="{{ url_for('auth.register') }}">Opret gratis profil</a></p>
+  </article>
+{% endblock %}

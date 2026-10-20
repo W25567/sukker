@@ -1,34 +1,35 @@
 {% extends "base.html" %}
 {% from "_like.html" import like_button %}
 {% from "_avatar.html" import avatar %}
-{% block title %}Likes og matches – {{ brand.name }}{% endblock %}
+{% set w = brand.words %}
+{% block title %}{{ w.likes | capitalize }} og {{ w.matches }} – {{ brand.name }}{% endblock %}
 {% block content %}
-  <h1>Likes</h1>
+  <h1>{{ w.nav }}</h1>
   <div class="panels">
   <section class="card">
-    <h2>Dine matches</h2>
+    <h2>Dine {{ w.matches }}</h2>
     {% if matches %}
       <ul class="person-list">
         {% for other, age, is_new in matches %}
           <li>
             <a class="person" href="{{ url_for('profiles.view', handle=other.handle, fra=url_for('matches.index')) }}">
               {{ avatar(other, avatars.get(other.id)) }}
-              <span>{{ other.display_name }}, {{ age }}{% if is_new %} <span class="new-badge">Nyt</span>{% endif %}</span>
+              <span>{{ other.display_name }}, {{ age }}{% if is_new %} <span class="new-badge">{{ w.new_badge }}</span>{% endif %}</span>
             </a>
             <span class="row-actions">
               <a class="button small" href="{{ url_for('messaging.start', handle=other.handle) }}">Skriv</a>
-              <a class="muted small-link" href="{{ url_for('matches.remove', handle=other.handle) }}">Fjern match</a>
+              <a class="muted small-link" href="{{ url_for('matches.remove', handle=other.handle) }}">Fjern {{ w.match }}</a>
             </span>
           </li>
         {% endfor %}
       </ul>
     {% else %}
-      <p class="muted">Du har ingen matches endnu. Når I liker hinanden, bliver det et match.</p>
+      <p class="muted">Du har ingen {{ w.matches }} endnu. Når I {{ w.like_each_other }}, bliver det {{ w.a_match }}.</p>
     {% endif %}
   </section>
 
   <section class="card">
-    <h2>Har liket dig</h2>
+    <h2>{{ w.liked_you | capitalize }}</h2>
     {% if can_see_likers %}
       {% if likers %}
         <ul class="person-list">
@@ -43,13 +44,13 @@
           {% endfor %}
         </ul>
       {% else %}
-        <p class="muted">Ingen nye likes lige nu.</p>
+        <p class="muted">Ingen nye {{ w.likes }} lige nu.</p>
       {% endif %}
     {% else %}
       {% if like_count %}
-        <p><strong>{{ like_count }} {{ 'person har' if like_count == 1 else 'personer har' }} liket dig.</strong></p>
+        <p><strong>{{ like_count }} {{ 'person' if like_count == 1 else 'personer' }} {{ w.liked_you }}.</strong></p>
       {% else %}
-        <p class="muted">Ingen nye likes lige nu.</p>
+        <p class="muted">Ingen nye {{ w.likes }} lige nu.</p>
       {% endif %}
       <p class="muted">Med Premium eller Premium+ kan du se, hvem der har liket dig. Ellers opdager du det, når I matcher.</p>
     {% endif %}

@@ -2,9 +2,10 @@ from flask_wtf import FlaskForm
 from wtforms import BooleanField, IntegerField, SelectField, SelectMultipleField, StringField, TextAreaField, widgets
 from wtforms.validators import DataRequired, Length, NumberRange, Optional, ValidationError
 
+from ..brands import current_brand
 from ..core import contact_info
 from . import choices, interests
-from .fields import FIELDS, NOT_HIDEABLE
+from .fields import NOT_HIDEABLE, profile_fields
 
 
 class MultiCheckboxField(SelectMultipleField):
@@ -43,6 +44,7 @@ class ProfileForm(FlaskForm):
                             validators=[Optional(), Length(max=300), contact_info.validator])
     travel = StringField("Rejser", filters=[_strip_or_none], validators=[Optional(), Length(max=300), contact_info.validator])
 
+    # Navn og valg sættes i __init__ efter brandet: "Søger" eller "Hvad har du lyst til" (choices.LOOKING_FOR).
     relationship_types = MultiCheckboxField("Søger", choices=choices.RELATIONSHIP_TYPES, validators=[Optional()])
     age_min = IntegerField("Alder fra", validators=[Optional(), NumberRange(18, 99, "Alder skal være mellem 18 og 99.")])
     age_max = IntegerField("Alder til", validators=[Optional(), NumberRange(18, 99, "Alder skal være mellem 18 og 99.")])
@@ -53,13 +55,26 @@ class ProfileForm(FlaskForm):
     expectations = TextAreaField("Forventninger", filters=[_strip_or_none],
                                  validators=[Optional(), Length(max=500), contact_info.validator])
 
-    # Stjernetegnet beregnes ud fra fødselsdatoen og kan ikke redigeres, kun skjules.
-    hidden_fields = MultiCheckboxField("Skjul for andre", choices=[(f.name, f.label) for f in FIELDS if f.name not in NOT_HIDEABLE]
-                                       + [("zodiac", "Stjernetegn")],
-                                       validators=[Optional()])
+    # Stjernetegnet beregnes ud fra fødselsdatoen og kan ikke redigeres, kun skjules. Valgene sættes i __init__.
+    hidden_fields = MultiCheckboxField("Skjul for andre", choices=[], validators=[Optional()])
+
+    # Formularfelterne bag datingfelterne (fields.DATING_FIELDS). Fjernes, når brandet ikke har dem (app/brands).
+    DATING_FORM_FIELDS = ("wants_children", "age_min", "age_max", "preferred_distance_km", "long_distance_ok",
+                          "expectations")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        brand = current_brand()
+        if not brand.dating_fields:
+            for name in self.DATING_FORM_FIELDS:
+                delattr(self, name)
+        fields = profile_fields()
+        self.seeking_genders.label.text = brand.words["seeking_genders"]
+        looking_for = choices.looking_for()
+        self.relationship_types.label.text = looking_for.label
+        self.relationship_types.choices = looking_for.choices
+        self.hidden_fields.choices = ([(f.name, f.label) for f in fields if f.name not in NOT_HIDEABLE]
+                                      + [("zodiac", "Stjernetegn")])
         self.interest_tags.choices = interests.choices()
         self.interest_groups = interests.catalog()
 
@@ -76,17 +91,23 @@ class ProfileForm(FlaskForm):
                      "exercise", "smoking", "alcohol", "interests", "travel", "age_min", "age_max", "expectations")
     LIST_FIELDS = ("seeking_genders", "relationship_types", "hidden_fields")
 
+    def _present(self, names):
+        """Kun de felter, formularen har for det kørende brand. Fjernede felter lades urørt på profilen."""
+        return [name for name in names if name in self._fields]
+
     def load(self, profile):
-        for name in self.SCALAR_FIELDS:
+        for name in self._present(self.SCALAR_FIELDS):
             getattr(self, name).data = getattr(profile, name)
         for name in self.LIST_FIELDS:
             getattr(self, name).data = list(getattr(profile, name))
         self.interest_tags.data = list(profile.interest_tags or [])
-        self.preferred_distance_km.data = str(profile.preferred_distance_km or "")
-        self.long_distance_ok.data = {True: "ja", False: "nej"}.get(profile.long_distance_ok, "")
+        if "preferred_distance_km" in self._fields:
+            self.preferred_distance_km.data = str(profile.preferred_distance_km or "")
+        if "long_distance_ok" in self._fields:
+            self.long_distance_ok.data = {True: "ja", False: "nej"}.get(profile.long_distance_ok, "")
 
     def save(self, profile):
-        for name in self.SCALAR_FIELDS:
+        for name in self._present(self.SCALAR_FIELDS):
             setattr(profile, name, getattr(self, name).data or None)
         for name in self.LIST_FIELDS:
             setattr(profile, name, getattr(self, name).data or [])
@@ -94,15 +115,23 @@ class ProfileForm(FlaskForm):
         current = {key for key, _ in self.interest_tags.choices}
         profile.interest_tags = list(self.interest_tags.data or []) + [
             key for key in profile.interest_tags or [] if key not in current]
-        profile.preferred_distance_km = int(self.preferred_distance_km.data) if self.preferred_distance_km.data else None
-        profile.long_distance_ok = {"ja": True, "nej": False}.get(self.long_distance_ok.data)
+        if "preferred_distance_km" in self._fields:
+            profile.preferred_distance_km = (int(self.preferred_distance_km.data) if self.preferred_distance_km.data
+                                             else None)
+        if "long_distance_ok" in self._fields:
+            profile.long_distance_ok = {"ja": True, "nej": False}.get(self.long_distance_ok.data)
 
 
 class VisibilityForm(FlaskForm):
     hidden_from_search = BooleanField("Skjul min profil fra søgninger")
-    matches_only = BooleanField("Vis kun min profil for personer, jeg har et match med")
+    matches_only = BooleanField("")  # teksten sættes i __init__ med brandets ord
     show_kommune = BooleanField("Vis min kommune på profilen")
     show_activity = BooleanField("Vis når jeg har været aktiv for nylig")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.matches_only.label.text = (
+            f"Vis kun min profil for personer, jeg har {current_brand().words['a_match']} med")
 
     def load(self, profile):
         for name in ("hidden_from_search", "matches_only", "show_kommune", "show_activity"):
@@ -116,7 +145,12 @@ class VisibilityForm(FlaskForm):
 
 
 class ExplorePreferenceForm(FlaskForm):
-    hide_liked = BooleanField("Skjul profiler, jeg har liket, indtil de liker tilbage")
+    hide_liked = BooleanField("")  # teksten sættes i __init__ med brandets ord
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        words = current_brand().words
+        self.hide_liked.label.text = f"Skjul profiler, jeg har {words['liked']}, indtil de {words['like_back']}"
 
     def save(self, profile):
         profile.hide_liked = bool(self.hide_liked.data)
