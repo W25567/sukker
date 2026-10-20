@@ -94,8 +94,8 @@ linje i registret.
   at platformen endnu ikke er officielt i luften (`app/pages/prerelease.py`). Efter tidspunktet forsvinder det af sig selv.
 - **Ændres vilkårene væsentligt**, hæves `TERMS_VERSION` i `app/pages/legal.py`. Alle skal så acceptere igen ved
   næste besøg. Konti, der fandtes før M8, skal acceptere de første vilkår.
-- **Logo og ikoner** ligger alle i `app/static/images`. Favicons, app-ikoner og `site.webmanifest` kommer fra
-  RealFaviconGenerator, og originalerne af logoet ligger i `images/full/`. De afledte filer (`logo-64.webp`,
+- **Logo og ikoner** ligger i `app/static/brands/<brand>/`. Favicons, app-ikoner og `site.webmanifest` kommer fra
+  RealFaviconGenerator, og originalerne af logoet ligger i `full/`. Sukker.nu's afledte filer (`logo-64.webp`,
   `full-logo-280.webp`, en mørk variant og delingsbilledet `og.jpg`) laves med
   `python scripts\make_brand_images.py`. Brugerbilleder indgår aldrig.
 - **Staging**: `SUKKER_NOINDEX_ALL=1` giver noindex på alt og `Disallow: /` i robots.txt.
@@ -122,10 +122,9 @@ modulet slået til?", "hvad hedder det?"), aldrig "er det Nogen.nu?".
 - **Egne tekster:** forside, formål, Sådan virker det, Tryghed, Om, velkomst, FAQ (`pages/content.BRAND_FAQ`),
   brugervilkår og privatlivspolitik.
 
-> **Skal gennemlæses af ejeren før lancering:** `app/templates/brands/nogen/pages/terms.html` og
-> `privacy.html` er udkast, bygget på Sukker.nu's vilkår og politik uden afsnittene om dating, Premium, tidlige
-> fugle og privat album. De er ikke juridisk gennemgået. Tjek især afsnit 4 (opførsel) og 7 (pris) i vilkårene og
-> afsnit 2–3 (oplysninger og grundlag) i privatlivspolitikken.
+> **Vilkår og privatlivspolitik:** `app/templates/brands/nogen/pages/terms.html` og `privacy.html` bygger på
+> Sukker.nu's vilkår og politik uden afsnittene om dating, Premium, tidlige fugle og privat album. Gennemlæst og
+> godkendt af ejeren 20-10-2026, men ikke juridisk gennemgået.
 
 ## Drift og udgivelse
 
@@ -146,5 +145,4 @@ Baggrundsopgaverne kan også køres lokalt:
 ```
 
 Kendte begrænsninger: Rate limiting gemmes i hukommelsen pr. Gunicorn-proces, så grænserne er reelt
-lidt højere med flere processer. E-mail før Premium-perioden udløber (specifikation 10.1) og
-notifikationer (12.4) er endnu ikke bygget.
+lidt højere med flere processer.

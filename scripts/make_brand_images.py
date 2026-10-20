@@ -1,7 +1,7 @@
-"""Laver de afledte logofiler og det generiske delingsbillede (Open Graph) i app/static/images.
+"""Laver Sukker.nu's afledte logofiler og det generiske delingsbillede (Open Graph) i app/static/brands/sukker.
 
-Kilden er logoerne i app/static/images/full/. Favicons og app-ikoner kommer fra RealFaviconGenerator
-og ligger direkte i app/static/images. Kør scriptet igen, når logoet ændres:
+Kilden er logoerne i app/static/brands/sukker/full/. Favicons og app-ikoner kommer fra RealFaviconGenerator
+og ligger direkte i app/static/brands/sukker. Farver og tekster er Sukker.nu's. Kør scriptet igen, når logoet ændres:
 
     .venv\\Scripts\\python.exe scripts\\make_brand_images.py
 
@@ -11,7 +11,8 @@ import os
 
 from PIL import Image, ImageDraw, ImageFont
 
-IMAGES = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "app", "static", "images")
+IMAGES = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "app", "static", "brands",
+                      "sukker")
 SOURCE_LOGO = os.path.join(IMAGES, "full", "logo.png")  # hjertet alene
 SOURCE_FULL = os.path.join(IMAGES, "full", "full-logo.png")  # hjerte og navn
 
