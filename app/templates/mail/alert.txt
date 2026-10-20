@@ -1,4 +1,4 @@
-Overvågning af Sukker.nu ({{ environment }})
+Overvågning af {{ brand.name }} ({{ environment }})
 {% if problems %}
 Problemer lige nu:
 {% for problem in problems %}

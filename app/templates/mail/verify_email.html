@@ -3,7 +3,7 @@
 {% block title %}Bekræft din e-mail{% endblock %}
 {% block content %}
   <p style="margin:0 0 16px;">Hej {{ name }}</p>
-  <p style="margin:0 0 16px;">Tak fordi du har oprettet en profil på Sukker.nu. Bekræft din e-mail ved at trykke på knappen. Så får du også dine 3 måneders Premium.</p>
+  <p style="margin:0 0 16px;">Tak fordi du har oprettet en profil på {{ brand.name }}. Bekræft din e-mail ved at trykke på knappen.{% if brand.premium %} Så får du også din gratis Premium.{% endif %}</p>
   {{ button(verify_url, "Bekræft din e-mail") }}
   {{ fallback(verify_url) }}
   <p style="margin:0 0 16px;">Linket virker i {{ hours }} timer og kan kun bruges én gang.</p>

@@ -40,7 +40,8 @@ def templates():
 
 def test_committed_environments_file_is_valid_json_without_secrets():
     data = deploy.load_environments()
-    assert set(data) == {"production", "staging"}
+    assert {"production", "staging", "nogen-staging"} <= set(data)
+    assert all(deploy.validate(name, data) == [] for name in data)
     text = open(deploy.ENVIRONMENTS_FILE, encoding="utf-8").read().lower()
     assert "password" not in text and "secret" not in text and "age-secret-key" not in text
 
@@ -60,6 +61,27 @@ def test_production_requires_public_age_keys():
                for e in deploy.validate("production", environments(production={"backup_age_recipients": []})))
     private = environments(production={"backup_age_recipients": ["AGE-SECRET-KEY-1ABC"]})
     assert any("aldrig private nøgler" in e for e in deploy.validate("production", private))
+
+
+def test_other_brands_get_their_own_resources():
+    envs = environments()
+    envs["nogen-staging"] = {**COMPLETE, "brand": "nogen", "domain": "staging.nogen.nu", "aliases": [],
+                             "backup_age_recipients": []}
+    envs["nogen"] = {**COMPLETE, "brand": "nogen", "production": True, "domain": "nogen.nu", "aliases": [],
+                     "backup_remote": "u1@u1.your-storagebox.de:nogen/"}
+    staging, production = deploy.resolve("nogen-staging", envs["nogen-staging"]), deploy.resolve("nogen", envs["nogen"])
+    assert (staging["service"], staging["database"], staging["basic_auth"]) == ("nogen-staging", "nogen_staging", True)
+    assert (production["service"], production["app_root"], production["backup_enabled"]) == ("nogen", "/opt/nogen", True)
+    assert production["env_settings"]["SUKKER_BRAND"] == "nogen" and not production["basic_auth"]
+    assert all(deploy.validate(name, envs) == [] for name in envs)
+    # Produktion for et andet brand kræver også krypteret backup uden for serveren
+    envs["nogen"]["backup_remote"] = ""
+    assert any("nogen.backup_remote mangler" in e for e in deploy.validate("nogen", envs))
+    # To produktionsmiljøer må ikke dele mappe på backupserveren
+    envs["nogen"]["backup_remote"] = COMPLETE["backup_remote"]
+    assert any("backup_remote" in e and "deler" in e for e in deploy.validate("nogen", envs))
+    envs["nogen"]["brand"] = "findes-ikke"
+    assert any("brand er ukendt" in e for e in deploy.validate("nogen", envs))
 
 
 def test_production_requires_offsite_backup_and_proper_sender():

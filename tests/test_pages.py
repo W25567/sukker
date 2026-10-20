@@ -60,7 +60,7 @@ def test_public_page_is_indexable_with_metadata(client, path):
     assert len(re.findall(r"<h1[ >]", html)) == 1
     assert meta(html, "description")
     assert f'<link rel="canonical" href="http://localhost{path}">' in html
-    assert meta(html, "og:image").startswith("http://localhost/static/images/og.jpg?v=")
+    assert meta(html, "og:image").startswith("http://localhost/static/brands/sukker/og.jpg?v=")
     assert "/billede/" not in html  # aldrig brugerbilleder
 
 
@@ -178,12 +178,12 @@ def test_icons_logos_and_manifest_exist(client):
     html = client.get("/").get_data(as_text=True)
     paths = set(re.findall(r'(?:href|src|srcset)="(/static/[^"]+)"', html))
     paths.add(meta(html, "og:image").removeprefix("http://localhost"))
-    assert {"/static/images/site.webmanifest", "/static/images/full-logo-280.webp"} <= {p.split("?")[0] for p in paths}
+    assert {"/static/brands/sukker/site.webmanifest", "/static/brands/sukker/full-logo-280.webp"} <= {p.split("?")[0] for p in paths}
     assert all("?v=" in p for p in paths)  # cache-busting, så Nginx kan cache statiske filer længe
     for path in paths:
         assert client.get(path).status_code == 200, path
 
-    manifest = json.loads(client.get("/static/images/site.webmanifest").get_data(as_text=True))
+    manifest = json.loads(client.get("/static/brands/sukker/site.webmanifest").get_data(as_text=True))
     assert manifest["name"] == "Sukker.nu"
     for icon in manifest["icons"]:
         assert client.get(icon["src"]).status_code == 200, icon["src"]

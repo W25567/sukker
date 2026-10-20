@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% from "_avatar.html" import avatar %}
-{% block title %}Adgang til private billeder – Sukker.nu{% endblock %}
+{% block title %}Adgang til private billeder – {{ brand.name }}{% endblock %}
 {% block content %}
   <a class="back-link" href="{{ url_for('profiles.me') }}#billeder">← Min profil</a>
   <h1>Adgang til private billeder</h1>

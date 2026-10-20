@@ -3,13 +3,13 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}{{ seo.title if seo else 'Sukker.nu' }}{% endblock %}</title>
+  <title>{% block title %}{{ seo.title if seo else brand.name }}{% endblock %}</title>
   {% if seo %}
     {# Kun offentlige sider har seo. Delingsbilledet er altid generisk, aldrig et brugerbillede (specifikation 12.5). #}
     <meta name="description" content="{{ seo.description }}">
     <link rel="canonical" href="{{ seo.canonical }}">
     <meta property="og:type" content="website">
-    <meta property="og:site_name" content="Sukker.nu">
+    <meta property="og:site_name" content="{{ brand.name }}">
     <meta property="og:locale" content="da_DK">
     <meta property="og:title" content="{{ seo.title }}">
     <meta property="og:description" content="{{ seo.description }}">
@@ -17,7 +17,7 @@
     <meta property="og:image" content="{{ seo.image }}">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
-    <meta property="og:image:alt" content="Sukker.nu – dating for voksne">
+    <meta property="og:image:alt" content="{{ brand.og_alt }}">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="{{ seo.title }}">
     <meta name="twitter:description" content="{{ seo.description }}">
@@ -25,20 +25,21 @@
   {% endif %}
   {% if structured %}<script type="application/ld+json">{{ structured | tojson }}</script>{% endif %}
   {% block meta %}{% endblock %}
-  {# Ikonerne i static/images kommer fra RealFaviconGenerator. #}
-  <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/favicon-96x96.png') }}" sizes="96x96">
-  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='images/favicon.svg') }}">
+  {# Ikonerne og logoet ligger i static/brands/<brand>/ (app/brands). #}
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename=brand.asset('favicon-96x96.png')) }}" sizes="96x96">
+  {% if brand.svg_favicon %}<link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename=brand.asset('favicon.svg')) }}">{% endif %}
   <link rel="shortcut icon" href="{{ url_for('pages.favicon') }}">
-  <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='images/apple-touch-icon.png') }}">
-  <meta name="apple-mobile-web-app-title" content="Sukker.nu">
-  <link rel="manifest" href="{{ url_for('static', filename='images/site.webmanifest') }}">
-  <meta name="theme-color" content="#a8325a">
+  <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename=brand.asset('apple-touch-icon.png')) }}">
+  <meta name="apple-mobile-web-app-title" content="{{ brand.name }}">
+  <link rel="manifest" href="{{ url_for('static', filename=brand.asset('site.webmanifest')) }}">
+  <meta name="theme-color" content="{{ brand.theme_color }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+  {% if brand.stylesheet %}<link rel="stylesheet" href="{{ url_for('static', filename=brand.asset('brand.css')) }}">{% endif %}
 </head>
-<body{% if current_user %} class="member"{% endif %}>
+<body class="brand-{{ brand.key }}{% if current_user %} member{% endif %}">
   <header class="topbar">
     <a class="brand" href="{{ url_for('core.home') }}">
-      <img src="{{ url_for('static', filename='images/logo-64.webp') }}" width="38" height="32" alt=""><span class="brand-name">Sukker<span>.nu</span></span>
+      <img src="{{ url_for('static', filename=brand.asset('logo-64.webp')) }}" width="{{ brand.logo_size[0] }}" height="{{ brand.logo_size[1] }}" alt=""><span class="brand-name">{{ brand.name_main }}<span>{{ brand.name_tld }}</span></span>
     </a>
     <nav class="topnav">
       {% if current_user %}
@@ -64,7 +65,7 @@
   {% if prerelease_label and request.endpoint != 'pages.prerelease_landing' %}
     {# Vises indtil lanceringen (pages/prerelease.py), så det altid er tydeligt, at siden er i pre-release. #}
     <a class="prerelease-bar" href="{{ url_for('pages.prerelease_landing') }}">
-      <strong>Pre-release</strong> · Sukker.nu åbner officielt {{ prerelease_label }}
+      <strong>Pre-release</strong> · {{ brand.name }} åbner officielt {{ prerelease_label }}
     </a>
   {% endif %}
 
@@ -77,7 +78,7 @@
 
   {% if current_user and not current_user.is_verified %}
     <div class="notice">
-      <span>Bekræft din e-mail for at få adgang til alt, også dine 3 måneders Premium.</span>
+      <span>Bekræft din e-mail for at få adgang til alt{% if brand.premium %}, også din gratis Premium{% endif %}.</span>
       <form method="post" action="{{ url_for('auth.resend_verification') }}" class="inline">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button type="submit" class="link">Send mailen igen</button>
@@ -97,10 +98,10 @@
   {% if not current_user %}
     {# Kun for besøgende. Medlemmer finder de samme sider under Min profil → Hjælp. #}
     <footer class="site-footer">
-      <nav aria-label="Om Sukker.nu">
+      <nav aria-label="Om {{ brand.name }}">
         {% for page in footer_pages() %}<a href="{{ url_for(page.endpoint) }}">{{ page.nav_label }}</a>{% endfor %}
       </nav>
-      <p class="footer-note">© {{ current_year }} Sukker.nu · Kun for personer på 18 år eller derover</p>
+      <p class="footer-note">© {{ current_year }} {{ brand.name }} · Kun for personer på 18 år eller derover</p>
     </footer>
   {% endif %}
 

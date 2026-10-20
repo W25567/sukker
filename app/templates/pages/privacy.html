@@ -7,14 +7,14 @@
 
     <h2>1. Dataansvarlig</h2>
     <p>
-      {% if company.name %}{{ company.name }}{% if company.cvr %}, CVR-nr. {{ company.cvr }}{% endif %}{% if company.address %}, {{ company.address }}{% endif %}{% else %}Sukker.nu{% endif %}
+      {% if company.name %}{{ company.name }}{% if company.cvr %}, CVR-nr. {{ company.cvr }}{% endif %}{% if company.address %}, {{ company.address }}{% endif %}{% else %}{{ brand.name }}{% endif %}
       er dataansvarlig for behandlingen af dine oplysninger. Kontakt: <a href="mailto:{{ contact_email }}">{{ contact_email }}</a>.
     </p>
 
     <h2>2. Hvilke oplysninger vi behandler</h2>
     <dl>
       <dt>Kontooplysninger</dt>
-      <dd>Vist navn, e-mailadresse, password (gemt krypteret, så ingen kan læse det), fødselsdato, postnummer og den kommune, postnummeret hører til, samt hvornår du har accepteret vilkårene og, hvis du var med før lanceringen, at Sukker.nu var i pre-release.</dd>
+      <dd>Vist navn, e-mailadresse, password (gemt krypteret, så ingen kan læse det), fødselsdato, postnummer og den kommune, postnummeret hører til, samt hvornår du har accepteret vilkårene og, hvis du var med før lanceringen, at {{ brand.name }} var i pre-release.</dd>
       <dt>Profiloplysninger</dt>
       <dd>Det, du selv vælger at skrive på din profil, fx køn, hvad du søger, relationstype og præsentation, samt dine synlighedsindstillinger. Nogle profiloplysninger kan sige noget om dit seksualliv eller din seksuelle orientering. Dem giver du kun, hvis du selv vil.</dd>
       <dt>Billeder</dt>
@@ -24,7 +24,7 @@
       <dt>Verificering</dt>
       <dd>Vælger du at verificere din profil, sender du en selfie, som en moderator sammenligner med dine profilbilleder. Vi bruger ikke ansigtsgenkendelse, og selfien slettes, så snart den er vurderet. Vi gemmer kun afgørelsen. Grundlaget er dit samtykke, og verificering er frivillig.</dd>
       <dt>Abonnement</dt>
-      <dd>Dit niveau og dine perioder med Premium eller Premium+.</dd>
+      <dd>{% if brand.premium %}Dit niveau og dine perioder med Premium eller Premium+.{% else %}{{ brand.name }} er gratis for alle, så der er ingen abonnementer.{% endif %}</dd>
       <dt>Tekniske oplysninger</dt>
       <dd>Dine logins med IP-adresse, browser og enhed samt tidspunkt for seneste aktivitet.</dd>
       <dt>Moderation</dt>
@@ -37,7 +37,7 @@
       <li><strong>Følsomme profiloplysninger</strong>, fx om seksuel orientering, behandler vi kun, fordi du selv vælger at give dem, og grundlaget er dit udtrykkelige samtykke (artikel 9, stk. 2, litra a). Du kan til enhver tid fjerne dem fra din profil.</li>
       <li><strong>For at beskytte brugerne</strong> mod misbrug, svindel, phishing og spam, behandle anmeldelser og sikre siden. Grundlaget er vores og brugernes legitime interesse i en tryg tjeneste (artikel 6, stk. 1, litra f) og de pligter, vi har efter lovgivningen (artikel 6, stk. 1, litra c).</li>
       <li><strong>Nødvendige e-mails</strong>, fx bekræftelse af e-mail og nulstilling af password, som en del af aftalen med dig.</li>
-      <li><strong>Notifikationer</strong> om nyt på siden, fx en ny besked eller et nyt match, og en påmindelse, før en Premium-periode udløber. De er en del af tjenesten og ikke markedsføring. En notifikation pr. e-mail siger aldrig hvem eller hvad, kun at der er nyt, og du vælger selv under Konto, hvilke notifikationer du vil have på siden og pr. e-mail. Alle notifikationsmails kan afmeldes med ét klik.</li>
+      <li><strong>Notifikationer</strong> om nyt på siden, fx en ny besked eller et nyt match{% if brand.premium %}, og en påmindelse, før en Premium-periode udløber{% endif %}. De er en del af tjenesten og ikke markedsføring. En notifikation pr. e-mail siger aldrig hvem eller hvad, kun at der er nyt, og du vælger selv under Konto, hvilke notifikationer du vil have på siden og pr. e-mail. Alle notifikationsmails kan afmeldes med ét klik.</li>
       <li><strong>Udforsk</strong> viser profiler {% if distance_visible() %}efter afstand og derefter den nyeste profil{% else %}med de nyeste først{% endif %}. Vi bruger ingen algoritme, der vurderer eller rangerer dig.{% if inactive_months %} Har du ikke været logget ind i {{ inactive_months }} måneder, skjules din profil fra Udforsk, indtil du logger ind igen. Du får en e-mail en uge før.{% endif %}</li>
       <li><strong>Statistik</strong> laves kun som samlede optællinger, fx antal nye profiler. Vi bruger ikke sporing eller profilering til markedsføring.</li>
     </ul>

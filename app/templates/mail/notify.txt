@@ -1,6 +1,6 @@
 Hej {{ name }}
 
-Der er nyt til dig på Sukker.nu:
+Der er nyt til dig på {{ brand.name }}:
 {% for line in lines %}
 - {{ line }}{% endfor %}
 
@@ -15,4 +15,4 @@ Du får denne mail, fordi du har slået notifikationer pr. e-mail til. Vi sender
 Afmeld e-mails om nyt med ét klik: {{ unsubscribe_url }}
 
 Venlig hilsen
-Sukker.nu
+{{ brand.name }}

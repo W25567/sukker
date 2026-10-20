@@ -1,6 +1,6 @@
 Hej {{ name }}
 
-Du har ikke været logget ind på Sukker.nu i et stykke tid. Den {{ hidden_date }} bliver din profil derfor skjult fra Udforsk, så andre kun ser profiler, der faktisk er i brug.
+Du har ikke været logget ind på {{ brand.name }} i et stykke tid. Den {{ hidden_date }} bliver din profil derfor skjult fra Udforsk, så andre kun ser profiler, der faktisk er i brug.
 
 Du mister ikke noget. Dine matches og samtaler er der stadig, og din profil bliver vist igen, så snart du logger ind:
 
@@ -9,4 +9,4 @@ Du mister ikke noget. Dine matches og samtaler er der stadig, og din profil bliv
 Vil du ikke have flere af disse varsler, kan du afmelde dem med ét klik: {{ unsubscribe_url }}
 
 Venlig hilsen
-Sukker.nu
+{{ brand.name }}

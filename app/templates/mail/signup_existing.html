@@ -3,10 +3,10 @@
 {% block title %}Du har allerede en profil{% endblock %}
 {% block content %}
   <p style="margin:0 0 16px;">Hej {{ name }}</p>
-  <p style="margin:0 0 16px;">Nogen har forsøgt at oprette en ny profil på Sukker.nu med din e-mail. Du har allerede en profil, så der er ikke oprettet en ny.</p>
+  <p style="margin:0 0 16px;">Nogen har forsøgt at oprette en ny profil på {{ brand.name }} med din e-mail. Du har allerede en profil, så der er ikke oprettet en ny.</p>
   <p style="margin:0;">Var det dig, kan du logge ind her:</p>
   {{ button(login_url, "Log ind") }}
-  <p style="margin:0 0 16px;">Har du glemt dit password, kan du <a href="{{ reset_url }}" style="color:#a8325a;">nulstille det her</a>.</p>
+  <p style="margin:0 0 16px;">Har du glemt dit password, kan du <a href="{{ reset_url }}" style="color:{{ brand.theme_color }};">nulstille det her</a>.</p>
   {{ fallback(login_url) }}
   <p style="margin:0;color:#6f6475;">Var det ikke dig, behøver du ikke gøre noget.</p>
 {% endblock %}

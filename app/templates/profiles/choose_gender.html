@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 {% from "_forms.html" import field %}
-{% block title %}Vælg dit køn – Sukker.nu{% endblock %}
+{% block title %}Vælg dit køn – {{ brand.name }}{% endblock %}
 {% block content %}
   <h1>Vælg dit køn</h1>
-  <p class="muted">Sukker.nu bruger dit køn til at vise dig for dem, der søger netop dit køn, og til at vise dig dem,
+  <p class="muted">{{ brand.name }} bruger dit køn til at vise dig for dem, der søger netop dit køn, og til at vise dig dem,
     du søger. Det tager kun et øjeblik, og du kan altid rette det under Min profil.</p>
   <form method="post" class="form" novalidate>
     {{ form.hidden_tag() }}

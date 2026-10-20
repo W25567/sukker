@@ -1,6 +1,7 @@
 from flask import current_app, url_for
 from sqlalchemy import select
 
+from ..brands import current_brand
 from ..core.mail import send_mail
 from ..core.timeutil import now_utc
 from ..extensions import db
@@ -63,7 +64,7 @@ def send_verification_mail(user):
     raw = tokens.issue_token(user, tokens.VERIFY_EMAIL, current_app.config["EMAIL_VERIFY_TTL"])
     return send_mail(
         user.email,
-        "Bekræft din e-mail på Sukker.nu",
+        f"Bekræft din e-mail på {current_brand().name}",
         "mail/verify_email.txt",
         name=user.display_name,
         verify_url=_absolute_url("auth.verify_email", token=raw),
@@ -116,7 +117,7 @@ def request_password_reset(email):
     raw = tokens.issue_token(user, tokens.RESET_PASSWORD, current_app.config["PASSWORD_RESET_TTL"])
     send_mail(
         user.email,
-        "Nulstil dit password på Sukker.nu",
+        f"Nulstil dit password på {current_brand().name}",
         "mail/reset_password.txt",
         name=user.display_name,
         reset_url=_absolute_url("auth.reset_password", token=raw),

@@ -25,68 +25,68 @@ class PublicPage:
 
 PUBLIC_PAGES = [
     PublicPage(
-        "core.home", "Forside", "Sukker.nu – moderne og diskret datingside for voksne",
-        "Sukker.nu er en moderne og diskret datingside for voksne. Opret en gratis profil på få minutter, "
+        "core.home", "Forside", "{site} – moderne og diskret datingside for voksne",
+        "{site} er en moderne og diskret datingside for voksne. Opret en gratis profil på få minutter, "
         "og mød nye mennesker i nærheden – du bestemmer selv, hvor meget du deler.",
         date(2026, 10, 17), "1.0",
     ),
     PublicPage(
-        "pages.purpose", "Hvorfor Sukker.nu", "Hvorfor findes Sukker.nu? Ærlig dating uden fiduser",
-        "Sukker.nu er et ærligt alternativ til dyre datingsider: rigtige mennesker, ingen falske profiler eller robotter, "
+        "pages.purpose", "Hvorfor {site}", "Hvorfor findes {site}? Ærlig dating uden fiduser",
+        "{site} er et ærligt alternativ til dyre datingsider: rigtige mennesker, ingen falske profiler eller robotter, "
         "rimelige priser og en administrator, du kan skrive til.",
         date(2026, 10, 18), "0.9",
     ),
     PublicPage(
-        "pages.early_bird", "Tidlige fugle", "Premium for livstid til tidlige fugle – Sukker.nu",
-        "Sukker.nu er en ny dansk datingside. Opret en gratis profil nu, mens vi er få, og få Premium for livstid "
+        "pages.early_bird", "Tidlige fugle", "Premium for livstid til tidlige fugle – {site}",
+        "{site} er en ny dansk datingside. Opret en gratis profil nu, mens vi er få, og få Premium for livstid "
         "som tidlig fugl: skriv med dine matches, se hvem der har liket dig, og filtrér i Udforsk.",
         date(2026, 10, 17), "0.9", only_if="early_bird",
     ),
     PublicPage(
-        "pages.how", "Sådan virker det", "Sådan virker Sukker.nu – profil, likes, matches og beskeder",
-        "Se hvordan du kommer i gang på Sukker.nu: opret en profil på få minutter, find mennesker i nærheden, "
+        "pages.how", "Sådan virker det", "Sådan virker {site} – profil, likes, matches og beskeder",
+        "Se hvordan du kommer i gang på {site}: opret en profil på få minutter, find mennesker i nærheden, "
         "like hinanden og skriv sammen, når I har et match.",
         date(2026, 10, 17), "0.8",
     ),
     PublicPage(
-        "pages.safety", "Tryghed og sikkerhed", "Tryghed og sikkerhed på Sukker.nu",
-        "Sådan beskytter Sukker.nu dit privatliv: ingen profiler eller billeder for besøgende, omtrentlig afstand "
+        "pages.safety", "Tryghed og sikkerhed", "Tryghed og sikkerhed på {site}",
+        "Sådan beskytter {site} dit privatliv: ingen profiler eller billeder for besøgende, omtrentlig afstand "
         "i stedet for adresse, blokering, anmeldelse og moderation.",
         date(2026, 10, 17), "0.8",
     ),
     PublicPage(
-        "pages.premium", "Premium", "Free, Premium og Premium+ på Sukker.nu",
-        "Se forskellen på Free, Premium og Premium+ på Sukker.nu. Nye profiler får Premium gratis i en periode, "
+        "pages.premium", "Premium", "Free, Premium og Premium+ på {site}",
+        "Se forskellen på Free, Premium og Premium+ på {site}. Nye profiler får Premium gratis i en periode, "
         "og sikkerhedsfunktioner er altid gratis.",
-        date(2026, 10, 17), "0.7",
+        date(2026, 10, 17), "0.7", only_if="premium",
     ),
     PublicPage(
-        "pages.faq", "Ofte stillede spørgsmål", "Ofte stillede spørgsmål om Sukker.nu",
-        "Svar på de mest stillede spørgsmål om Sukker.nu: pris, synlighed, afstand, matches, beskeder, "
+        "pages.faq", "Ofte stillede spørgsmål", "Ofte stillede spørgsmål om {site}",
+        "Svar på de mest stillede spørgsmål om {site}: pris, synlighed, afstand, matches, beskeder, "
         "blokering og sletning af profil.",
         date(2026, 10, 17), "0.7",
     ),
     PublicPage(
-        "pages.about", "Om og kontakt", "Om Sukker.nu og kontakt",
-        "Sukker.nu er en dansk datingside for voksne med fokus på enkelhed, diskretion og tryghed. "
+        "pages.about", "Om og kontakt", "Om {site} og kontakt",
+        "{site} er en dansk datingside for voksne med fokus på enkelhed, diskretion og tryghed. "
         "Her kan du læse om siden og finde kontaktoplysninger.",
         date(2026, 10, 17), "0.5",
     ),
     PublicPage(
-        "pages.terms", "Brugervilkår", "Brugervilkår for Sukker.nu",
-        "Brugervilkårene for Sukker.nu: hvem kan bruge siden, regler for opførsel, moderation, abonnementer "
+        "pages.terms", "Brugervilkår", "Brugervilkår for {site}",
+        "Brugervilkårene for {site}: hvem kan bruge siden, regler for opførsel, moderation, abonnementer "
         "og sletning af profil.",
         date(2026, 10, 17), "0.3",
     ),
     PublicPage(
-        "pages.privacy", "Privatlivspolitik", "Privatlivspolitik for Sukker.nu",
-        "Hvilke oplysninger Sukker.nu behandler, hvorfor, hvor længe de gemmes, og hvordan du får indsigt, "
+        "pages.privacy", "Privatlivspolitik", "Privatlivspolitik for {site}",
+        "Hvilke oplysninger {site} behandler, hvorfor, hvor længe de gemmes, og hvordan du får indsigt, "
         "henter dine data eller sletter din profil.",
         date(2026, 10, 17), "0.3",
     ),
     PublicPage(
-        "pages.cookies", "Cookies", "Cookiepolitik for Sukker.nu",
-        "Sukker.nu bruger kun én nødvendig cookie til login og sikkerhed. Ingen sporing og ingen "
+        "pages.cookies", "Cookies", "Cookiepolitik for {site}",
+        "{site} bruger kun én nødvendig cookie til login og sikkerhed. Ingen sporing og ingen "
         "markedsføringscookies.",
         date(2026, 10, 17), "0.2",
     ),
@@ -94,18 +94,59 @@ PUBLIC_PAGES = [
 
 PAGES_BY_ENDPOINT = {page.endpoint: page for page in PUBLIC_PAGES}
 
+# Brands med egne titler og beskrivelser (app/brands). Sider, der ikke står her, bruger de fælles tekster ovenfor.
+BRAND_PAGES = {
+    "nogen": {
+        "core.home": ("{site} – find nogen at gå tur, drikke kaffe eller snakke med",
+                      "{site} er et sted at møde nye mennesker til venskab og fællesskab: en gåtur, en kop kaffe "
+                      "eller en god snak. Gratis for alle, uden algoritmer."),
+        "pages.purpose": ("Hvorfor findes {site}?",
+                          "{site} skal gøre det lettere at finde nogen at være sammen med – gratis, trygt og uden "
+                          "algoritmer, der bestemmer, hvem du ser."),
+        "pages.how": ("Sådan virker {site}",
+                      "Se hvordan du kommer i gang på {site}: opret en profil, vælg dine interesser, og find "
+                      "nogen at mødes med."),
+        "pages.about": ("Om {site} og kontakt",
+                        "{site} er en dansk side for venskab og fællesskab. Her kan du læse om siden og finde "
+                        "kontaktoplysninger."),
+        "pages.faq": ("Ofte stillede spørgsmål om {site}",
+                      "Svar på de mest stillede spørgsmål om {site}: synlighed, afstand, forbindelser, beskeder, "
+                      "blokering og sletning af profil."),
+    },
+}
+
+
+def _site(text):
+    from ..brands import current_brand
+
+    return text.replace("{site}", current_brand().name)
+
 
 def page_active(page):
     if page.only_if == "early_bird":
         from ..subscriptions.services import early_bird_open
 
         return early_bird_open()
+    if page.only_if == "premium":
+        from ..brands import current_brand
+
+        return current_brand().premium
     return True
 
 
 def visible_pages():
     """De offentlige sider, der findes lige nu. Bruges af sitemap, sidefod og hjælpesiden."""
-    return [page for page in PUBLIC_PAGES if page_active(page)]
+    return [_for_brand(page) for page in PUBLIC_PAGES if page_active(page)]
+
+
+def _for_brand(page):
+    """Siden med brandets egne tekster og navn indsat."""
+    from dataclasses import replace
+
+    from ..brands import current_brand
+
+    title, description = BRAND_PAGES.get(current_brand().key, {}).get(page.endpoint, (page.title, page.description))
+    return replace(page, nav_label=_site(page.nav_label), title=_site(title), description=_site(description))
 
 
 def absolute_url(endpoint, **values):
@@ -114,12 +155,14 @@ def absolute_url(endpoint, **values):
 
 def seo_for(endpoint):
     """Metadata til base.html: unik titel og beskrivelse samt canonical-URL."""
-    page = PAGES_BY_ENDPOINT[endpoint]
+    from ..brands import current_brand
+
+    page = _for_brand(PAGES_BY_ENDPOINT[endpoint])
     return {
         "title": page.title,
         "description": page.description,
         "canonical": absolute_url(endpoint),
-        "image": absolute_url("static", filename="images/og.jpg"),
+        "image": absolute_url("static", filename=current_brand().asset("og.jpg")),
     }
 
 
@@ -136,14 +179,39 @@ def faq_items():
         bonus = f"Nye profiler får {months} måneders Premium gratis, så snart e-mailen er bekræftet."
     else:
         bonus = "Premium tildeles i øjeblikket ikke automatisk ved oprettelse."
+    return [(_site(question), _site(answer)) for question, answer in _faq_items(months, early_bird, bonus)]
+
+
+def _faq_items(months, early_bird, bonus):
+    from ..brands import current_brand
+
     early_bird_items = [
         ("Hvad er en tidlig fugl?",
-         "Sukker.nu er ny, og der er endnu ikke så mange profiler. Opretter du en profil nu, bekræfter din e-mail og "
+         "{site} er ny, og der er endnu ikke så mange profiler. Opretter du en profil nu, bekræfter din e-mail og "
          "uploader et billede, får du Premium for livstid som tak, fordi du er med fra starten. Det kræver ingen "
          "betaling og intet abonnement."),
     ] if early_bird else []
+    if not current_brand().premium:
+        # Uden Premium er alt gratis for alle (app/brands).
+        return [
+            ("Hvad koster {site}?", "Ingenting. Alle funktioner er gratis for alle, og det bliver de ved med at være."),
+            ("Hvem kan se min profil?",
+             "Kun brugere, der er logget ind. Besøgende uden login kan hverken se profiler eller billeder, og profiler "
+             "vises aldrig i søgemaskiner. Du kan skjule enkelte felter, holde pause eller kun være synlig for dem, "
+             "du har forbindelse med."),
+            ("Hvordan kommer jeg i kontakt med nogen?",
+             "Når I begge har sagt, at I gerne vil i kontakt, kan I skrive sammen. Forbindelsen kan altid fjernes "
+             "igen af begge."),
+            ("Hvad er forskellen på at skjule og blokere?",
+             "Skjul fjerner en profil fra det, du ser i Udforsk. Blokér forhindrer al kontakt i begge retninger. "
+             "Ingen af dem giver den anden besked."),
+            ("Hvordan sletter jeg min profil?",
+             "Under Konto kan du slette din profil. Beskeder, du har sendt, bliver stående hos modtageren med "
+             "afsenderen vist som \"Slettet bruger\"."),
+            ("Hvor gammel skal man være?", "{site} er kun for personer på 18 år eller derover."),
+        ]
     return early_bird_items + [
-        ("Hvad koster Sukker.nu?",
+        ("Hvad koster {site}?",
          f"Det er gratis at oprette en profil, like andre og få matches. {bonus} "
          "Der er endnu ikke indført betaling. Kommer der betaling, får du besked, før noget koster penge."),
         ("Hvem kan se min profil?",
@@ -170,5 +238,5 @@ def faq_items():
          "Under Konto kan du slette din profil. Profil, billeder, likes og matches slettes. Beskeder, du har sendt, "
          "bliver stående hos modtageren med afsenderen vist som \"Slettet bruger\"."),
         ("Hvor gammel skal man være?",
-         "Sukker.nu er kun for personer på 18 år eller derover."),
+         "{site} er kun for personer på 18 år eller derover."),
     ]

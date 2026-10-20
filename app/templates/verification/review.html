@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Verificering – Sukker.nu{% endblock %}
+{% block title %}Verificering – {{ brand.name }}{% endblock %}
 {% block content %}
   {% include "admin/_nav.html" if current_user.role == 'admin' else "moderation/_nav.html" %}
   <a class="back-link" href="{{ url_for('verification.queue') }}">← Verificeringer</a>

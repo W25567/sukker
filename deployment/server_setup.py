@@ -199,7 +199,8 @@ def nginx_values(cfg, cert_dir):
         )
     basic_auth = ""
     if cfg.get("basic_auth"):
-        basic_auth = f'\n    auth_basic "Sukker.nu {cfg["env"]}";\n    auth_basic_user_file {cfg["htpasswd_file"]};\n'
+        label = f'{cfg.get("brand_main", "Sukker")}{cfg.get("brand_tld", ".nu")}'
+        basic_auth = f'\n    auth_basic "{label} {cfg["env"]}";\n    auth_basic_user_file {cfg["htpasswd_file"]};\n'
     return {
         "env": cfg["env"], "id": cfg["id"], "service": cfg["service"], "domain": cfg["domain"],
         "server_names": server_names(cfg), "acme_root": cfg["acme_root"], "cert_dir": cert_dir,
@@ -614,7 +615,9 @@ def load_geo(cfg, release, env_values, state):
 
 def write_support_files(cfg, release, templates, payload, changes):
     values = {"env": cfg["env"], "log_dir": cfg["log_dir"], "user": cfg["user"]}
-    changes.write(f"{cfg['app_root']}/shared/maintenance/_vedligeholdelse.html", templates["maintenance.html"])
+    changes.write(f"{cfg['app_root']}/shared/maintenance/_vedligeholdelse.html",
+                  render(templates["maintenance.html"], {"brand_main": cfg.get("brand_main", "Sukker"),
+                                                         "brand_tld": cfg.get("brand_tld", ".nu")}))
     changes.write(f"/etc/logrotate.d/{cfg['service']}", render(templates["sukker.logrotate"], values))
     auth = payload.get("staging_auth")
     if cfg.get("basic_auth") and auth:

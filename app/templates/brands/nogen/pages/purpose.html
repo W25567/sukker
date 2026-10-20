@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{# Nogen.nu's formålsside. Overstyrer templates/pages/purpose.html (app/brands). Midlertidig tekst. #}
+{% block page_class %}public{% endblock %}
+{% block content %}
+  <article class="prose purpose">
+    <header class="purpose-intro">
+      <h1>Hvorfor findes {{ brand.name }}?</h1>
+      <p class="lead">Alle har brug for nogen.</p>
+      <p>Mange savner nogen at gå en tur med, drikke en kop kaffe med eller bare tale med. Det kan være svært at møde
+        nye mennesker, når man er flyttet, har mistet nogen, er gået på pension eller bare har en hverdag, hvor dagene
+        ligner hinanden.</p>
+      <p class="purpose-claim">{{ brand.name }} skal gøre det lettere at finde nogen.</p>
+    </header>
+
+    <section id="raekkefoelge">
+      <h2>Gratis, og uden algoritmer</h2>
+      <p>Ingen skal betale for at finde nogen at være sammen med. Alt på {{ brand.name }} er gratis for alle.</p>
+      <p>Der er heller ingen algoritme, der vurderer dig eller bestemmer, hvem du ser. I Udforsk ser du profilerne
+        {% if distance_visible() %}efter afstand og derefter den nyeste profil{% else %}med de nyeste først{% endif %},
+        og du kan se, hvilke interesser I har til fælles.</p>
+    </section>
+
+    <section>
+      <h2>Tryghed først</h2>
+      <p>Ingen kan skrive til dig, før I begge har sagt ja. Alle kan anmelde en profil eller en besked, og anmeldelser
+        behandles af mennesker. Profiler med mærket <strong>Verificeret</strong> har sendt en selfie, som en moderator har
+        sammenlignet med profilbillederne.</p>
+      <p>Pas på, hvis nogen hurtigt beder om penge, gavekort eller vil flytte samtalen væk fra siden. Det er aldrig i
+        orden, og du kan altid anmelde det. <a href="{{ url_for('pages.safety') }}">Læs om tryghed og sikkerhed</a>.</p>
+    </section>
+
+    <section>
+      <h2>Der skal være nogen at tale med</h2>
+      <p>Du kan altid skrive direkte til en administrator under Min profil, og svaret kommer fra et menneske.</p>
+    </section>
+
+    <aside class="purpose-summary" aria-labelledby="kort-fortalt">
+      <h2 id="kort-fortalt">Kort fortalt</h2>
+      <ul>
+        <li>Gratis for alle.</li>
+        <li>Ingen algoritme, der bestemmer, hvem du ser.</li>
+        <li>Kontakt kun, når begge har sagt ja.</li>
+      </ul>
+      {% if current_user %}
+        <a class="button" href="{{ url_for('messaging.admin_conversation') }}">Skriv til Administrator</a>
+      {% else %}
+        <a class="button" href="{{ url_for('auth.register') }}">Opret gratis profil</a>
+      {% endif %}
+    </aside>
+  </article>
+{% endblock %}

@@ -17,14 +17,17 @@ def home():
         return redirect(url_for("explore.index"))
     from ..pages.content import absolute_url, seo_for
 
+    from ..brands import current_brand
+
+    brand = current_brand()
     base = absolute_url("core.home")
     structured = {
         "@context": "https://schema.org",
         "@graph": [
-            {"@type": "Organization", "@id": base + "#organization", "name": "Sukker.nu", "url": base,
-             "logo": absolute_url("static", filename="images/web-app-manifest-512x512.png"),
+            {"@type": "Organization", "@id": base + "#organization", "name": brand.name, "url": base,
+             "logo": absolute_url("static", filename=brand.asset("web-app-manifest-512x512.png")),
              "email": current_app.config["CONTACT_EMAIL"]},
-            {"@type": "WebSite", "@id": base + "#website", "name": "Sukker.nu", "url": base, "inLanguage": "da-DK",
+            {"@type": "WebSite", "@id": base + "#website", "name": brand.name, "url": base, "inLanguage": "da-DK",
              "publisher": {"@id": base + "#organization"}},
         ],
     }
@@ -34,7 +37,7 @@ def home():
     seo = seo_for("core.home")
     if early_bird:
         # Tilbuddet skal også kunne findes i søgemaskinerne, mens det gælder.
-        seo["description"] = ("Sukker.nu er en ny, diskret datingside for voksne. Opret en gratis profil nu, og få "
+        seo["description"] = (f"{brand.name} er en ny, diskret datingside for voksne. Opret en gratis profil nu, og få "
                               "Premium for livstid som tidlig fugl – mens vi stadig er få.")
     return render_template("core/home.html", seo=seo, structured=structured, early_bird=early_bird,
                            signup_months=get_setting("signup_premium_months"))

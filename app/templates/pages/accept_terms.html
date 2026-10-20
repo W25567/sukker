@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% from "_forms.html" import checkbox %}
-{% block title %}Nye vilkår – Sukker.nu{% endblock %}
+{% block title %}Nye vilkår – {{ brand.name }}{% endblock %}
 {% block content %}
   <h1>Vi har opdateret vilkårene</h1>
   <p>Brugervilkårene og privatlivspolitikken er opdateret og gælder fra {{ effective.strftime('%d-%m-%Y') }}. Læs dem, og acceptér dem for at fortsætte.</p>

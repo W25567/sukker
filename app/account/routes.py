@@ -3,6 +3,7 @@ import json
 from flask import Blueprint, Response, flash, g, redirect, render_template, request, session, url_for
 
 from ..auth import services
+from ..brands import current_brand
 from ..auth.forms import ActionForm, ChangePasswordForm, DeleteAccountForm, DisplayNameForm
 from ..auth.passwords import verify_password
 from ..auth.sessions import active_sessions, end_current_session, login_required, revoke_sessions
@@ -109,7 +110,8 @@ def delete():
             delete_account(g.user)
             session.clear()
             db.session.commit()
-            flash("Din profil er slettet og kan ikke længere ses af andre. Tak fordi du brugte Sukker.nu.", "info")
+            flash(f"Din profil er slettet og kan ikke længere ses af andre. Tak fordi du brugte {current_brand().name}.",
+                  "info")
             return redirect(url_for("core.home"))
     return (render_template("account/delete.html", form=form, retention_months=get_setting("data_retention_months")),
             400 if form.errors else 200)

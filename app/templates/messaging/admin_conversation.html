@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 {% from "_forms.html" import field %}
-{% block title %}Administrator – Sukker.nu{% endblock %}
+{% block title %}Administrator – {{ brand.name }}{% endblock %}
 {% block content %}
   <a class="back-link" href="{{ url_for('messaging.inbox') if thread else url_for('profiles.me') }}">← {{ 'Beskeder' if thread else 'Min profil' }}</a>
   <h1>Administrator</h1>
   {% if thread %}
-    <p class="muted">Samtalen med Sukker.nu's administration. Du kan svare her.</p>
+    <p class="muted">Samtalen med {{ brand.name }}'s administration. Du kan svare her.</p>
   {% else %}
-    <p class="muted">Har du et spørgsmål, eller vil du gøre os opmærksom på noget? Skriv til Sukker.nu's administration her.
+    <p class="muted">Har du et spørgsmål, eller vil du gøre os opmærksom på noget? Skriv til {{ brand.name }}'s administration her.
       Du får svar i Beskeder. Vil du anmelde en profil eller en besked, så brug Anmeld på profilen eller i samtalen.
       Har du fundet en fejl, så <a href="{{ url_for('support.bug_report') }}">rapportér fejlen</a>.</p>
   {% endif %}

@@ -41,5 +41,24 @@
     "backup_remote": "u671371-sub4@u671371-sub4.your-storagebox.de",
     "backup_remote_port": "23",
     "gunicorn_workers": 2
+  },
+  "nogen-staging": {
+    "brand": "nogen",
+    "host": "nogen.nu",
+    "ssh_user": "kvich",
+    "ssh_port": 22,
+    "domain": "staging.nogen.nu",
+    "aliases": [],
+    "letsencrypt_email": "",
+    "alert_email": "service@kvich.dk",
+    "mail_from": "Nogen.nu staging <svar-ikke@nogen.nu>",
+    "smtp_host": "smtp-relay.brevo.com",
+    "smtp_port": 587,
+    "smtp_username": "beb664001@smtp-brevo.com",
+    "contact_email": "service@kvich.dk",
+    "company_name": "Kvichs ApS",
+    "company_cvr": "45715566",
+    "company_address": "",
+    "gunicorn_workers": 2
   }
 }

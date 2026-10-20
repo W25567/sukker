@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Min profil – Sukker.nu{% endblock %}
+{% block title %}Min profil – {{ brand.name }}{% endblock %}
 {% macro rotate_buttons(image) %}
   {% if not image.is_animated %}
     <div class="image-rotate">
@@ -78,7 +78,7 @@
                   <button type="submit" class="link">Gør til profilbillede</button>
                 </form>
               {% endif %}
-              {% if images | length > 1 %}
+              {% if brand.private_album and images | length > 1 %}
                 {# Det sidste offentlige billede kan ikke gøres privat: man skal have ét offentligt for at have private. #}
                 <form method="post" action="{{ url_for('profiles.move_image', public_id=image.public_id, target='privat') }}">
                   {{ action_form.hidden_tag() }}
@@ -102,6 +102,7 @@
       <p class="muted">Du har ingen billeder endnu. Profiler med billeder får flere likes.</p>
     {% endif %}
 
+    {% if brand.private_album %}
     <div class="heading-row">
       <h3 class="subheading">Privat album</h3>
       <a class="small-link" href="{{ url_for('profiles.private_access') }}">Styr adgang{% if access_requests %} <span class="nav-badge">{{ access_requests }}</span>{% endif %}</a>
@@ -135,6 +136,7 @@
       <p class="muted">Du kan gøre et billede privat, så kun du kan se det. Du skal altid have mindst ét offentligt billede.</p>
     {% else %}
       <p class="muted">Du kan gøre billeder private, når du har mindst to billeder. Ét billede skal altid være offentligt.</p>
+    {% endif %}
     {% endif %}
     {# Med JavaScript uploades billederne, så snart de er valgt (static/js/upload.js). Uden JavaScript bruges knappen. #}
     <form method="post" action="{{ url_for('profiles.upload') }}" enctype="multipart/form-data" class="form upload"
@@ -197,7 +199,7 @@
 
   <section class="card">
     <h2>Hjælp</h2>
-    <p class="muted">Sådan virker Sukker.nu, tryghed, spørgsmål og svar, vilkår og kontakt.</p>
+    <p class="muted">Sådan virker {{ brand.name }}, tryghed, spørgsmål og svar, vilkår og kontakt.</p>
     <a class="button secondary" href="{{ url_for('pages.help') }}">Hjælp og vilkår</a>
   </section>
 

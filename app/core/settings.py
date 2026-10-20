@@ -96,11 +96,18 @@ class Setting(db.Model):
     updated_at = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now())
 
 
+def default_for(key):
+    """Standardværdien: brandets egen (app/brands), ellers den fælles i DEFAULTS."""
+    from ..brands import current_brand
+
+    return current_brand().setting_defaults.get(key, DEFAULTS[key])
+
+
 def get_setting(key):
     if key not in DEFAULTS:
         raise KeyError(f"Ukendt indstilling: {key}")
     row = db.session.get(Setting, key)
-    return DEFAULTS[key] if row is None else row.value
+    return default_for(key) if row is None else row.value
 
 
 def set_setting(key, value):

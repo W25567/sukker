@@ -1,6 +1,6 @@
 Hej {{ name }}
 
-Din Premium-periode på Sukker.nu udløber den {{ end_date }}{% if days > 1 %}, om {{ days }} dage{% endif %}.
+Din Premium-periode på {{ brand.name }} udløber den {{ end_date }}{% if days > 1 %}, om {{ days }} dage{% endif %}.
 
 Derefter fortsætter din konto som Free. Du mister ikke noget: din profil, dine billeder, matches og beskeder er der stadig. Der bliver ikke trukket penge, og du skal ikke gøre noget.
 
@@ -13,4 +13,4 @@ Du kan altid se din periode under Konto: {{ account_url }}
 Du får denne påmindelse, fordi den er slået til under Konto. Afmeld påmindelser om Premium med ét klik: {{ unsubscribe_url }}
 
 Venlig hilsen
-Sukker.nu
+{{ brand.name }}

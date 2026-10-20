@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Moderation – Sukker.nu{% endblock %}
+{% block title %}Moderation – {{ brand.name }}{% endblock %}
 {% block content %}
   {% include "moderation/_nav.html" %}
   <h1>{{ 'Lukkede sager' if closed else 'Sager' }}</h1>

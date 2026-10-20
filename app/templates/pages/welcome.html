@@ -1,9 +1,9 @@
 {% extends "base.html" %}
-{% block title %}Velkommen – Sukker.nu{% endblock %}
+{% block title %}Velkommen – {{ brand.name }}{% endblock %}
 {% block content %}
   <section class="welcome">
     <h1>Velkommen, {{ current_user.display_name }}</h1>
-    <p class="lead">Sukker.nu er helt ny. Der er endnu ikke så mange profiler, og nogle steder i landet kan der gå lidt tid, før du finder nogen i nærheden. Det bliver bedre for hver ny, der kommer til – også takket være dig.</p>
+    <p class="lead">{{ brand.name }} er helt ny. Der er endnu ikke så mange profiler, og nogle steder i landet kan der gå lidt tid, før du finder nogen i nærheden. Det bliver bedre for hver ny, der kommer til – også takket være dig.</p>
 
     {% if subscription and subscription.is_lifetime %}
       <div class="card early-bird-card">
@@ -27,7 +27,7 @@
       <li><strong>Vælg hvem du vil møde</strong><span>Udfyld "Interesseret i", så Udforsk kun viser dem, du er interesseret i.</span></li>
       <li><strong>Tilføj et billede</strong><span>Et billede gør det lettere for andre at få et indtryk af dig. Du bestemmer selv, hvad du viser.</span></li>
       <li><strong>Skriv et par linjer om dig selv</strong><span>En kort præsentation gør det lettere at starte en samtale.</span></li>
-      <li><strong>Fortæl andre om Sukker.nu</strong><span>Jo flere vi er, jo større er chancen for at møde nogen i nærheden.</span></li>
+      <li><strong>Fortæl andre om {{ brand.name }}</strong><span>Jo flere vi er, jo større er chancen for at møde nogen i nærheden.</span></li>
     </ol>
 
     <form method="post" class="form actions">

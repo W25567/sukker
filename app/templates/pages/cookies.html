@@ -5,16 +5,16 @@
     <h1>Cookiepolitik</h1>
     <p class="muted">Gældende fra {{ effective.strftime('%d-%m-%Y') }}</p>
 
-    <p class="lead">Sukker.nu bruger kun én cookie, og den er nødvendig for, at siden virker. Vi bruger ingen cookies til statistik, sporing eller markedsføring, og der er ingen cookies fra tredjeparter.</p>
+    <p class="lead">{{ brand.name }} bruger kun én cookie, og den er nødvendig for, at siden virker. Vi bruger ingen cookies til statistik, sporing eller markedsføring, og der er ingen cookies fra tredjeparter.</p>
 
     <div class="table-scroll">
       <table>
-        <caption>Cookies på Sukker.nu</caption>
+        <caption>Cookies på {{ brand.name }}</caption>
         <thead><tr><th scope="col">Navn</th><th scope="col">Formål</th><th scope="col">Varighed</th></tr></thead>
         <tbody>
           <tr>
             <td><code>session</code></td>
-            <td>Holder dig logget ind og beskytter formularer mod forfalskede indsendelser.{% if prerelease_label %} Indtil lanceringen {{ prerelease_label }} husker den også, at du har accepteret, at Sukker.nu er i pre-release.{% endif %}
+            <td>Holder dig logget ind og beskytter formularer mod forfalskede indsendelser.{% if prerelease_label %} Indtil lanceringen {{ prerelease_label }} husker den også, at du har accepteret, at {{ brand.name }} er i pre-release.{% endif %}
               Sættes først, når du logger ind, udfylder en formular{% if prerelease_label %} eller accepterer pre-release{% endif %}.</td>
             <td>
               Logget ind: indtil du lukker browseren. Har du valgt "Husk mig på denne enhed": 30 dage fra dit seneste besøg.

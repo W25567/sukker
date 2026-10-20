@@ -2,6 +2,7 @@ from flask import Blueprint, flash, g, redirect, render_template, request, sessi
 from flask_limiter.util import get_remote_address
 from sqlalchemy.exc import IntegrityError
 
+from ..brands import current_brand
 from ..extensions import db, limiter
 from ..location.services import geo_loaded, kommuner_for_postcode
 from . import services, tokens
@@ -98,7 +99,7 @@ def verify_email(token):
     if user is None:
         return render_template("auth/link_invalid.html", purpose=tokens.VERIFY_EMAIL), 400
     if g.user is not None and g.user.id == user.id:
-        flash("Din e-mail er bekræftet. Velkommen til Sukker.nu.", "success")
+        flash(f"Din e-mail er bekræftet. Velkommen til {current_brand().name}.", "success")
         return redirect(url_for("explore.index"))
     if g.user is not None:
         # Linket hørte til en anden profil end den, der er logget ind her. Sig det, så banneret om at bekræfte

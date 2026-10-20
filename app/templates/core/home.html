@@ -4,11 +4,11 @@
   <section class="hero">
     {# Logoet er synligt med det samme, så det indlæses ikke lazy (Core Web Vitals). #}
     <picture>
-      <source srcset="{{ url_for('static', filename='images/full-logo-280-dark.webp') }}" media="(prefers-color-scheme: dark)">
-      <img class="hero-logo" src="{{ url_for('static', filename='images/full-logo-280.webp') }}" width="280" height="140" alt="Sukker.nu" fetchpriority="high">
+      <source srcset="{{ url_for('static', filename=brand.asset('full-logo-280-dark.webp')) }}" media="(prefers-color-scheme: dark)">
+      <img class="hero-logo" src="{{ url_for('static', filename=brand.asset('full-logo-280.webp')) }}" width="280" height="140" alt="{{ brand.name }}" fetchpriority="high">
     </picture>
     <h1>Mød nye mennesker – diskret og enkelt</h1>
-    <p class="lead">Sukker.nu er en moderne datingside for voksne. Opret en profil på få minutter, og bestem selv, hvor meget du deler.</p>
+    <p class="lead">{{ brand.name }} er en moderne datingside for voksne. Opret en profil på få minutter, og bestem selv, hvor meget du deler.</p>
     {% if early_bird %}
       <a class="early-bird-banner" href="{{ url_for('pages.early_bird') }}">
         <strong>Vi er lige startet.</strong> Der er endnu ikke så mange profiler – derfor får du <strong>Premium for livstid</strong>, hvis du er med som tidlig fugl.
@@ -38,7 +38,7 @@
     <h2>Hvorfor endnu en datingside?</h2>
     <p>Fordi dating ikke behøver være dyrt, besværligt eller fyldt med fiduser. Hos os møder du rigtige mennesker – ingen
       falske profiler, ingen robotter – og der er altid et menneske, du kan skrive til.</p>
-    <p><a href="{{ url_for('pages.purpose') }}">Læs hvorfor vi har lavet Sukker.nu</a></p>
+    <p><a href="{{ url_for('pages.purpose') }}">Læs hvorfor vi har lavet {{ brand.name }}</a></p>
   </section>
 
   <section class="public-section">

@@ -4,7 +4,7 @@
 {% block content %}
   <article class="prose">
     <h1>Free, Premium og Premium+</h1>
-    <p class="lead">Sukker.nu har tre niveauer. Det er gratis at være med, og {% if early_bird_open() %}lige nu får nye profiler <a href="{{ url_for('pages.early_bird') }}">Premium for livstid som tidlige fugle</a>{% elif signup_months %}alle nye profiler får {{ signup_months }} måneders Premium, når e-mailen er bekræftet{% else %}du kan altid oprette en profil, like og matche gratis{% endif %}.</p>
+    <p class="lead">{{ brand.name }} har tre niveauer. Det er gratis at være med, og {% if early_bird_open() %}lige nu får nye profiler <a href="{{ url_for('pages.early_bird') }}">Premium for livstid som tidlige fugle</a>{% elif signup_months %}alle nye profiler får {{ signup_months }} måneders Premium, når e-mailen er bekræftet{% else %}du kan altid oprette en profil, like og matche gratis{% endif %}.</p>
 
     <div class="table-scroll">
       <table class="compare">
@@ -37,7 +37,7 @@
     <p>Premium+ indeholder alt fra Premium. Senere kommer flere muligheder, blandt andet at skrive en enkelt besked til nogen, du ikke har et match med. Modtageren kan altid sige nej tak til den slags henvendelser, og Premium+ kan aldrig gå uden om en blokering eller dine privatlivsindstillinger.</p>
 
     <h2>Hvad koster det?</h2>
-    <p>Lige nu koster Sukker.nu ingenting. Der er endnu ikke indført betaling, og priserne er ikke fastlagt. Kommer der betaling, får du besked i god tid, og intet bliver trukket automatisk, uden at du selv har valgt det.</p>
+    <p>Lige nu koster {{ brand.name }} ingenting. Der er endnu ikke indført betaling, og priserne er ikke fastlagt. Kommer der betaling, får du besked i god tid, og intet bliver trukket automatisk, uden at du selv har valgt det.</p>
 
     <h2>Altid gratis</h2>
     <p>Sikkerhed og privatliv er aldrig en betalingsfordel. Alle kan skjule, blokere og anmelde, styre deres synlighed, hente deres data og slette deres profil.</p>

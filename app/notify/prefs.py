@@ -39,14 +39,22 @@ CHANNELS = ("app", "mail")
 
 
 def kinds_for(user):
-    return [kind for kind in KINDS if not kind.admin_only or user.role == "admin"]
+    from ..brands import current_brand
+
+    brand = current_brand()
+    return [kind for kind in KINDS if (not kind.admin_only or user.role == "admin")
+            and (kind.key != "premium" or brand.premium) and (kind.key not in PRIVATE_KINDS or brand.private_album)]
+
+
+# Notifikationer, der kun findes, når brandet har private album (app/brands).
+PRIVATE_KINDS = {"request", "grant"}
 
 
 def wants(user, key, channel):
     """Om brugeren vil have notifikationer af slagsen `key` via `channel` ("app" eller "mail")."""
     kind = KIND_BY_KEY[key]
     default = getattr(kind, channel)
-    if default is None or (kind.admin_only and user.role != "admin"):
+    if default is None or kind not in kinds_for(user):
         return False
     stored = (user.notification_prefs or {}).get(key, {})
     return bool(stored.get(channel, default))

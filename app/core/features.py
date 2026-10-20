@@ -36,7 +36,15 @@ LEGACY_KNOWN = {"messages.read", "messages.reply", "messages.unmatched.send", "l
 
 
 def tier_features():
-    """Den aktuelle fordeling af funktioner pr. niveau."""
+    """Den aktuelle fordeling af funktioner pr. niveau.
+
+    Et brand uden betalte niveauer (app/brands, fx Nogen.nu) giver alle Premium-funktionerne til alle, og
+    fordelingen kan ikke ændres. Premium+-funktionen om beskeder uden match gives ikke: kontakt kræver altid, at
+    begge har sagt ja."""
+    from ..brands import current_brand
+
+    if not current_brand().premium:
+        return {tier: list(DEFAULT_TIER_FEATURES["premium"]) for tier in TIERS}
     stored = get_setting("tier_features")
     if not stored:
         return {tier: list(DEFAULT_TIER_FEATURES[tier]) for tier in TIERS}

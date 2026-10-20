@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% from "_forms.html" import field %}
-{% block title %}Konto – Sukker.nu{% endblock %}
+{% block title %}Konto – {{ brand.name }}{% endblock %}
 {% block content %}
   <h1>Konto</h1>
   <div class="panels">
@@ -19,6 +19,7 @@
     </form>
   </section>
 
+  {% if brand.premium %}
   <section class="card">
     <h2>Abonnement</h2>
     {% if subscription and subscription.is_lifetime %}
@@ -29,6 +30,7 @@
       <p><strong>Free</strong></p>
     {% endif %}
   </section>
+  {% endif %}
 
   <section class="card" id="notifikationer">
     <h2>Notifikationer</h2>

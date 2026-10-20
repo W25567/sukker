@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Afmeld e-mails – Sukker.nu{% endblock %}
+{% block title %}Afmeld e-mails – {{ brand.name }}{% endblock %}
 {% block content %}
   <section class="card">
     {% if done %}
@@ -7,7 +7,7 @@
       <p>Du får ikke flere {{ label }}. Du kan altid slå dem til igen under <a href="{{ url_for('account.overview') }}#notifikationer">Konto</a>.</p>
     {% else %}
       <h1>Afmeld e-mails</h1>
-      <p>Vil du afmelde {{ label }} fra Sukker.nu?</p>
+      <p>Vil du afmelde {{ label }} fra {{ brand.name }}?</p>
       <form method="post" action="{{ url_for('notify.unsubscribe', token=token) }}">
         <button type="submit" class="button">Afmeld</button>
       </form>

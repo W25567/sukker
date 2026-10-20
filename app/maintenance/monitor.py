@@ -15,6 +15,7 @@ from datetime import datetime, timedelta
 
 from flask import current_app
 
+from ..brands import current_brand
 from ..core.mail import send_mail
 from ..core.timeutil import now_utc
 from . import backup
@@ -133,10 +134,11 @@ def check_failed_units(runner=subprocess.run):
 
 
 def belongs_to(unit, prefix):
-    """Produktion (sukker) og staging (sukker-staging) deler præfiks, men hvert miljø overvåger kun sit eget."""
+    """Produktion (fx sukker eller nogen) og staging (sukker-staging, nogen-staging) deler præfiks, men hvert miljø
+    overvåger kun sit eget."""
     if not (unit.startswith(prefix + ".") or unit.startswith(prefix + "-") or unit.startswith(prefix + "@")):
         return False
-    return prefix.endswith("-staging") or not unit.startswith("sukker-staging")
+    return prefix.endswith("-staging") or not unit.startswith(prefix + "-staging")
 
 
 def collect_problems():
@@ -173,8 +175,8 @@ def run(now=None, problems=None):
     sent = False
     recipient = current_app.config["ALERT_EMAIL"]
     if (due or resolved) and recipient:
-        subject = (f"Sukker.nu ({current_app.config['ENV_NAME']}): {len(problems)} problem(er)" if problems
-                   else f"Sukker.nu ({current_app.config['ENV_NAME']}): alt er i orden igen")
+        subject = (f"{current_brand().name} ({current_app.config['ENV_NAME']}): {len(problems)} problem(er)" if problems
+                   else f"{current_brand().name} ({current_app.config['ENV_NAME']}): alt er i orden igen")
         sent = send_mail(recipient, subject, "mail/alert.txt", problems=problems, resolved=resolved,
                          environment=current_app.config["ENV_NAME"])
     for problem in problems:
@@ -193,5 +195,5 @@ def alert_unit_failure(unit):
     current_app.logger.error(problem.message)
     if not recipient:
         return False
-    return send_mail(recipient, f"Sukker.nu ({current_app.config['ENV_NAME']}): {unit} fejlede", "mail/alert.txt",
+    return send_mail(recipient, f"{current_brand().name} ({current_app.config['ENV_NAME']}): {unit} fejlede", "mail/alert.txt",
                      problems=[problem], resolved=[], environment=current_app.config["ENV_NAME"])

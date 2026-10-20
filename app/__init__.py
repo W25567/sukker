@@ -5,6 +5,7 @@ from datetime import datetime
 from functools import lru_cache
 
 from flask import Flask
+from jinja2 import ChoiceLoader, FileSystemLoader
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from .config import get_config
@@ -38,6 +39,16 @@ def create_app(config_name=None):
 
     if app.config["PROXY_FIX"]:
         app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
+
+    # Brandet (app/brands): skabeloner i templates/brands/<brand>/ overstyrer de fælles med samme navn.
+    from .brands import brand_for
+
+    brand = brand_for(app.config["BRAND"])
+    app.jinja_loader = ChoiceLoader([
+        FileSystemLoader(os.path.join(app.root_path, "templates", "brands", brand.key)),
+        FileSystemLoader(os.path.join(app.root_path, "templates")),
+    ])
+    app.jinja_env.globals["brand"] = brand
 
     db.init_app(app)
     migrate.init_app(app, db)

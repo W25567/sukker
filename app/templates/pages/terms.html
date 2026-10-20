@@ -6,12 +6,12 @@
     <p class="muted">Gældende fra {{ effective.strftime('%d-%m-%Y') }}</p>
 
     <h2>1. Om vilkårene</h2>
-    <p>Vilkårene gælder for din brug af Sukker.nu{% if company.name %}, som drives af {{ company.name }}{% endif %}. Når du opretter en profil, accepterer du vilkårene og <a href="{{ url_for('pages.privacy') }}">privatlivspolitikken</a>.</p>
+    <p>Vilkårene gælder for din brug af {{ brand.name }}{% if company.name %}, som drives af {{ company.name }}{% endif %}. Når du opretter en profil, accepterer du vilkårene og <a href="{{ url_for('pages.privacy') }}">privatlivspolitikken</a>.</p>
     {% if prerelease_label %}
-      <p><strong>Pre-release:</strong> Indtil den officielle lancering {{ prerelease_label }} er Sukker.nu i pre-release. Du skal acceptere det, før du bruger siden. I perioden kan der være fejl og få profiler, og funktioner kan ændre sig uden varsel. Vilkårene og privatlivspolitikken gælder fuldt ud, også i pre-release, og din profil fortsætter efter lanceringen.</p>
+      <p><strong>Pre-release:</strong> Indtil den officielle lancering {{ prerelease_label }} er {{ brand.name }} i pre-release. Du skal acceptere det, før du bruger siden. I perioden kan der være fejl og få profiler, og funktioner kan ændre sig uden varsel. Vilkårene og privatlivspolitikken gælder fuldt ud, også i pre-release, og din profil fortsætter efter lanceringen.</p>
     {% endif %}
 
-    <h2>2. Hvem kan bruge Sukker.nu</h2>
+    <h2>2. Hvem kan bruge {{ brand.name }}</h2>
     <ul>
       <li>Du skal være mindst 18 år.</li>
       <li>Du må kun have én profil, og den skal være din egen.</li>
@@ -23,7 +23,7 @@
     <p>Hold dit password hemmeligt, og log ud på enheder, du deler med andre. Du kan se og afslutte dine aktive logins under Konto. Har du mistanke om, at andre har adgang til din konto, så skift password med det samme.</p>
 
     <h2>4. Sådan opfører du dig</h2>
-    <p>Sukker.nu er til frivillige relationer mellem voksne. Det er ikke tilladt at:</p>
+    <p>{{ brand.name }} er til frivillige relationer mellem voksne. Det er ikke tilladt at:</p>
     <ul>
       <li>chikanere, true, presse eller nedgøre andre</li>
       <li>udgive sig for at være en anden eller oprette falske profiler</li>
@@ -32,9 +32,9 @@
       <li>dele indhold, der viser eller seksualiserer mindreårige</li>
       <li>dele andres billeder eller private oplysninger uden deres samtykke</li>
       <li>sende spam, reklame eller kædebeskeder</li>
-      <li>bruge Sukker.nu til andet end at finde kontakt med andre voksne til dating og relationer, fx markedsføring, salg,
+      <li>bruge {{ brand.name }} til andet end at finde kontakt med andre voksne til dating og relationer, fx markedsføring, salg,
         reklame for produkter, tjenester eller andre sider, hvervning eller indsamling af kontakter</li>
-      <li>bruge et vist navn, der er groft, krænkende eller seksuelt, eller som kan forveksles med Sukker.nu eller administrationen, fx "Admin" eller "Moderator"</li>
+      <li>bruge et vist navn, der er groft, krænkende eller seksuelt, eller som kan forveksles med {{ brand.name }} eller administrationen, fx "Admin" eller "Moderator"</li>
       <li>skrive e-mail, telefonnummer, links eller andre kontaktoplysninger, fx brugernavne på sociale medier, i din profil –
         hverken i profilteksten, dit viste navn eller andre felter</li>
       <li>indsamle oplysninger om andre brugere automatisk, bruge robotter eller omgå sikkerhedsforanstaltninger og begrænsninger</li>
@@ -42,7 +42,7 @@
     </ul>
 
     <h2>5. Dit indhold</h2>
-    <p>Du bevarer rettighederne til de tekster og billeder, du deler. Du giver os ret til at opbevare og vise dem på Sukker.nu for de brugere, du har valgt, så længe din profil findes. Du må kun uploade billeder, du selv har rettighederne til, og som ikke viser andre uden deres samtykke. Vi kan fjerne indhold, der overtræder vilkårene.</p>
+    <p>Du bevarer rettighederne til de tekster og billeder, du deler. Du giver os ret til at opbevare og vise dem på {{ brand.name }} for de brugere, du har valgt, så længe din profil findes. Du må kun uploade billeder, du selv har rettighederne til, og som ikke viser andre uden deres samtykke. Vi kan fjerne indhold, der overtræder vilkårene.</p>
 
     <h2>6. Moderation</h2>
     <p>Alle kan anmelde profiler, samtaler og beskeder. Anmeldelser behandles af moderatorer. For at afdække misbrug, svindel og phishing kan en moderator få adgang til de oplysninger, der er gemt om en konto, herunder beskeder og billeder. Det sker kun med en begrundelse, og al adgang logges.</p>
@@ -50,8 +50,8 @@
     <p>Er du uenig i en afgørelse, der vedrører dig, kan du <a href="{{ url_for('moderation.appeal') }}">klage</a> og få sagen vurderet igen af en anden.</p>
 
     <h2>7. Abonnementer</h2>
-    <p>Sukker.nu har tre niveauer: Free, Premium og Premium+. <a href="{{ url_for('pages.premium') }}">Se hvad de giver adgang til</a>.{% if signup_months %} Nye profiler får {{ signup_months }} måneders Premium gratis, når e-mailen er bekræftet.{% endif %} Når en periode udløber, overgår du til Free, og du får besked i god tid forinden.</p>
-    <p><strong>Tidlige fugle:</strong> Mens kampagnen for tidlige fugle er åben, får nye profiler Premium for livstid, når e-mailen er bekræftet, og der er mindst ét billede på profilen. Vi kan lukke kampagnen for nye profiler når som helst. Har du fået Premium for livstid, beholder du det, så længe du har din profil med mindst ét billede, og så længe Sukker.nu drives. Har du ingen billeder, er Premium for livstid sat på pause, indtil du uploader et nyt. Det gælder det niveau, der hedder Premium, og indholdet kan udvikle sig som for alle andre. Premium for livstid kan ikke overdrages, og det bortfalder, hvis profilen slettes eller lukkes efter afsnit 6.</p>
+    <p>{{ brand.name }} har tre niveauer: Free, Premium og Premium+. <a href="{{ url_for('pages.premium') }}">Se hvad de giver adgang til</a>.{% if signup_months %} Nye profiler får {{ signup_months }} måneders Premium gratis, når e-mailen er bekræftet.{% endif %} Når en periode udløber, overgår du til Free, og du får besked i god tid forinden.</p>
+    <p><strong>Tidlige fugle:</strong> Mens kampagnen for tidlige fugle er åben, får nye profiler Premium for livstid, når e-mailen er bekræftet, og der er mindst ét billede på profilen. Vi kan lukke kampagnen for nye profiler når som helst. Har du fået Premium for livstid, beholder du det, så længe du har din profil med mindst ét billede, og så længe {{ brand.name }} drives. Har du ingen billeder, er Premium for livstid sat på pause, indtil du uploader et nyt. Det gælder det niveau, der hedder Premium, og indholdet kan udvikle sig som for alle andre. Premium for livstid kan ikke overdrages, og det bortfalder, hvis profilen slettes eller lukkes efter afsnit 6.</p>
     <p>Indholdet af niveauerne kan ændre sig, efterhånden som siden udvikles. Der er endnu ikke indført betaling. Hvis det sker, gælder særskilte betalingsvilkår, som du skal acceptere, før noget koster penge.</p>
 
     <h2>8. Sletning og ophør</h2>

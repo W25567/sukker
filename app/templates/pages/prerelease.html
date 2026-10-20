@@ -1,15 +1,15 @@
 {% extends "base.html" %}
 {% from "_forms.html" import field %}
-{% block title %}Pre-release – Sukker.nu åbner {{ launch_label }}{% endblock %}
-{% block meta %}<meta name="description" content="Sukker.nu åbner officielt {{ launch_label }}. Indtil da kan du være med i vores pre-release.">
+{% block title %}Pre-release – {{ brand.name }} åbner {{ launch_label }}{% endblock %}
+{% block meta %}<meta name="description" content="{{ brand.name }} åbner officielt {{ launch_label }}. Indtil da kan du være med i vores pre-release.">
   {# Siden er forsidens midlertidige indhold. Søgemaskinerne skal knytte den til forsiden, ikke til /pre-release?next=... #}
   <link rel="canonical" href="{{ home_url }}">{% endblock %}
 {% block page_class %}public prerelease-page{% endblock %}
 {% block content %}
   <section class="prerelease-hero">
     <picture>
-      <source srcset="{{ url_for('static', filename='images/full-logo-280-dark.webp') }}" media="(prefers-color-scheme: dark)">
-      <img class="hero-logo" src="{{ url_for('static', filename='images/full-logo-280.webp') }}" width="280" height="140" alt="Sukker.nu" fetchpriority="high">
+      <source srcset="{{ url_for('static', filename=brand.asset('full-logo-280-dark.webp')) }}" media="(prefers-color-scheme: dark)">
+      <img class="hero-logo" src="{{ url_for('static', filename=brand.asset('full-logo-280.webp')) }}" width="280" height="140" alt="{{ brand.name }}" fetchpriority="high">
     </picture>
     <p class="prerelease-tag">Pre-release</p>
     <h1>Noget nyt er på vej</h1>
@@ -28,7 +28,7 @@
   <section class="prerelease-body">
     <div class="card">
       <h2>Du er på vej ind i en pre-release</h2>
-      <p>Sukker.nu er bygget og virker, men vi er endnu ikke officielt i luften. Det betyder:</p>
+      <p>{{ brand.name }} er bygget og virker, men vi er endnu ikke officielt i luften. Det betyder:</p>
       <ul class="points">
         <li><strong>Der er endnu få profiler.</strong> Du er blandt de første, og siden vokser, efterhånden som flere kommer til.</li>
         <li><strong>Der kan være fejl, og ting kan ændre sig.</strong> Vi retter løbende og hører gerne fra dig – under Min profil kan du rapportere fejl og skrive til os.</li>
@@ -41,7 +41,7 @@
       </ul>
 
       {% if already_accepted %}
-        <a class="button wide" href="{{ next_url }}">Fortsæt til Sukker.nu</a>
+        <a class="button wide" href="{{ next_url }}">Fortsæt til {{ brand.name }}</a>
       {% else %}
         <form method="post" class="form" novalidate>
           {{ form.hidden_tag() }}
@@ -49,14 +49,14 @@
             <label>{{ form.understood() }} {{ form.understood.label.text }}. Jeg ved, at der kan være fejl og få profiler, og at funktioner kan ændre sig før lanceringen.</label>
             {% for error in form.understood.errors %}<small class="error">{{ error }}</small>{% endfor %}
           </div>
-          <button type="submit" class="button wide">Gå ind på Sukker.nu</button>
+          <button type="submit" class="button wide">Gå ind på {{ brand.name }}</button>
         </form>
         {% if not current_user %}
           <p class="muted prerelease-links">Har du allerede accepteret og oprettet en profil? <a href="{{ url_for('auth.login') }}">Log ind</a></p>
         {% endif %}
       {% endif %}
       <p class="muted prerelease-links">
-        <a href="{{ url_for('pages.purpose') }}">Hvorfor Sukker.nu</a> ·
+        <a href="{{ url_for('pages.purpose') }}">Hvorfor {{ brand.name }}</a> ·
         <a href="{{ url_for('pages.terms') }}">Vilkår</a> ·
         <a href="{{ url_for('pages.privacy') }}">Privatliv</a> ·
         Kun for personer på 18 år eller derover

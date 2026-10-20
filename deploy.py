@@ -55,12 +55,39 @@ class DeployAbort(RuntimeError):
 # --- Konfiguration ------------------------------------------------------------------------------------------
 
 
+# Brands (app/brands): navnet bruges i Nginx' adgangskode-dialog og på vedligeholdelsessiden.
+BRAND_NAMES = {"sukker": ("Sukker", ".nu"), "nogen": ("nogen", ".nu")}
+
+
+def is_production(env_name, raw):
+    """Et miljø er produktion, hvis det hedder "production" eller har "production": true (fx Nogen.nu)."""
+    return bool(raw.get("production", env_name == "production"))
+
+
+def service_name(env_name, raw):
+    """Sukker.nu: "sukker" og "sukker-staging". Andre brands: "<brand>" og "<brand>-staging"."""
+    brand = raw.get("brand", "sukker")
+    if brand == "sukker":
+        return "sukker" if env_name == "production" else f"sukker-{env_name}"
+    if is_production(env_name, raw):
+        return brand
+    return env_name if env_name.startswith(f"{brand}-") else f"{brand}-{env_name}"
+
+
 def resolve(env_name, raw):
-    """Alle navne og stier udledes af miljøets navn, så produktion og staging aldrig kan dele ressourcer."""
-    name = "sukker" if env_name == "production" else f"sukker-{env_name}"
+    """Alle navne og stier udledes af miljøets navn og brand, så miljøerne aldrig kan dele ressourcer."""
+    brand = raw.get("brand", "sukker")
+    if brand not in BRAND_NAMES:
+        raise DeployAbort(f"{env_name}.brand er ukendt: {brand!r}. Findes: {', '.join(BRAND_NAMES)}.")
+    production = is_production(env_name, raw)
+    name = service_name(env_name, raw)
     ident = name.replace("-", "_")
     cfg = {
         "env": env_name,
+        "brand": brand,
+        "brand_main": BRAND_NAMES[brand][0],
+        "brand_tld": BRAND_NAMES[brand][1],
+        "production": production,
         "id": ident,
         "service": name,
         "user": name,
@@ -77,14 +104,15 @@ def resolve(env_name, raw):
         "nginx_site": f"/etc/nginx/sites-available/{raw['domain']}.conf",
         "domain": raw["domain"],
         "aliases": list(raw.get("aliases", [])),
-        "basic_auth": env_name != "production",
-        "backup_enabled": env_name == "production",
+        "basic_auth": not production,
+        "backup_enabled": production,
         "letsencrypt_email": raw.get("letsencrypt_email") or raw.get("alert_email", ""),
         "smtp_username": raw.get("smtp_username", ""),
         "backup_age_recipients": list(raw.get("backup_age_recipients", [])),
     }
     cfg["env_settings"] = {
         "SUKKER_ENV": env_name,
+        "SUKKER_BRAND": brand,
         "SUKKER_BASE_URL": f"https://{raw['domain']}",
         "SUKKER_SITE_DOMAIN": raw["domain"],
         "SUKKER_SERVICE_NAME": name,
@@ -128,23 +156,30 @@ def validate(env_name, environments):
             errors.append(f"{env_name}.{key} mangler i deployment/environments.json.")
     if not (raw.get("letsencrypt_email") or raw.get("alert_email")):
         errors.append(f"{env_name}.letsencrypt_email (eller alert_email) mangler.")
-    if env_name == "production":
+    if raw.get("brand", "sukker") not in BRAND_NAMES:
+        return errors + [f"{env_name}.brand er ukendt: {raw.get('brand')!r}. Findes: {', '.join(BRAND_NAMES)}."]
+    if is_production(env_name, raw):
         if not raw.get("backup_age_recipients"):
-            errors.append("production.backup_age_recipients mangler: backup skal være krypteret (specifikation 14.8).")
+            errors.append(f"{env_name}.backup_age_recipients mangler: backup skal være krypteret (specifikation 14.8).")
         if any(not r.startswith("age1") for r in raw.get("backup_age_recipients", [])):
             errors.append("backup_age_recipients skal være offentlige age-nøgler (age1...), aldrig private nøgler.")
         if not raw.get("backup_remote"):
-            errors.append("production.backup_remote mangler: backuppen skal også ligge uden for serveren, ellers "
+            errors.append(f"{env_name}.backup_remote mangler: backuppen skal også ligge uden for serveren, ellers "
                           "mistes både data og backup, hvis serveren går tabt (specifikation 14.8).")
         if "staging" in str(raw.get("mail_from", "")).lower():
-            errors.append("production.mail_from indeholder \"staging\". Brugerne vil se det som afsender.")
+            errors.append(f"{env_name}.mail_from indeholder \"staging\". Brugerne vil se det som afsender.")
     mine = resolve(env_name, raw) if raw.get("domain") else None
     for other_name, other_raw in environments.items():
         if other_name == env_name or not other_raw.get("domain") or not mine:
             continue
         other = resolve(other_name, other_raw)
-        shared = [k for k in ("domain", "app_root", "data_root", "database", "service", "env_file", "nginx_site")
+        shared = [k for k in ("domain", "app_root", "data_root", "database", "service", "env_file", "nginx_site",
+                              "backup_dir")
                   if mine[k] == other[k]]
+        # To miljøer må heller ikke tage backup til samme mappe uden for serveren (--delete ville slette den andens).
+        if (mine["backup_enabled"] and other["backup_enabled"] and raw.get("backup_remote")
+                and raw.get("backup_remote") == other_raw.get("backup_remote")):
+            shared.append("backup_remote")
         overlap = set([mine["domain"]] + mine["aliases"]) & set([other["domain"]] + other["aliases"])
         if shared or overlap:
             errors.append(f"{env_name} og {other_name} deler {', '.join(shared) or ', '.join(overlap)}.")
@@ -369,7 +404,8 @@ def ask_secrets(inspect_result, args):
 def main(argv=None):
     parser = argparse.ArgumentParser(description="Udgiv Sukker.nu.", formatter_class=argparse.RawDescriptionHelpFormatter,
                                      epilog=__doc__)
-    parser.add_argument("--env", default="production", help="production (standard) eller staging")
+    parser.add_argument("--env", default="production",
+                        help="miljøet i deployment/environments.json: production (standard), staging, nogen-staging …")
     parser.add_argument("--yes", action="store_true", help="spring bekræftelsen af produktion over")
     parser.add_argument("--dry-run", action="store_true", help="vis status og hvad der ville ske, uden ændringer")
     parser.add_argument("--skip-tests", action="store_true", help="kør ikke testene før udgivelsen")
@@ -389,7 +425,7 @@ def main(argv=None):
     raw = environments[args.env]
     cfg = resolve(args.env, raw)
 
-    if args.env == "production" and not (args.yes or args.dry_run or args.run):
+    if cfg["production"] and not (args.yes or args.dry_run or args.run):
         answer = input(f"Udgiv til PRODUKTION ({cfg['domain']}) på {raw['host']}? Skriv ja: ").strip().lower()
         if answer != "ja":
             print("Afbrudt.")

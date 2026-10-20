@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% from "_like.html" import like_button %}
 {% from "_avatar.html" import photo_placeholder %}
-{% block title %}{{ user.display_name }} – Sukker.nu{% endblock %}
+{% block title %}{{ user.display_name }} – {{ brand.name }}{% endblock %}
 
 {% macro lock_icon() %}<svg class="lock-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 10V7a5 5 0 0 1 10 0v3h1a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1zm2 0h6V7a3 3 0 0 0-6 0z"/></svg>{% endmacro %}
 
@@ -47,7 +47,7 @@
           {% endfor %}
         </div>
       {% endif %}
-      {% if private_state.total %}
+      {% if brand.private_album and private_state.total %}
         {# Låste billeder vises kun som et antal. Intet fra selve billederne sendes til browseren. #}
         <section class="card private-album" id="privat">
           <div class="private-album-head">

@@ -12,6 +12,8 @@ def _env(name, default=None):
 
 
 class BaseConfig:
+    # Hvilket brand installationen kører som (app/brands): "sukker" eller "nogen". Hvert brand har sin egen installation.
+    BRAND = _env("SUKKER_BRAND", "sukker")
     SECRET_KEY = _env("SUKKER_SECRET_KEY")
     BASE_URL = _env("SUKKER_BASE_URL", "http://localhost:5000")
     TIMEZONE = "Europe/Copenhagen"
@@ -62,7 +64,8 @@ class BaseConfig:
     COMPANY_ADDRESS = _env("SUKKER_COMPANY_ADDRESS")
     # Officiel lancering. Indtil da er siden i pre-release: en landingsside tæller ned, og man skal acceptere, at
     # platformen endnu ikke er i luften, før man går videre (app/pages/prerelease.py). Tom = ingen pre-release.
-    LAUNCH_AT = _env("SUKKER_LAUNCH_AT", "2026-11-01T00:00:00+01:00")
+    # Datoen gælder Sukker.nu. Andre brands har ingen pre-release, medmindre SUKKER_LAUNCH_AT sættes.
+    LAUNCH_AT = _env("SUKKER_LAUNCH_AT", "2026-11-01T00:00:00+01:00" if BRAND == "sukker" else "")
     # Staging: alt sendes med noindex, og robots.txt udelukker hele siden (specifikation 14.7).
     NOINDEX_ALL = _env("SUKKER_NOINDEX_ALL", "0") == "1"
 

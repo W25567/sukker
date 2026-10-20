@@ -8,6 +8,7 @@
 - Hver fjernelse oprettes som en afsluttet moderationssag med en kopi af materialet, så brugeren kan klage, og så
   handlingen kan spores. Brugeren får en kort besked fra Administrator.
 """
+from ..brands import current_brand
 from ..core.timeutil import now_utc
 from ..extensions import db
 from ..media.access import forget_image
@@ -63,7 +64,7 @@ def remove_image(actor, image, owner, reason):
     services.add_event(case, actor, "decision", f"content_removed: billede fjernet ({label})")
     case.decision, case.decision_note = "content_removed", label
     case.status, case.closed_at = "closed", now_utc()
-    _notify(actor, owner, "Et af dine billeder er fjernet, fordi det ikke overholder reglerne på Sukker.nu "
+    _notify(actor, owner, f"Et af dine billeder er fjernet, fordi det ikke overholder reglerne på {current_brand().name} "
                           f"({label.lower()}). Det kan ikke længere ses af andre. Du kan slette markeringen under "
                           "Min profil. Er du uenig, kan du svare her eller klage over afgørelsen.")
     return case
@@ -117,6 +118,6 @@ def remove_display_name(admin, user, note=None):
     audit(admin, "name_removed", user, original=original, note=(note or "").strip() or None)
     user.display_name = REMOVED_NAME
     user.name_removed_at = now_utc()
-    _notify(admin, user, "Dit visningsnavn er slettet, fordi det ikke overholder reglerne på Sukker.nu. "
+    _notify(admin, user, f"Dit visningsnavn er slettet, fordi det ikke overholder reglerne på {current_brand().name}. "
                          "Vælg et nyt navn under Konto. Andre ser nu \"" + REMOVED_NAME + "\".")
     return original

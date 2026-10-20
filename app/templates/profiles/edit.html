@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% from "_forms.html" import field %}
-{% block title %}Rediger profil – Sukker.nu{% endblock %}
+{% block title %}Rediger profil – {{ brand.name }}{% endblock %}
 
 {% macro hide_toggle(name) %}
   {% for option in form.hidden_fields if option.data == name %}

@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% from "_avatar.html" import avatar %}
-{% block title %}Beskeder – Sukker.nu{% endblock %}
+{% block title %}Beskeder – {{ brand.name }}{% endblock %}
 {% block content %}
   <div class="heading-row">
     <h1>{{ 'Arkiv' if archived else 'Beskeder' }}</h1>

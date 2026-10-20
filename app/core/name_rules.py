@@ -21,7 +21,10 @@ import re
 
 from flask import has_app_context
 
-# Navne, der kan forveksles med Sukker.nu selv eller administrationen. Må ikke stå nogen steder i navnet.
+from ..brands import current_brand
+
+# Navne, der kan forveksles med siden selv eller administrationen. Må ikke stå nogen steder i navnet. Begge brands'
+# navne er altid reserverede (SITE_NAME og det kørende brands navn, se problem()).
 RESERVED = ("admin", "moderator", "support", "kundeservice", "systembesked", "system")
 SITE_NAME = "sukkernu"
 
@@ -94,7 +97,9 @@ def problem(name):
     words = [word for word in _words(name) if word not in allowed]
     # Søges inde i hvert ord, ikke på tværs af ord, så fx "Lu Derek" ikke bliver til "luder" og "Ad Mina" ikke til
     # "admin". Kun sidens eget navn søges på tværs ("Sukker.nu", "Sukker Nu").
-    if any(term in word for word in plain + _spelled(plain) for term in reserved) or SITE_NAME in "".join(plain):
+    site_names = {SITE_NAME, current_brand().compact}
+    if (any(term in word for word in plain + _spelled(plain) for term in reserved)
+            or any(site in "".join(plain) for site in site_names)):
         return "reserved"
     if any(term in word for word in plain + _spelled(plain) for term in anywhere):
         return "offensive"
@@ -108,7 +113,7 @@ BUILT_IN = {"name_reserved": RESERVED, "name_blocked_anywhere": ANYWHERE, "name_
 
 
 MESSAGES = {
-    "reserved": "Navnet må ikke ligne et navn fra Sukker.nu eller administrationen. Vælg et andet navn.",
+    "reserved": "Navnet må ikke ligne et navn fra {site} eller administrationen. Vælg et andet navn.",
     "offensive": "Navnet må ikke indeholde grove, krænkende eller seksuelle ord. Vælg et andet navn.",
 }
 
@@ -119,4 +124,4 @@ def validator(form, field):
 
     found = problem(field.data if isinstance(field.data, str) else None)
     if found:
-        raise ValidationError(MESSAGES[found])
+        raise ValidationError(MESSAGES[found].format(site=current_brand().name))

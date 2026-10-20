@@ -1,3 +1,5 @@
+from functools import wraps
+
 from sqlalchemy import func, select
 
 from flask import Blueprint, abort, flash, g, jsonify, redirect, render_template, request, url_for
@@ -8,6 +10,7 @@ from ..auth.forms import ActionForm, GenderForm
 from ..auth.models import User, UserSession
 from ..explore.services import RECENTLY_ACTIVE
 from ..auth.sessions import login_required, safe_next_url
+from ..brands import current_brand
 from ..core.timeutil import now_utc
 from ..extensions import PROFILE_VIEW_LIMIT, db, limiter, user_or_ip
 from ..moderation.signals import is_masked, record_visit, scraping_breach
@@ -279,7 +282,7 @@ def rotate_image(public_id, direction):
 def move_image(public_id, target):
     """Gør et billede privat eller offentligt. Private billeder kan kun ses af ejeren (specifikation 4.1)."""
     image = media.owned_image(g.user, public_id)
-    if image is None:
+    if image is None or (target == "privat" and not current_brand().private_album):
         abort(404)
     if ActionForm().validate_on_submit():
         try:
@@ -317,8 +320,19 @@ def make_primary(public_id):
 # --- Private album: anmodninger og adgang (specifikation 4.2) ---------------------------------------------------
 
 
+def private_album_required(view):
+    """Brands uden privat album (app/brands) svarer 404 på alle sider om private billeder."""
+    @wraps(view)
+    def wrapped(*args, **kwargs):
+        if not current_brand().private_album:
+            abort(404)
+        return view(*args, **kwargs)
+    return wrapped
+
+
 @bp.route("/bruger/<handle>/privat/anmod", methods=["POST"])
 @login_required
+@private_album_required
 @limiter.limit("30 per hour", methods=["POST"])
 def request_private(handle):
     """Anmod om adgang til en profils private album."""
@@ -339,6 +353,7 @@ def request_private(handle):
 
 @bp.route("/bruger/<handle>/privat/fortryd", methods=["POST"])
 @login_required
+@private_album_required
 def cancel_private(handle):
     owner = find_user_by_handle(handle)
     if owner is None:
@@ -352,6 +367,7 @@ def cancel_private(handle):
 
 @bp.route("/profil/privat-adgang")
 @login_required
+@private_album_required
 def private_access():
     """Ejerens oversigt: anmodninger om adgang og hvem der har adgang til det private album."""
     pending, approved = private.owner_overview(g.user)
@@ -370,6 +386,7 @@ def _own_access_or_404(access_id):
 
 @bp.route("/profil/privat-adgang/<int:access_id>", methods=["GET", "POST"])
 @login_required
+@private_album_required
 def private_access_edit(access_id):
     """Giv eller ret adgang: hele albummet eller udvalgte billeder."""
     access = _own_access_or_404(access_id)
@@ -393,6 +410,7 @@ def private_access_edit(access_id):
 
 @bp.route("/profil/privat-adgang/<int:access_id>/<any(alle, afvis, tilbagekald):action>", methods=["POST"])
 @login_required
+@private_album_required
 def private_access_action(access_id, action):
     access = _own_access_or_404(access_id)
     viewer = db.session.get(User, access.viewer_id)

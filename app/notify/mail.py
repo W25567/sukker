@@ -17,6 +17,7 @@ from flask import current_app, url_for
 from sqlalchemy import and_, func, or_, select
 
 from ..auth.models import User, UserSession
+from ..brands import current_brand
 from ..core.mail import send_mail
 from ..core.timeutil import DANISH_TZ, now_utc
 from ..extensions import db
@@ -160,7 +161,7 @@ def _site_url(endpoint, **values):
 
 
 def _send_news(user, kinds):
-    return send_mail(user.email, "Der er nyt til dig på Sukker.nu", "mail/notify.txt",
+    return send_mail(user.email, f"Der er nyt til dig på {current_brand().name}", "mail/notify.txt",
                      headers=mail_headers(user, "news"), name=user.display_name,
                      lines=[LINES[kind] for kind in kinds], login_url=_site_url("auth.login"),
                      settings_url=_site_url("account.overview") + "#notifikationer",
@@ -249,7 +250,7 @@ def _send_inactive(user, now):
     from ..explore.services import inactive_before
 
     hidden_at = user.last_active_at + (now - inactive_before(now))
-    return send_mail(user.email, "Din profil på Sukker.nu bliver snart skjult", "mail/inactive.txt",
+    return send_mail(user.email, f"Din profil på {current_brand().name} bliver snart skjult", "mail/inactive.txt",
                      headers=mail_headers(user, "inactive"), name=user.display_name, hidden_date=hidden_at.astimezone(DANISH_TZ).strftime("%d-%m-%Y"),
                      login_url=_site_url("auth.login"),
                      settings_url=_site_url("account.overview") + "#notifikationer",

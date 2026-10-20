@@ -14,8 +14,15 @@ EMAIL = re.compile(rf"[\w.+-]+\s*{_AT}\s*[\w-]+(?:\s*{_DOT}\s*[\w-]+)*\s*{_DOT}\
 _TLDS = ("dk|com|net|org|io|me|se|no|de|eu|info|biz|co|app|link|ly|uk|xyz|online|site|shop|tv|cc|gg|to|fi|nl|be|at|ch|"
          "pl|ru|es|it|fr|us|ca|tk|club|live|chat|vip|top|store|page|dating|nu")
 URL = re.compile(rf"(?:\b(?:https?://|www\.)\S+|\b[\w-]+(?:\.[\w-]+)*\.(?:{_TLDS})\b(?:/\S*)?)", re.IGNORECASE)
-# Sukker.nu selv er ikke et link væk fra siden.
+# Siden selv er ikke et link væk fra siden.
 ALLOWED_DOMAINS = {"sukker.nu", "www.sukker.nu"}
+
+
+def _allowed_domains():
+    from ..brands import current_brand
+
+    domain = current_brand().domain
+    return ALLOWED_DOMAINS | {domain, f"www.{domain}"}
 
 # Danske numre (8 cifre, evt. i par eller fire og fire) og internationale numre med landekode.
 PHONE = re.compile(
@@ -41,7 +48,7 @@ def find(text):
     if EMAIL.search(text):
         return "e-mail"
     for match in URL.finditer(text):
-        if match.group(0).lower().rstrip("/.") not in ALLOWED_DOMAINS:
+        if match.group(0).lower().rstrip("/.") not in _allowed_domains():
             return "link"
     if _phone(text):
         return "telefonnummer"

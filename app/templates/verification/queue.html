@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Verificeringer – Sukker.nu{% endblock %}
+{% block title %}Verificeringer – {{ brand.name }}{% endblock %}
 {% block content %}
   {% include "admin/_nav.html" if current_user.role == 'admin' else "moderation/_nav.html" %}
   <h1>Verificeringer</h1>

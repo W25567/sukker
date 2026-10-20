@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{# Nogen.nu's forside. Overstyrer templates/core/home.html (app/brands). Midlertidige tekster indtil de endelige er skrevet. #}
+{% block page_class %}public{% endblock %}
+{% block content %}
+  <section class="hero">
+    <picture>
+      <source srcset="{{ url_for('static', filename=brand.asset('full-logo-280-dark.webp')) }}" media="(prefers-color-scheme: dark)">
+      <img class="hero-logo" src="{{ url_for('static', filename=brand.asset('full-logo-280.webp')) }}" width="280" height="140" alt="{{ brand.name }}" fetchpriority="high">
+    </picture>
+    <h1>Find nogen at være sammen med</h1>
+    <p class="lead">En gåtur, en kop kaffe, en god snak eller en at dele en interesse med. {{ brand.name }} gør det lettere at
+      møde nye mennesker – gratis, trygt og uden algoritmer.</p>
+    <a class="button" href="{{ url_for('auth.register') }}">Opret gratis profil</a>
+    <p class="muted">Gratis for alle. Kun for personer på 18 år eller derover.</p>
+  </section>
+
+  <section class="public-section">
+    <h2>Sådan kommer du i gang</h2>
+    <ol class="steps">
+      <li><strong>Opret en profil</strong><span>Et navn, fødselsdato, postnummer og e-mail er nok. Resten kan vente.</span></li>
+      <li><strong>Vælg dine interesser</strong><span>Så kan du se, hvad du har til fælles med andre.</span></li>
+      <li><strong>Sig hej</strong><span>Når I begge gerne vil i kontakt, kan I skrive sammen og aftale at mødes.</span></li>
+    </ol>
+    <p><a href="{{ url_for('pages.how') }}">Læs mere om, hvordan det virker</a></p>
+  </section>
+
+  <section class="public-section">
+    <h2>Trygt fra start</h2>
+    <ul class="points">
+      <li><strong>Kun for medlemmer.</strong> Besøgende og søgemaskiner kan hverken se profiler eller billeder.</li>
+      <li><strong>Kontakt kræver et ja fra begge.</strong> Ingen kan skrive til dig, før du selv har sagt ja.</li>
+      <li><strong>Verificerede profiler.</strong> Mærket viser, at en moderator har sammenlignet en selfie med profilbillederne.</li>
+      <li><strong>Blokér og anmeld.</strong> Anmeldelser behandles af mennesker, og du kan altid skrive til os.</li>
+    </ul>
+    <p><a href="{{ url_for('pages.safety') }}">Om tryghed og sikkerhed</a></p>
+  </section>
+
+  <section class="public-section cta">
+    <h2>Klar til at møde nogen?</h2>
+    <a class="button" href="{{ url_for('auth.register') }}">Opret gratis profil</a>
+    <p class="muted">Har du allerede en profil? <a href="{{ url_for('auth.login') }}">Log ind</a></p>
+  </section>
+{% endblock %}

@@ -21,6 +21,29 @@ genetablere Sukker.nu, hvis udvikleren ikke er tilgængelig (specifikation 14.8)
 Navnene udledes af miljøets navn i `deploy.py`. Miljøerne kan derfor ikke dele filer, database eller
 service, og `deploy.py` afviser en konfiguration, hvor de deler domæne.
 
+## Flere brands (Sukker.nu og Nogen.nu)
+
+Samme kode kører som flere selvstændige sider. Hvert miljø i `environments.json` kan have `"brand"` (standard
+`"sukker"`) og `"production": true`. Navnene udledes af brand og miljø, så intet deles:
+
+| Miljø | Brand | Service, database og mapper | Adgangskode |
+|---|---|---|---|
+| `production` | sukker | `sukker` | nej |
+| `staging` | sukker | `sukker-staging` | ja |
+| `nogen-staging` | nogen | `nogen-staging` | ja |
+| `nogen` (senere, `"production": true`) | nogen | `nogen` | nej |
+
+Brandet sættes som `SUKKER_BRAND` i miljøfilen. Logo, farver og egne tekster ligger i `app/static/brands/<brand>/` og
+`app/templates/brands/<brand>/` (se `app/brands/__init__.py`).
+
+**Før første udgivelse af et nyt brand:** DNS for domænet (fx `staging.nogen.nu`) skal pege på serveren, og afsenderen
+(fx `svar-ikke@nogen.nu`) skal være godkendt som afsenderdomæne i Brevo med SPF og DKIM. Ellers bliver mails afvist
+eller havner som spam. Et produktionsmiljø skal have sin egen mappe på backupserveren (fx `...:nogen/`).
+
+```
+python deploy.py --env nogen-staging
+```
+
 ## Før første udgivelse
 
 1. **Server:** Ubuntu med PostgreSQL kørende. Din bruger skal have sudo-rettigheder, og din SSH-nøgle

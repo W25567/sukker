@@ -13,6 +13,7 @@ from ..core.timeutil import now_utc
 from ..extensions import db
 from ..subscriptions.services import active_subscription, early_bird_open, grant_early_bird
 from .content import absolute_url, faq_items, seo_for, visible_pages
+from ..brands import current_brand
 from . import prerelease
 from .forms import AcceptTermsForm, PrereleaseForm
 from .legal import TERMS_EFFECTIVE, TERMS_VERSION
@@ -71,6 +72,8 @@ PREMIUM_ROWS = [
 @bp.route("/premium")
 @public_page
 def premium():
+    if not current_brand().premium:
+        abort(404)  # brandet har ingen betalte niveauer (app/brands)
     mapping, disabled = tier_features(), disabled_features()
     rows = [(feature, label, [feature in mapping[tier] for tier in ("free", "premium", "premium_plus")])
             for feature, label in PREMIUM_ROWS if feature not in disabled]
@@ -248,4 +251,5 @@ def robots():
 @bp.route("/favicon.ico")
 @public_page  # søgemaskiner skal kunne hente ikonet til søgeresultaterne
 def favicon():
-    return send_from_directory(os.path.join(current_app.static_folder, "images"), "favicon.ico", max_age=7 * 24 * 3600)
+    folder = os.path.join(current_app.static_folder, os.path.dirname(current_brand().asset("favicon.ico")))
+    return send_from_directory(folder, "favicon.ico", max_age=7 * 24 * 3600)
