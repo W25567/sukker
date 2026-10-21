@@ -22,7 +22,7 @@ from ..extensions import db
 from ..subscriptions.services import TIER_LABELS, active_subscription, effective_tier
 from ..subscriptions.models import Subscription
 from ..support import services as support
-from ..support.models import MODULE_LABELS, BugReport, BugReportImage
+from ..support.models import BugReport, BugReportImage, module_labels
 from . import browse, metrics, services
 from .models import UserFeatureGrant
 
@@ -78,7 +78,7 @@ def bug_reports():
         .where(BugReportImage.report_id.in_([r.id for r in reports])).group_by(BugReportImage.report_id)
     ).all()) if reports else {}
     return render_template("admin/bug_reports.html", reports=reports, users=users, counts=counts,
-                           show_closed=show_closed, modules=MODULE_LABELS)
+                           show_closed=show_closed, modules=module_labels())
 
 
 @bp.route("/fejl/<int:report_id>", methods=["GET", "POST"])
@@ -96,7 +96,7 @@ def bug_report(report_id):
         return redirect(url_for("admin.bug_reports"))
     reporter = db.session.get(User, report.user_id) if report.user_id else None
     return render_template("admin/bug_report.html", report=report, reporter=reporter, images=support.images_for(report),
-                           modules=MODULE_LABELS, form=FlaskForm())
+                           modules=module_labels(), form=FlaskForm())
 
 
 @bp.route("/fejl/<int:report_id>/billede/<public_id>/<variant>.webp")

@@ -203,7 +203,9 @@ def restore_check_command(path, identity, database_url):
         manifest, checks = backup.restore_check(path, identity, database_url)
     except backup.BackupError as error:
         raise click.ClickException(str(error))
-    click.echo(f"Backup fra {manifest['created_at']} ({manifest['environment']}, migration {manifest['alembic_revision']})")
+    # Backups fra før brands havde ikke "brand" i manifestet, og de er alle fra Sukker.nu.
+    click.echo(f"Backup fra {manifest['created_at']} ({manifest.get('brand', 'sukker')} {manifest['environment']}, "
+               f"migration {manifest['alembic_revision']})")
     for name, ok, detail in checks:
         click.echo(f"  {'OK  ' if ok else 'FEJL'} {name}: {detail}")
     if not all(ok for _, ok, _ in checks):

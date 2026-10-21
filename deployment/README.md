@@ -31,18 +31,37 @@ Samme kode kører som flere selvstændige sider. Hvert miljø i `environments.js
 | `production` | sukker | `sukker` | nej |
 | `staging` | sukker | `sukker-staging` | ja |
 | `nogen-staging` | nogen | `nogen-staging` | ja |
-| `nogen` (senere, `"production": true`) | nogen | `nogen` | nej |
+| `nogen` (`"production": true`) | nogen | `nogen` | nej |
 
 Brandet sættes som `SUKKER_BRAND` i miljøfilen. Logo, farver og egne tekster ligger i `app/static/brands/<brand>/` og
 `app/templates/brands/<brand>/` (se `app/brands/__init__.py`).
 
 **Før første udgivelse af et nyt brand:** DNS for domænet (fx `staging.nogen.nu`) skal pege på serveren, og afsenderen
 (fx `svar-ikke@nogen.nu`) skal være godkendt som afsenderdomæne i Brevo med SPF og DKIM. Ellers bliver mails afvist
-eller havner som spam. Et produktionsmiljø skal have sin egen mappe på backupserveren (fx `...:nogen/`).
+eller havner som spam.
 
 ```
 python deploy.py --env nogen-staging
+python deploy.py --env nogen
 ```
+
+**Backup for flere brands på samme Storage Box:** Brands kan dele underkonto, men hvert produktionsmiljø skal have
+sin egen mappe (`...:sukker/` og `...:nogen/`). `deploy.py` afviser to miljøer med samme mappe. Filerne hedder
+`<brand>-production-<tid>-nightly.tar.age`, og hvert brand spejler og roterer kun sine egne filer. Begge krypteres
+til den samme age-nøgle, så én privat nøgle gendanner begge. Hvert brand har sin egen servicebruger og dermed sin
+egen SSH-nøgle, så første udgivelse af et nyt brand kræver:
+
+1. Opret mappen på boksen: `ssh -p 23 u671371-sub4@u671371-sub4.your-storagebox.de mkdir nogen`
+2. Kør `python deploy.py --env nogen`. Rapporten viser servicebrugerens offentlige SSH-nøgle.
+3. Gem nøglen i en fil (fx `nogen-backup.pub`) og føj den til boksen. `install-ssh-key` tilføjer, så Sukker.nu's
+   nøgle bliver liggende:
+   ```
+   type nogen-backup.pub | ssh -p 23 u671371-sub4@u671371-sub4.your-storagebox.de install-ssh-key
+   ```
+4. Kontrollér: `python deploy.py --env nogen --run "sukker backup"` og se `offsite: ok`.
+
+Begge brands kan altså læse og slette hinandens kopier på boksen. Det er samme ejer og samme server, kopierne er
+krypterede, og snapshots på boksen beskytter mod sletning.
 
 ## Før første udgivelse
 
@@ -100,9 +119,14 @@ Kører du scriptet igen uden ændringer, genstartes intet og databasen røres ik
 python deploy.py --env staging --dry-run                 # vis status, ændr intet
 python deploy.py --rollback                              # tilbage til seneste fungerende version
 python deploy.py --run "sukker set-role dig@example.com admin"
+python deploy.py --env nogen --run "sukker set-role dig@example.com admin"   # Nogen.nu
 python deploy.py --env staging --run "sukker create-test-accounts"
 python deploy.py --set-secret SUKKER_SMTP_PASSWORD       # skift en hemmelighed
 ```
+
+`--env` vælger installationen (standard er Sukker.nu's produktion). Kommandoerne hedder `sukker …` for alle brands,
+også Nogen.nu. Hvert brand har sin egen brugerdatabase, så en konto skal oprettes på siden, før den kan få en rolle,
+og en administrator på Sukker.nu er ikke administrator på Nogen.nu. Roller: `user`, `moderator` eller `admin`.
 
 ## Fejl under udgivelse
 

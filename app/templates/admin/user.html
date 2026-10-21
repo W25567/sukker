@@ -131,6 +131,7 @@
     {% endfor %}
   </section>
 
+  {% if brand.private_album %}
   <section class="card" id="privat-adgang">
     <h2>Adgang til private billeder</h2>
     {% set statuses_da = {'pending': 'venter', 'approved': 'har adgang', 'declined': 'afvist', 'revoked': 'trukket tilbage'} %}
@@ -144,6 +145,7 @@
         · anmodet {{ a.requested_at | local_datetime }}{% if a.decided_at %} · afgjort {{ a.decided_at | local_datetime }}{% endif %}</p>
     {% else %}<p class="muted">Ingen.</p>{% endfor %}
   </section>
+  {% endif %}
 
   <section class="card" id="aktivitet">
     <h2>Aktivitet</h2>

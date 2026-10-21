@@ -5,7 +5,7 @@
   {% include "moderation/_nav.html" %}
   <h1>{{ target.display_name }}</h1>
   <div class="card notice-card">
-    <p>Du får adgang til alle gemte data om brugeren, også beskeder og private billeder. Adgangen registreres i revisionsloggen
+    <p>Du får adgang til alle gemte data om brugeren, også beskeder{{ ' og private billeder' if brand.private_album }}. Adgangen registreres i revisionsloggen
       med din begrundelse og gælder i to timer. Brugeren får ingen besked.</p>
   </div>
   <form method="post" action="{{ url_for('moderation.request_access', user_id=target.id) }}" class="form" novalidate>

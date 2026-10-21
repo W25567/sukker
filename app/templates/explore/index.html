@@ -115,7 +115,8 @@
     {% endif %}
   {% else %}
     <div class="card">
-      <p>{{ 'Ingen profiler matcher dine filtre.' if filters_active or hide_liked else 'Der er ingen profiler at vise endnu.' }}</p>
+      {% if filters_active or hide_liked %}<p>Ingen profiler matcher dine filtre.</p>
+      {% else %}{% include "explore/_empty.html" %}{% endif %}
       {% if hide_liked %}<p class="muted">Profiler, du har {{ brand.words.liked }}, er skjult. <a href="{{ url_for('explore.index', **toggle_args) }}">Vis dem</a></p>{% endif %}
     </div>
   {% endif %}

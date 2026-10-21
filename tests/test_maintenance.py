@@ -7,6 +7,7 @@ import shutil
 import tarfile
 import time
 from datetime import timedelta
+from types import SimpleNamespace
 
 import pytest
 from PIL import Image
@@ -290,6 +291,21 @@ def test_backup_rotation_keeps_the_newest(app, ctx, backup_config):
     removed = backup.rotate(str(backup_config), "nightly", 2)
     assert removed == ["sukker-production-20261001_023000-nightly.tar.age"]
     assert len(os.listdir(backup_config)) == 3
+
+
+def test_backups_are_named_and_rotated_per_brand(app, ctx, backup_config, monkeypatch):
+    """To brands kan dele backupserver: filerne hedder efter brandet, og hvert brand rører kun sine egne."""
+    os.makedirs(backup_config)
+    for stamp in ("20261001_023000", "20261002_023000"):
+        (backup_config / f"sukker-production-{stamp}-nightly.tar.age").write_bytes(b"x")
+    monkeypatch.setitem(app.config, "BRAND", "nogen")
+    assert backup._prefix() == "nogen-"
+    assert backup.rotate(str(backup_config), "nightly", 1) == []  # Sukker.nu's filer er ikke Nogen.nu's
+    calls = []
+    monkeypatch.setitem(app.config, "BACKUP_REMOTE", "u1@u1.your-storagebox.de:nogen/")
+    monkeypatch.setattr(backup.subprocess, "run", lambda args, **kw: calls.append(args) or SimpleNamespace(returncode=0))
+    backup._offsite(str(backup_config))
+    assert "nogen-*-nightly.tar.age" in calls[0] and "sukker-*-nightly.tar.age" not in calls[0]
 
 
 def test_production_backup_refuses_without_encryption(app, ctx, backup_config):

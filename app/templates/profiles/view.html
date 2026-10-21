@@ -9,7 +9,7 @@
   {% if back_url %}<a class="back-link" href="{{ back_url }}">← Tilbage til Udforsk</a>{% endif %}
   {% if preview %}
     <div class="card notice-card preview-note">
-      <p>Sådan ser andre din profil. Skjulte oplysninger og dine private billeder vises ikke.
+      <p>Sådan ser andre din profil. Skjulte oplysninger{{ ' og dine private billeder' if brand.private_album }} vises ikke.
         <a href="{{ url_for('profiles.me') }}">Tilbage til Min profil</a></p>
     </div>
   {% endif %}

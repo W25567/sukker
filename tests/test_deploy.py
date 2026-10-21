@@ -40,8 +40,11 @@ def templates():
 
 def test_committed_environments_file_is_valid_json_without_secrets():
     data = deploy.load_environments()
-    assert {"production", "staging", "nogen-staging"} <= set(data)
+    assert {"production", "staging", "nogen-staging", "nogen"} <= set(data)
     assert all(deploy.validate(name, data) == [] for name in data)
+    # Nogen.nu deler Storage Box med Sukker.nu, men i sin egen mappe
+    assert data["nogen"]["backup_remote"].endswith(":nogen/") and data["production"]["backup_remote"].endswith(":sukker/")
+    assert all(data[name].get("company_address") for name in data)
     text = open(deploy.ENVIRONMENTS_FILE, encoding="utf-8").read().lower()
     assert "password" not in text and "secret" not in text and "age-secret-key" not in text
 
@@ -83,6 +86,8 @@ def test_other_brands_get_their_own_resources():
     assert any("nogen.backup_remote mangler" in e for e in deploy.validate("nogen", envs))
     # To produktionsmiljøer må ikke dele mappe på backupserveren
     envs["nogen"]["backup_remote"] = COMPLETE["backup_remote"]
+    assert any("backup_remote" in e and "deler" in e for e in deploy.validate("nogen", envs))
+    envs["nogen"]["backup_remote"] = COMPLETE["backup_remote"].rstrip("/")  # "...:sukker" er samme mappe
     assert any("backup_remote" in e and "deler" in e for e in deploy.validate("nogen", envs))
     envs["nogen"]["brand"] = "findes-ikke"
     assert any("brand er ukendt" in e for e in deploy.validate("nogen", envs))

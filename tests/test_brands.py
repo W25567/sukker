@@ -248,6 +248,42 @@ def test_own_texts_for_friendship(nogen):
     assert "Kom godt i gang" in member(nogen).get("/velkommen").get_data(as_text=True)
 
 
+MEMBER_SKIP = ("/admin", "/moderation", "/static", "/pre-release", "/sitemap.xml", "/robots.txt", "/favicon.ico")
+OFF_BRAND = {"privat album/billeder": r"\bprivate? (?:billede|billeder|album)\w*", "Premium": r"\bpremium\b",
+             "like": r"\blike[st]?\b|\bliket\b|\bliker\b", "match": r"\bmatch(?:es|et)?\b"}
+
+
+def test_member_pages_never_mention_dating_or_paid_features(nogen):
+    """Alle sider, et medlem kan åbne, taler Nogen.nu's sprog: ingen private billeder, Premium, likes eller matches."""
+    anna = member(nogen)
+    offenders = []
+    for rule in nogen.url_map.iter_rules():
+        if "GET" not in rule.methods or rule.arguments or rule.rule.startswith(MEMBER_SKIP):
+            continue
+        response = anna.get(rule.rule)
+        if response.status_code != 200 or "html" not in response.mimetype:
+            continue
+        html = re.sub(r"<script.*?</script>|<style.*?</style>", " ", response.get_data(as_text=True), flags=re.S)
+        text = re.sub(r"<[^>]+>", " ", html).lower()
+        offenders += [f"{rule.rule}: {name}" for name, pattern in OFF_BRAND.items() if re.search(pattern, text)]
+    assert offenders == []
+
+
+def test_tells_why_the_site_is_empty(nogen, app, outbox, ctx):
+    """Ingen nedtælling på Nogen.nu, men forsiden, velkomsten og en tom Udforsk fortæller, hvorfor der er få profiler."""
+    assert "Vi er lige begyndt" in nogen.test_client().get("/").get_data(as_text=True)
+    assert nogen.test_client().get("/pre-release", follow_redirects=False).status_code == 302
+    anna = member(nogen)
+    assert "falske profiler" in anna.get("/velkommen").get_data(as_text=True)
+    explore = anna.get("/udforsk").get_data(as_text=True)
+    assert "Der er ingen profiler at vise endnu." in explore and "falske profiler" in explore
+    # Sukker.nu viser den korte tekst som før
+    with app.test_request_context():
+        from flask import render_template
+
+        assert render_template("explore/_empty.html").strip() == "<p>Der er ingen profiler at vise endnu.</p>"
+
+
 def test_purpose_page_has_its_own_address(nogen):
     client = nogen.test_client()
     assert client.get("/hvorfor").status_code == 200

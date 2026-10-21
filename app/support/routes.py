@@ -7,20 +7,23 @@ from ..auth.sessions import login_required
 from ..extensions import db, limiter
 from ..media.processing import ACCEPT
 from . import services
-from .models import MODULES
+from .models import module_labels
 
 bp = Blueprint("support", __name__)
 
 
 class BugReportForm(FlaskForm):
-    module = SelectField("Hvor er fejlen?", choices=[("", "Vælg")] + MODULES,
-                         validators=[DataRequired("Vælg, hvor fejlen er.")])
+    module = SelectField("Hvor er fejlen?", validators=[DataRequired("Vælg, hvor fejlen er.")])
     description = TextAreaField(
         "Beskriv fejlen",
         validators=[DataRequired("Beskriv fejlen."),
                     Length(max=services.MAX_DESCRIPTION, message=f"Højst {services.MAX_DESCRIPTION} tegn.")],
     )
     screenshots = MultipleFileField("Skærmbilleder (valgfrit, op til 3)")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.module.choices = [("", "Vælg")] + list(module_labels().items())
 
 
 @bp.route("/profil/fejlrapport", methods=["GET", "POST"])

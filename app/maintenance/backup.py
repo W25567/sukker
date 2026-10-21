@@ -39,6 +39,14 @@ class BackupError(RuntimeError):
     pass
 
 
+def _prefix():
+    """Backupfilerne begynder med brandet ("sukker-production-…", "nogen-production-…"), så to brands kan dele
+    backupserver uden at kunne forveksles, og så rotation og spejling kun rører brandets egne filer."""
+    from ..brands import current_brand
+
+    return current_brand().key + "-"
+
+
 def backup_dir():
     path = current_app.config["BACKUP_DIR"] or os.path.join(current_app.instance_path, "backups")
     os.makedirs(path, mode=0o700, exist_ok=True)
@@ -162,7 +170,7 @@ def _encrypt(source, target, recipients):
 
 
 def rotate(directory, label, keep):
-    files = sorted(f for f in os.listdir(directory) if f.startswith("sukker-") and f"-{label}." in f)
+    files = sorted(f for f in os.listdir(directory) if f.startswith(_prefix()) and f"-{label}." in f)
     removed = files[:-keep] if keep and len(files) > keep else []
     for name in removed:
         os.remove(os.path.join(directory, name))
@@ -176,7 +184,7 @@ def _offsite(directory):
     # Backupserveren spejler de natlige backups (--delete følger rotationen). Beskyttelsen mod, at en angriber
     # med adgang til serveren også sletter kopierne, er snapshots på backupserveren (deployment/README.md).
     ssh = f"ssh -p {int(current_app.config['BACKUP_REMOTE_PORT'])} -o BatchMode=yes"
-    args = [_tool("rsync"), "-a", "--delete", "-e", ssh, "--include", "sukker-*-nightly.tar.age", "--exclude", "*",
+    args = [_tool("rsync"), "-a", "--delete", "-e", ssh, "--include", f"{_prefix()}*-nightly.tar.age", "--exclude", "*",
             directory.rstrip("/") + "/", remote]
     result = subprocess.run(args, capture_output=True, text=True, timeout=3600)
     if result.returncode != 0:
@@ -194,7 +202,7 @@ def run_backup(label="nightly", db_only=False):
         if config["BACKUP_REQUIRE_ENCRYPTION"] and not recipients:
             raise BackupError("Backup skal krypteres, men SUKKER_BACKUP_AGE_RECIPIENTS er ikke sat.")
         stamp = datetime.now(DANISH_TZ).strftime("%Y%m%d_%H%M%S")
-        name = f"sukker-{config['ENV_NAME']}-{stamp}-{label}"
+        name = f"{_prefix()}{config['ENV_NAME']}-{stamp}-{label}"
         work = tempfile.mkdtemp(prefix=".tmp-", dir=directory)
         try:
             dump_database(os.path.join(work, "database.dump"))
@@ -202,6 +210,7 @@ def run_backup(label="nightly", db_only=False):
             manifest = {
                 "created_at": now_utc().isoformat(),
                 "environment": config["ENV_NAME"],
+                "brand": _prefix().rstrip("-"),
                 "label": label,
                 "alembic_revision": _alembic_revision(),
                 "images_in_database": db.session.scalar(select(func.count(ProfileImage.id))),

@@ -11,6 +11,13 @@ MODULES = [("udforsk", "Udforsk"), ("likes", "Likes"), ("beskeder", "Beskeder"),
 MODULE_LABELS = dict(MODULES)
 
 
+def module_labels():
+    """Modulerne med brandets ord: "Likes" hedder fx "Forbindelser" på Nogen.nu, ligesom i menuen (app/brands)."""
+    from ..brands import current_brand
+
+    return {**MODULE_LABELS, "likes": current_brand().words["nav"]}
+
+
 class BugReport(db.Model):
     __tablename__ = "bug_reports"
     __table_args__ = (

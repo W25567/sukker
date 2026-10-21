@@ -178,9 +178,10 @@ def validate(env_name, environments):
         shared = [k for k in ("domain", "app_root", "data_root", "database", "service", "env_file", "nginx_site",
                               "backup_dir")
                   if mine[k] == other[k]]
-        # To miljøer må heller ikke tage backup til samme mappe uden for serveren (--delete ville slette den andens).
+        # To miljøer må heller ikke tage backup til samme mappe uden for serveren. Samme backupserver med hver sin
+        # mappe er fint (fx ...:sukker/ og ...:nogen/). "...:nogen" og "...:nogen/" er samme mappe.
         if (mine["backup_enabled"] and other["backup_enabled"] and raw.get("backup_remote")
-                and raw.get("backup_remote") == other_raw.get("backup_remote")):
+                and raw["backup_remote"].rstrip("/") == str(other_raw.get("backup_remote") or "").rstrip("/")):
             shared.append("backup_remote")
         overlap = set([mine["domain"]] + mine["aliases"]) & set([other["domain"]] + other["aliases"])
         if shared or overlap:

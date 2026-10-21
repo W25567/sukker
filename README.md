@@ -107,7 +107,7 @@ adgangskode. Google Search Console og evt. cookiefri besøgsstatistik sættes op
 ## Nogen.nu
 
 Samme kode driver Nogen.nu, en gratis side for venskab og fællesskab (`SUKKER_BRAND=nogen`, egen database og
-egen installation, `python deploy.py --env nogen-staging`). Alle forskelle står i `app/brands/__init__.py`, og
+egen installation, `python deploy.py --env nogen-staging` og `--env nogen`). Alle forskelle står i `app/brands/__init__.py`, og
 skabeloner i `app/templates/brands/nogen/` overstyrer de fælles med samme sti. Koden spørger brandet ("er
 modulet slået til?", "hvad hedder det?"), aldrig "er det Nogen.nu?".
 
@@ -120,7 +120,8 @@ modulet slået til?", "hvad hedder det?"), aldrig "er det Nogen.nu?".
 - **Interesser:** eget standardkatalog (`profiles/interests.FRIENDSHIP_CATALOG`), som administrator kan ændre.
 - **Formålssiden** ligger på `/hvorfor` (`Brand.purpose_path`). `/hvorfor-sukker` sender videre dertil.
 - **Egne tekster:** forside, formål, Sådan virker det, Tryghed, Om, velkomst, FAQ (`pages/content.BRAND_FAQ`),
-  brugervilkår og privatlivspolitik.
+  brugervilkår og privatlivspolitik. Forsiden, velkomsten og en tom Udforsk (`explore/_empty.html`) fortæller,
+  hvorfor der endnu er få profiler. Ingen nedtælling: Nogen.nu er i luften fra første udgivelse.
 
 > **Vilkår og privatlivspolitik:** `app/templates/brands/nogen/pages/terms.html` og `privacy.html` bygger på
 > Sukker.nu's vilkår og politik uden afsnittene om dating, Premium, tidlige fugle og privat album. Gennemlæst og
