@@ -7,6 +7,7 @@
   <section class="card">
     <h2>Blokerede</h2>
     {% if blocked %}
+      <p class="muted">Ophæver du en blokering, kan I se hinanden igen. Den anden får ikke besked.</p>
       <ul class="person-list">
         {% for user, since in blocked %}
           <li>

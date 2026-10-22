@@ -13,15 +13,20 @@
     {{ form.hidden_tag() }}
     {{ field(form.display_name, autocomplete="nickname", hint="Det navn, andre ser. Det behøver ikke være dit rigtige navn, og andre må gerne hedde det samme.") }}
     {{ field(form.email, autocomplete="email", hint="Vises aldrig for andre.") }}
-    {{ field(form.password, autocomplete="new-password", hint="Mindst 10 tegn.") }}
+    {# Et password sendes aldrig tilbage til browseren. Er der en fejl i formularen, siger vi derfor hvorfor det er tomt. #}
+    {{ field(form.password, autocomplete="new-password",
+             hint="Skriv dit password igen. Af sikkerhedshensyn gemmer vi det ikke, når noget skal rettes. Mindst 10 tegn." if form.errors else "Mindst 10 tegn.") }}
     {{ field(form.password_confirm, autocomplete="new-password") }}
     {{ field(form.birthdate, autocomplete="bday", hint="Bruges til at vise din alder. Datoen vises ikke.") }}
     {{ field(form.gender, autocomplete="sex", hint="Vises på din profil og bruges til at vise dig for dem, der søger dit køn.") }}
     {% include "profiles/_seeking_field.html" %}
     {{ field(form.postcode, autocomplete="postal-code", hint=("Bruges til omtrentlig afstand. " if distance_visible() else "Bruges til at finde din kommune. ") ~ "Postnummeret vises aldrig.") }}
-    {% if form.kommune.choices %}{{ field(form.kommune) }}{% endif %}
+    <div data-kommune-field data-url="{{ url_for('auth.kommuner') }}" data-selected="{{ form.kommune.data or '' }}"{% if not form.kommune.choices %} hidden{% endif %}>
+      {{ field(form.kommune, hint=None if form.kommune.errors else "Postnummeret dækker flere kommuner. Vælg den, du bor i.") }}
+    </div>
     {% call checkbox(form.accept_terms) %}Jeg er fyldt 18 år og accepterer <a href="{{ url_for('pages.terms') }}" target="_blank" rel="noopener">brugervilkårene</a> og <a href="{{ url_for('pages.privacy') }}" target="_blank" rel="noopener">privatlivspolitikken</a>{% endcall %}
     <button type="submit" class="button wide">Opret profil</button>
   </form>
   <p class="muted center">Har du allerede en profil? <a href="{{ url_for('auth.login') }}">Log ind</a></p>
+  <script src="{{ url_for('static', filename='js/kommune.js') }}" defer></script>
 {% endblock %}

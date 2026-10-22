@@ -194,7 +194,12 @@ def preview():
 @login_required
 @limiter.limit(PROFILE_VIEW_LIMIT, key_func=user_or_ip, on_breach=scraping_breach)
 def view(handle):
+    from ..safety.services import has_blocked
+
     user = find_user_by_handle(handle)
+    if user is not None and user.status == "active" and has_blocked(g.user.id, user.id):
+        # Den, der har blokeret, kan ophæve blokeringen her (fx fra et gammelt link). Den blokerede får stadig 404.
+        return render_template("safety/blocked_profile.html", target=user, form=ActionForm())
     if user is None or not can_view_profile(g.user, user):
         abort(404)
     if user.id == g.user.id:

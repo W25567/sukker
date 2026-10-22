@@ -78,8 +78,11 @@ def test_block_is_mutual_and_ends_match_and_conversation(app, outbox, ctx):
 
     assert db.session.scalar(select(func.count(Match.id)).where(Match.removed_at.is_(None))) == 0
     assert db.session.scalar(select(func.count(Like.id))) == 0
+    # Den, der blokerede, ser kun, at profilen er blokeret (og kan ophæve det). Den blokerede får 404.
+    blocked_page = anna.get(f"/bruger/{h('Bodil')}").get_data(as_text=True)
+    assert "Du har blokeret Bodil" in blocked_page and "Skriv besked" not in blocked_page
+    assert bodil.get(f"/bruger/{h('Anna')}").status_code == 404
     for client, other in ((anna, "Bodil"), (bodil, "Anna")):
-        assert client.get(f"/bruger/{h(other)}").status_code == 404
         assert client.post(f"/like/{h(other)}").status_code == 404
         assert other not in usernames_in_explore(client)
         assert client.get(url).status_code == 404
@@ -92,6 +95,27 @@ def test_unblock_does_not_restore_match(app, outbox, ctx):
     anna.post(f"/konto/blokeringer/{user('Bodil').id}/ophaev")
     assert bodil.get(f"/bruger/{h('Anna')}").status_code == 200
     assert db.session.scalar(select(func.count(Match.id)).where(Match.removed_at.is_(None))) == 0
+
+
+def test_unblock_from_the_profile_and_from_account(app, outbox, ctx):
+    anna, bodil = make_user(app, outbox, "Anna"), make_user(app, outbox, "Bodil")
+    make_user(app, outbox, "Cecilie")
+    anna.post(f"/bruger/{h('Bodil')}/bloker")
+    anna.post(f"/bruger/{h('Cecilie')}/bloker")
+    assert "Konto → Blokerede og skjulte" in anna.get("/udforsk").get_data(as_text=True)
+    # Fra profilen sendes man tilbage til profilen, som nu kan ses igen
+    response = anna.post(f"/konto/blokeringer/{user('Bodil').id}/ophaev", data={"next": f"/bruger/{h('Bodil')}"})
+    assert response.headers["Location"].endswith(f"/bruger/{h('Bodil')}")
+    assert "Du har blokeret" not in anna.get(f"/bruger/{h('Bodil')}").get_data(as_text=True)
+    # Fra Konto → Blokerede og skjulte
+    page = anna.get("/konto/blokeringer").get_data(as_text=True)
+    assert "Cecilie" in page and "Ophæv" in page and "Bodil" not in page
+    assert anna.post(f"/konto/blokeringer/{user('Cecilie').id}/ophaev").headers["Location"].endswith("/konto/blokeringer")
+    assert anna.get(f"/bruger/{h('Cecilie')}").status_code == 200
+    # Et link væk fra siden følges ikke
+    anna.post(f"/bruger/{h('Bodil')}/bloker")
+    response = anna.post(f"/konto/blokeringer/{user('Bodil').id}/ophaev", data={"next": "https://example.com/"})
+    assert response.headers["Location"].endswith("/konto/blokeringer")
 
 
 def test_blocked_user_cannot_unblock_themselves(app, outbox, ctx):
@@ -136,7 +160,8 @@ def test_report_message_and_block_at_the_same_time(app, outbox, ctx):
     anna.post(f"/anmeld/besked/{message_id}", data={"reason": "chikane", "also_block": "y"})
     case = latest_case()
     assert case.evidence["body"] == "Truende besked" and case.evidence["sender_username"] == "Bodil"
-    assert anna.get(f"/bruger/{h('Bodil')}").status_code == 404
+    assert "Du har blokeret Bodil" in anna.get(f"/bruger/{h('Bodil')}").get_data(as_text=True)
+    assert bodil.get(f"/bruger/{h('Anna')}").status_code == 404
 
 
 def test_cannot_report_own_message_or_foreign_conversation(app, outbox, ctx):

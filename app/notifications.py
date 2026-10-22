@@ -1,8 +1,8 @@
 """Notifikationer: tal i menuen og midlertidige beskeder om nye beskeder og matches.
 
 - Beskeder: ulæste beskeder fra matches og fra Administrator (messaging.services.total_unread).
-- Matches: aktive matches, der er opstået, siden brugeren sidst åbnede Likes. Et match, som brugeren selv
-  udløste ved at like tilbage, tæller ikke: det fik brugeren besked om med det samme.
+- Likes: aktive matches og likes til brugeren, der er kommet, siden brugeren sidst åbnede Likes. Et match, som
+  brugeren selv udløste ved at like tilbage, tæller ikke: det fik brugeren besked om med det samme.
 - Siderne spørger /notifikationer med jævne mellemrum (static/js/notifications.js).
 """
 from sqlalchemy import and_, or_, select
@@ -39,6 +39,20 @@ def _new_matches_query(user):
 
 def new_match_count(user):
     return len(db.session.execute(_new_matches_query(user)).all())
+
+
+def new_like_count(user):
+    """Likes til brugeren, siden brugeren sidst åbnede Likes. Kun et antal: hvem, ser kun dem med
+    likes.view_received, og Free ser allerede antallet på siden (matches/index.html)."""
+    from .matches.services import received_likes
+
+    seen = user.matches_seen_at
+    return sum(1 for like, _ in received_likes(user) if seen is None or like.created_at > seen)
+
+
+def new_count(user):
+    """Tallet ved Likes i menuen: nye matches og nye likes."""
+    return new_match_count(user) + new_like_count(user)
 
 
 def mark_matches_seen(user):
@@ -160,7 +174,7 @@ def summary(user, url_for):
         latest_staff = None
     return {
         "messages": total_unread(user),
-        "matches": len(matches),
+        "matches": len(matches) + new_like_count(user),  # tallet ved Likes: nye matches og nye likes
         "requests": len(requests),
         # Kun for administratorer: ulæste svar fra brugere i samtaler med "Administrator".
         "staff_threads": staff_threads,

@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{# Vises for den, der har blokeret, når profilen åbnes (profiles.view). Den blokerede ser aldrig denne side. #}
+{% block title %}{{ target.display_name }} er blokeret – {{ brand.name }}{% endblock %}
+{% block content %}
+  <h1>Du har blokeret {{ target.display_name }}</h1>
+  <div class="card">
+    <p>I kan ikke se hinandens profiler eller kontakte hinanden. Ophæver du blokeringen, kan I se hinanden igen.
+      {{ brand.words.ended_match | capitalize }} kommer ikke igen af sig selv, og {{ target.display_name }} får ikke besked.</p>
+  </div>
+  <form method="post" action="{{ url_for('safety.unblock', user_id=target.id) }}" class="actions">
+    {{ form.hidden_tag() }}
+    <input type="hidden" name="next" value="{{ url_for('profiles.view', handle=target.handle) }}">
+    <button type="submit" class="button">Ophæv blokeringen</button>
+    <a class="button secondary" href="{{ url_for('safety.settings') }}">Blokerede og skjulte</a>
+  </form>
+{% endblock %}

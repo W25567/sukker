@@ -130,7 +130,7 @@ def test_hello_and_connections_instead_of_likes_and_matches(nogen):
     anna, bodil = member(nogen), member(nogen, "Bodil")
     explore = anna.get("/udforsk").get_data(as_text=True)
     assert ">Hils på</button>" in explore and ">Like</button>" not in explore
-    assert "Forbindelser<span" in explore and "Likes<span" not in explore and 'data-label="nye forbindelser"' in explore
+    assert "Forbindelser<span" in explore and "Likes<span" not in explore and 'data-label="nye hilsner og forbindelser"' in explore
     assert 'data-match-text="Ny forbindelse med"' in explore
     assert "Skjul profiler, jeg har hilst på" in explore and 'valgt under "Jeg vil helst møde"' not in explore
 

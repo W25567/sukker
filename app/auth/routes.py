@@ -1,4 +1,6 @@
-from flask import Blueprint, flash, g, redirect, render_template, request, session, url_for
+import re
+
+from flask import Blueprint, flash, g, jsonify, redirect, render_template, request, session, url_for
 from flask_limiter.util import get_remote_address
 from sqlalchemy.exc import IntegrityError
 
@@ -37,6 +39,17 @@ def register():
                 db.session.rollback()
             return render_template("auth/check_email.html", email=form.email.data)
     return render_template("auth/register.html", form=form)
+
+
+@bp.route("/opret/kommuner")
+@limiter.limit("60 per minute")
+def kommuner():
+    """Kommunerne for et postnummer. Tilmeldingen viser kommunevælgeren, så snart postnummeret er skrevet, i stedet
+    for efter "Opret profil", hvor passwordet ellers skulle skrives igen (static/js/kommune.js). Offentlige data."""
+    postcode = request.args.get("postnummer", "")
+    if not re.fullmatch(r"\d{4}", postcode) or not geo_loaded():
+        return jsonify([])
+    return jsonify([{"code": k.code, "name": k.name} for k in kommuner_for_postcode(postcode)])
 
 
 def _resolve_kommune(form):

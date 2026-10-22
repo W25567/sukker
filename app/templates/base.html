@@ -112,8 +112,9 @@
       <a href="{{ url_for('explore.index') }}"{% if here.startswith('explore.') %} aria-current="page"{% endif %}>Udforsk</a>
       {# Tallene i de røde bobler opdateres automatisk (static/js/notifications.js). #}
       <a href="{{ url_for('matches.index') }}"{% if here.startswith('matches.') %} aria-current="page"{% endif %}>
-        {{ brand.words.nav }}<span class="nav-badge" data-badge="matches" data-label="nye {{ brand.words.matches }}"{% if not new_matches %} hidden{% endif %}
-                   aria-label="{{ new_matches }} nye {{ brand.words.matches }}">{{ new_matches }}</span>
+        {# Nye matches og nye likes (app/notifications.py). #}
+        {{ brand.words.nav }}<span class="nav-badge" data-badge="matches" data-label="nye {{ brand.words.likes }} og {{ brand.words.matches }}"{% if not new_matches %} hidden{% endif %}
+                   aria-label="{{ new_matches }} nye {{ brand.words.likes }} og {{ brand.words.matches }}">{{ new_matches }}</span>
       </a>
       <a href="{{ url_for('messaging.inbox') }}"{% if here.startswith('messaging.') %} aria-current="page"{% endif %}>
         Beskeder<span class="nav-badge" data-badge="messages" data-label="ulæste"{% if not unread_messages %} hidden{% endif %}

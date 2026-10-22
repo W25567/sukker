@@ -115,6 +115,19 @@ def test_postcode_in_several_kommuner_asks_for_kommune(client, geo):
     assert db.session.scalar(select(User.kommune_code)) == geo["B"]
 
 
+def test_kommune_choice_before_submitting(client, geo):
+    """Kommunevælgeren hentes, mens postnummeret skrives (static/js/kommune.js), så passwordet ikke går tabt."""
+    assert [k["name"] for k in client.get("/opret/kommuner?postnummer=5000").get_json()] == ["Aby", "Bby"]
+    assert len(client.get("/opret/kommuner?postnummer=3000").get_json()) == 1
+    assert client.get("/opret/kommuner?postnummer=9999").get_json() == []
+    assert client.get("/opret/kommuner?postnummer=abc").get_json() == []
+    page = client.get("/opret").get_data(as_text=True)
+    assert 'data-kommune-field data-url="/opret/kommuner"' in page and "js/kommune.js" in page
+    # Sendes formularen alligevel uden kommune, står der, hvorfor passwordet er tomt
+    html = register(client, postcode="5000").get_data(as_text=True)
+    assert "Skriv dit password igen" in html
+
+
 def test_registration_works_before_geo_data_is_loaded(client, ctx):
     register(client, postcode="8000")
     user = db.session.scalar(select(User))

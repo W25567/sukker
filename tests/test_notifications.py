@@ -39,6 +39,21 @@ def test_new_match_badge_until_likes_is_opened(app, outbox, ctx):
     assert badge(anna.get("/udforsk").get_data(as_text=True), "matches") == 0
 
 
+def test_new_like_badge_until_likes_is_opened(app, outbox, ctx):
+    """Et like giver også en boble ved Likes, ligesom en besked ved Beskeder. Hvem det er, ses stadig kun med Premium."""
+    anna, bodil, cecilie = make_user(app, outbox, "Anna"), make_user(app, outbox, "Bodil"), make_user(app, outbox, "Cecilie")
+    bodil.post(f"/like/{h('Anna')}")
+    cecilie.post(f"/like/{h('Anna')}")
+    assert badge(anna.get("/udforsk").get_data(as_text=True), "matches") == 2
+    assert anna.get("/notifikationer").get_json()["matches"] == 2
+    assert badge(bodil.get("/udforsk").get_data(as_text=True), "matches") == 0  # den, der liker, får ingen boble
+    anna.get("/likes")
+    assert badge(anna.get("/udforsk").get_data(as_text=True), "matches") == 0
+    # Liker Anna tilbage, bliver det et match, som Anna selv udløste: ingen boble for nogen af de to
+    anna.post(f"/like/{h('Bodil')}")
+    assert badge(anna.get("/udforsk").get_data(as_text=True), "matches") == 0
+
+
 def test_notifications_endpoint(app, outbox, ctx):
     anna, bodil = make_user(app, outbox, "Anna"), make_user(app, outbox, "Bodil")
     anna.post(f"/like/{h('Bodil')}")

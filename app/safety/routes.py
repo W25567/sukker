@@ -1,9 +1,9 @@
-from flask import Blueprint, abort, flash, g, redirect, render_template, url_for
+from flask import Blueprint, abort, flash, g, redirect, render_template, request, url_for
 from sqlalchemy import select
 
 from ..auth.forms import ActionForm
 from ..auth.models import User
-from ..auth.sessions import login_required
+from ..auth.sessions import login_required, safe_next_url
 from ..extensions import db, limiter
 from ..messaging import services as messaging
 from ..messaging.models import Conversation, Message
@@ -44,7 +44,8 @@ def block(handle):
     if form.validate_on_submit():
         services.block(g.user, target)
         db.session.commit()
-        flash(f"{target.display_name} er blokeret. I kan ikke længere se eller kontakte hinanden.", "info")
+        flash(f"{target.display_name} er blokeret. I kan ikke længere se eller kontakte hinanden. Du kan ophæve "
+              "blokeringen under Konto → Blokerede og skjulte.", "info")
         return redirect(url_for("explore.index"))
     return render_template("safety/confirm_block.html", target=target, form=form)
 
@@ -67,7 +68,8 @@ def unblock(user_id):
         services.unblock(g.user, user_id)
         db.session.commit()
         flash("Blokeringen er ophævet.", "info")
-    return redirect(url_for("safety.settings"))
+    # Fra den blokerede profil (safety/blocked_profile.html) sendes man tilbage til profilen.
+    return redirect(safe_next_url(request.form.get("next")) or url_for("safety.settings"))
 
 
 @bp.route("/konto/skjulte/<int:user_id>/vis", methods=["POST"])

@@ -60,6 +60,23 @@ def test_default_features_per_tier(app, outbox, ctx):
     assert has_feature(anna, "messages.read") and not has_feature(anna, "search.filters")
 
 
+def test_staff_go_from_a_profile_to_that_user(app, outbox, ctx):
+    """Fra en profil går administrator til administration og moderator til moderation af netop den bruger."""
+    admin = make_user(app, outbox, "Alma", role="admin")
+    mod = make_user(app, outbox, "Mogens", role="moderator")
+    anna = make_user(app, outbox, "Anna")
+    make_user(app, outbox, "Bodil")
+    bodil_id = user("Bodil").id
+    page = admin.get(f"/bruger/{h('Bodil')}").get_data(as_text=True)
+    assert f'href="/admin/bruger/{bodil_id}">Administration</a>' in page and "/moderation/bruger/" not in page
+    page = mod.get(f"/bruger/{h('Bodil')}").get_data(as_text=True)
+    assert f'href="/moderation/bruger/{bodil_id}">Moderation</a>' in page and "/admin/bruger/" not in page
+    page = anna.get(f"/bruger/{h('Bodil')}").get_data(as_text=True)
+    assert "/admin/bruger/" not in page and "/moderation/bruger/" not in page
+    # Moderatorens vej ind kræver stadig en begrundelse
+    assert "Du får adgang til alle gemte data" in mod.get(f"/moderation/bruger/{bodil_id}").get_data(as_text=True)
+
+
 def test_individual_grant_and_revoke(app, outbox, ctx):
     admin = make_user(app, outbox, "Alma", role="admin")
     make_user(app, outbox, "Anna")
