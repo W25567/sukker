@@ -37,11 +37,15 @@ def inbox():
     archived = request.args.get("arkiv") == "1"
     admin_thread = None if archived else admin_threads.visible_to_user(g.user)
     admin_last = admin_threads.messages(g.user.id)[-1] if admin_thread else None
+    admin_reaction = reactions.latest_in_admin_thread(g.user.id) if admin_last else None
+    if admin_reaction is not None and admin_reaction[0].created_at <= admin_last.created_at:
+        admin_reaction = None  # kun en reaktion efter den sidste besked vises i oversigten
     items = services.inbox(g.user, archived=archived)
     # Fjernede matches vises med forbogstav, ikke billede: samtalen er lukket.
     avatars = avatar_ids(g.user, [item.other for item in items if not item.removed])
     return render_template("messaging/inbox.html", items=items, archived=archived, avatars=avatars,
-                           admin_thread=admin_thread, admin_last=admin_last, action_form=ActionForm(),
+                           admin_thread=admin_thread, admin_last=admin_last, admin_reaction=admin_reaction,
+                           action_form=ActionForm(),
                            admin_unread=admin_threads.unread_for_user(g.user) if admin_thread else 0)
 
 

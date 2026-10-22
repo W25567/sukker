@@ -120,7 +120,7 @@ def unread_for_user(user):
     query = select(func.count(AdminMessage.id)).where(AdminMessage.user_id == user.id, AdminMessage.from_admin.is_(True))
     if thread.user_last_read_at is not None:
         query = query.where(AdminMessage.created_at > thread.user_last_read_at)
-    return db.session.scalar(query)
+    return db.session.scalar(query) + _unread_reactions(user.id, by_admin=True, read_at=thread.user_last_read_at)
 
 
 def unread_for_admin(user_id):
@@ -130,6 +130,18 @@ def unread_for_admin(user_id):
     query = select(func.count(AdminMessage.id)).where(AdminMessage.user_id == user_id, AdminMessage.from_admin.is_(False))
     if thread.admin_last_read_at is not None:
         query = query.where(AdminMessage.created_at > thread.admin_last_read_at)
+    return db.session.scalar(query) + _unread_reactions(user_id, by_admin=False, read_at=thread.admin_last_read_at)
+
+
+def _unread_reactions(user_id, by_admin, read_at):
+    """Reaktioner fra den anden side, siden samtalen sidst var åben. De tæller som ulæste beskeder."""
+    from .models import AdminMessageReaction
+
+    query = (select(func.count()).select_from(AdminMessageReaction)
+             .join(AdminMessage, AdminMessage.id == AdminMessageReaction.message_id)
+             .where(AdminMessage.user_id == user_id, AdminMessageReaction.from_admin.is_(by_admin)))
+    if read_at is not None:
+        query = query.where(AdminMessageReaction.created_at > read_at)
     return db.session.scalar(query)
 
 

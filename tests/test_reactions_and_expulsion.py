@@ -53,6 +53,57 @@ def test_react_change_and_remove_in_conversation(app, outbox, ctx):
     assert react(anna, url, message_id, "hjerte", headers={"X-Requested-With": "fetch"}).status_code == 204
 
 
+def test_latest_reaction_in_inbox(app, outbox, ctx):
+    anna, bodil = make_user(app, outbox, "Anna"), make_user(app, outbox, "Bodil")
+    matched(anna, bodil, "Anna", "Bodil")
+    url = conversation_url(bodil, "Anna")
+    bodil.post(url, data={"body": "Tal ordentligt :)"})
+    message_id = db.session.scalar(select(Message.id))
+    react(anna, url, message_id, "hjerte")
+
+    assert 'Anna reagerede med ❤️ på "Tal ordentligt :)"' in bodil.get("/beskeder/").get_data(as_text=True)
+    assert 'Du reagerede med ❤️ på "Tal ordentligt :)"' in anna.get("/beskeder/").get_data(as_text=True)
+    # En ny besked efter reaktionen vises igen som den sidste
+    bodil.post(url, data={"body": "Tak"})
+    inbox = anna.get("/beskeder/").get_data(as_text=True)
+    assert "reagerede med" not in inbox and "Tak" in inbox
+
+
+def test_reaction_counts_as_unread_until_opened(app, outbox, ctx):
+    from .test_notifications import badge
+
+    anna, bodil = make_user(app, outbox, "Anna"), make_user(app, outbox, "Bodil")
+    matched(anna, bodil, "Anna", "Bodil")
+    url = conversation_url(bodil, "Anna")
+    bodil.post(url, data={"body": "Hej Anna"})
+    anna.get(url)  # Anna læser beskeden
+    react(anna, url, db.session.scalar(select(Message.id)), "hjerte")
+
+    assert badge(bodil.get("/udforsk").get_data(as_text=True), "messages") == 1
+    assert bodil.get("/notifikationer").get_json()["messages"] == 1
+    assert 'class="unread-count">1<' in bodil.get("/beskeder/").get_data(as_text=True)
+    assert badge(anna.get("/udforsk").get_data(as_text=True), "messages") == 0  # ens egen reaktion tæller ikke
+    bodil.get(url)  # samtalen åbnes
+    assert badge(bodil.get("/udforsk").get_data(as_text=True), "messages") == 0
+
+
+def test_admin_reaction_counts_as_unread(app, outbox, ctx):
+    from .test_notifications import badge
+
+    admin = make_user(app, outbox, "Alma", role="admin")
+    anna = make_user(app, outbox, "Anna")
+    anna_id = user("Anna").id
+    admin.post(f"/admin/bruger/{anna_id}/samtale", data={"body": "Hej"})
+    anna.get("/beskeder/administrator")
+    anna.post("/beskeder/administrator", data={"body": "Tak"})
+    admin.get(f"/admin/bruger/{anna_id}/samtale")
+    reply = db.session.scalar(select(AdminMessage.id).where(AdminMessage.from_admin.is_(False)))
+    admin.post(f"/admin/bruger/{anna_id}/samtale/besked/{reply}/reaktion", data={"reaction": "hjerte"})
+    assert badge(anna.get("/udforsk").get_data(as_text=True), "messages") == 1
+    anna.get("/beskeder/administrator")
+    assert badge(anna.get("/udforsk").get_data(as_text=True), "messages") == 0
+
+
 def test_reaction_rules(app, outbox, ctx):
     anna, bodil = make_user(app, outbox, "Anna"), make_user(app, outbox, "Bodil")
     cecilie = make_user(app, outbox, "Cecilie")
@@ -83,6 +134,7 @@ def test_reactions_with_administrator(app, outbox, ctx):
 
     anna.post(f"/beskeder/administrator/besked/{from_admin}/reaktion", data={"reaction": "tommel"})
     assert "👍" in admin.get(f"/admin/bruger/{anna_id}/samtale").get_data(as_text=True)
+    assert 'Du reagerede med 👍 på "Husk vilkårene"' in anna.get("/beskeder/").get_data(as_text=True)
 
     anna.post("/beskeder/administrator", data={"body": "Undskyld"})
     reply = db.session.scalar(select(AdminMessage.id).where(AdminMessage.from_admin.is_(False)))

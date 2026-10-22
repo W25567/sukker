@@ -73,6 +73,25 @@ def for_messages(message_ids):
     return result
 
 
+def latest_visible(visible_messages):
+    """Den nyeste reaktion på en af `visible_messages` (en forespørgsel på brugerens synlige beskeder) som
+    (reaktion, besked), eller None. Bruges i samtaleoversigten: "Anna reagerede med ❤️"."""
+    visible = visible_messages.with_only_columns(Message.id).subquery()
+    return db.session.execute(
+        select(MessageReaction, Message).join(Message, Message.id == MessageReaction.message_id)
+        .where(MessageReaction.message_id.in_(select(visible.c.id)))
+        .order_by(MessageReaction.created_at.desc()).limit(1)
+    ).first()
+
+
+def latest_in_admin_thread(user_id):
+    """Den nyeste reaktion i samtalen med Administrator som (reaktion, besked), eller None."""
+    return db.session.execute(
+        select(AdminMessageReaction, AdminMessage).join(AdminMessage, AdminMessage.id == AdminMessageReaction.message_id)
+        .where(AdminMessage.user_id == user_id).order_by(AdminMessageReaction.created_at.desc()).limit(1)
+    ).first()
+
+
 def conversation_stamp(conversation_id):
     """Ændrer sig, når en reaktion i samtalen sættes, skiftes eller fjernes."""
     count, latest = db.session.execute(

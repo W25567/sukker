@@ -210,14 +210,42 @@ def unread_count(user, conversation):
     )
     if member.last_read_at is not None:
         query = query.where(Message.created_at > member.last_read_at)
-    return db.session.scalar(select(func.count()).select_from(query.subquery()))
+    return db.session.scalar(select(func.count()).select_from(query.subquery())) + _unread_reactions(user, conversation.id)
 
 
 def total_unread(user):
-    """Antal ulæste beskeder til bundnavigationen, inklusive beskeder fra Administrator."""
+    """Antal ulæste beskeder til bundnavigationen, inklusive beskeder fra Administrator. En reaktion på en af
+    brugerens beskeder tæller som en ulæst besked, indtil samtalen er åbnet (messaging/reactions.py)."""
     from .admin_threads import unread_for_user
 
-    return _unread_from_members(user) + unread_for_user(user)
+    return _unread_from_members(user) + _unread_reactions(user) + unread_for_user(user)
+
+
+def _unread_reactions(user, conversation_id=None):
+    """Den andens reaktioner på brugerens beskeder, siden brugeren sidst havde samtalen åben."""
+    from .models import MessageReaction
+
+    member = ConversationMember
+    deleted = select(MessageDeletion.message_id).where(
+        MessageDeletion.message_id == Message.id, MessageDeletion.user_id == user.id
+    ).exists()
+    query = (
+        select(func.count()).select_from(MessageReaction)
+        .join(Message, Message.id == MessageReaction.message_id)
+        .join(member, and_(member.conversation_id == Message.conversation_id, member.user_id == user.id))
+        .join(Conversation, Conversation.id == Message.conversation_id)
+        .where(
+            Conversation.hidden_at.is_(None),
+            Message.sender_id == user.id,
+            MessageReaction.user_id != user.id,
+            or_(member.last_read_at.is_(None), MessageReaction.created_at > member.last_read_at),
+            or_(member.cleared_before.is_(None), Message.created_at > member.cleared_before),
+            ~deleted,
+        )
+    )
+    if conversation_id is not None:
+        query = query.where(Message.conversation_id == conversation_id)
+    return db.session.scalar(query)
 
 
 def _unread_from_members(user):
@@ -249,6 +277,8 @@ class InboxItem:
     archived: bool
     activity_at: datetime
     removed: bool = False  # matchet er fjernet: samtalen har været der, men kan ikke længere læses
+    # Den nyeste reaktion, hvis den er nyere end den sidste besked (reaction, message), ellers None.
+    last_reaction: tuple | None = None
 
 
 def removed_match_items(user):
@@ -309,9 +339,19 @@ def inbox(user, archived=False):
 def _inbox_item(user, other, conversation, fallback_at):
     if conversation is None:
         return InboxItem(other, None, None, 0, bool(other and write_block_reason(user, other)), False, fallback_at)
+    from .reactions import latest_visible
+
     member = membership(conversation, user.id)
-    last = db.session.scalar(_visible_messages_query(user.id, member).order_by(Message.created_at.desc()).limit(1))
+    visible = _visible_messages_query(user.id, member)
+    last = db.session.scalar(visible.order_by(Message.created_at.desc()).limit(1))
     locked = other is None or write_block_reason(user, other) is not None
+    activity_at = last.created_at if last else fallback_at
+    # En reaktion efter den sidste besked vises i oversigten ("Anna reagerede med ❤️") og flytter samtalen op.
+    reaction = latest_visible(visible) if last else None
+    if reaction is not None and reaction[0].created_at > last.created_at:
+        activity_at = reaction[0].created_at
+    else:
+        reaction = None
     return InboxItem(
         other=other,
         conversation=conversation,
@@ -319,5 +359,6 @@ def _inbox_item(user, other, conversation, fallback_at):
         unread=unread_count(user, conversation),
         locked=locked,
         archived=member.archived,
-        activity_at=last.created_at if last else fallback_at,
+        activity_at=activity_at,
+        last_reaction=tuple(reaction) if reaction else None,
     )
