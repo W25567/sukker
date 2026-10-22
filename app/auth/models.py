@@ -43,7 +43,9 @@ class User(db.Model):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
     # Roller er adskilte: moderator behandler sager, administrator styrer platformen (specifikation 9.3).
     role: Mapped[str] = mapped_column(String(20), nullable=False, server_default="user")
-    # active, restricted (kan hverken ses, like eller skrive) eller suspended (kan ikke logge ind).
+    # active, restricted (kan hverken ses, like eller skrive), suspended (kan ikke logge ind, kan klage) eller
+    # expelled (lukket permanent uden varsel for grov overtrædelse, fx salg af stoffer eller våben; ingen klage på
+    # siden, kun til virksomhedens mail). Abonnementet ophører ved lukningen (moderation/services.py).
     status: Mapped[str] = mapped_column(String(20), nullable=False, server_default="active")
     status_changed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     # Testkonti til at afprøve adgangsregler. De vises aldrig for rigtige brugere og tæller ikke med i målinger.
@@ -68,8 +70,13 @@ class User(db.Model):
 
     __table_args__ = (
         CheckConstraint("role IN ('user', 'moderator', 'admin')", name="role"),
-        CheckConstraint("status IN ('active', 'restricted', 'suspended', 'deleted')", name="status"),
+        CheckConstraint("status IN ('active', 'restricted', 'suspended', 'expelled', 'deleted')", name="status"),
     )
+
+    @property
+    def is_locked_out(self):
+        """Suspenderede og permanent lukkede konti kan ikke logge ind og mister adgangen med det samme."""
+        return self.status in ("suspended", "expelled")
 
     @property
     def is_verified(self):

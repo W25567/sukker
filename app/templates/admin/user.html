@@ -47,14 +47,28 @@
       <div><dt>Vilkår</dt><dd>version {{ target.terms_version }} · accepteret {{ target.terms_accepted_at | local_datetime }}</dd></div>
     </dl>
     {% if not target.is_deleted %}
+    {% if target.status == 'expelled' %}
+      <p class="card notice-card"><strong>Kontoen er lukket permanent</strong> {{ target.status_changed_at | local_datetime }}
+        for grov overtrædelse. Brugeren kan ikke logge ind og kan ikke klage på siden. Vælg en anden status for at
+        genåbne kontoen. Et ophørt abonnement kommer ikke igen af sig selv.</p>
+    {% endif %}
     <form method="post" class="inline-form">
       {{ csrf() }}<input type="hidden" name="action" value="status">
       <select name="status" aria-label="Status">
+        {% if target.status == 'expelled' %}<option value="" selected disabled>Lukket permanent</option>{% endif %}
         {% for s, label in [('active', 'Aktiv'), ('restricted', 'Begrænset'), ('suspended', 'Suspenderet')] %}<option value="{{ s }}"{% if s == target.status %} selected{% endif %}>{{ label }}</option>{% endfor %}
       </select>
       <input name="note" type="text" placeholder="Begrundelse" aria-label="Begrundelse">
       <button type="submit" class="button small">Skift status</button>
     </form>
+    {% if target.status != 'expelled' %}
+      {# Grov overtrædelse, fx salg af stoffer eller våben (brugervilkårene). #}
+      <form method="post" class="inline-form" data-confirm="Luk {{ target.display_name }}s konto permanent? Brugeren logges ud med det samme, kan ikke klage på siden, og et abonnement ophører uden refusion.">
+        {{ csrf() }}<input type="hidden" name="action" value="expel">
+        <input name="note" type="text" placeholder="Begrundelse (påkrævet)" aria-label="Begrundelse for permanent lukning" required>
+        <button type="submit" class="button small danger-fill">Luk kontoen permanent</button>
+      </form>
+    {% endif %}
     {% endif %}
     <form method="post" class="inline-form">
       {{ csrf() }}<input type="hidden" name="action" value="role">

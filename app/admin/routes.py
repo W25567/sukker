@@ -8,7 +8,9 @@ from ..account.services import previous_accounts, retention_status
 from ..auth.models import User
 from ..media import storage
 from ..media.models import ProfileImage
-from ..messaging import admin_threads
+from ..messaging import admin_threads, reactions
+from ..messaging.models import AdminMessage
+from ..messaging.routes import reaction_response
 from ..moderation import content, userdata
 from ..moderation.models import DECISIONS, REASON_LABELS, STATUSES
 from ..profiles.zodiac import zodiac_for
@@ -141,6 +143,9 @@ def user(user_id):
                 if form.get("status") not in ("active", "restricted", "suspended"):
                     raise services.AdminError("Ukendt status.")
                 services.set_status(g.user, target, form["status"], note)
+            elif action == "expel":
+                # Grov overtrædelse: lukket uden varsel og uden klage på siden, og abonnementet ophører.
+                services.set_status(g.user, target, "expelled", note)
             elif action == "role":
                 if form.get("role") not in ("user", "moderator", "admin"):
                     raise services.AdminError("Ukendt rolle.")
@@ -281,9 +286,32 @@ def user_thread(user_id):
     db.session.commit()
     thread = admin_threads.thread_for(target.id)
     return render_template(
-        "admin/user_thread.html", target=target, form=form, thread=thread, admins=_admin_names(),
-        messages=admin_threads.messages(target.id), version=admin_threads.version(target.id), unread_thread=0,
+        "admin/user_thread.html", target=target, form=form, thread=thread, version=admin_threads.version(target.id),
+        unread_thread=0, **_user_thread_context(target),
     )
+
+
+def _user_thread_context(target):
+    messages = admin_threads.messages(target.id)
+    return {"admins": _admin_names(), "messages": messages, "action_form": FlaskForm(),
+            "reactions": reactions.for_admin_messages([m.id for m in messages])}
+
+
+@bp.route("/bruger/<int:user_id>/samtale/besked/<int:message_id>/reaktion", methods=["POST"])
+@admin_required
+def user_thread_react(user_id, message_id):
+    """Administrator reagerer på brugerens besked. Brugeren ser kun "Administrator"."""
+    message = db.session.get(AdminMessage, message_id)
+    if message is None or message.user_id != user_id or not FlaskForm().validate_on_submit():
+        abort(404)
+    refusal = None
+    try:
+        reactions.react_in_admin_thread(message, request.form.get("reaction"), admin=g.user)
+        db.session.commit()
+    except reactions.ReactionRefused as error:
+        db.session.rollback()
+        refusal = error
+    return reaction_response(url_for("admin.user_thread", user_id=user_id) + f"#a{message.id}", refusal)
 
 
 def _admin_names():
@@ -303,8 +331,7 @@ def user_thread_updates(user_id):
     else:
         admin_threads.mark_read_by_admin(target.id)  # administratoren har samtalen åben og ser svaret
         db.session.commit()
-        html = render_template("admin/_user_thread.html", target=target, admins=_admin_names(),
-                               messages=admin_threads.messages(target.id))
+        html = render_template("admin/_user_thread.html", target=target, **_user_thread_context(target))
         response = jsonify(version=version, html=html)
     response.headers["Cache-Control"] = "no-store"
     return response

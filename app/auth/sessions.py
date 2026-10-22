@@ -97,8 +97,8 @@ def _load_current_user():
         db.session.execute(update(User).where(User.id == user_session.user_id).values(last_active_at=now))
         db.session.commit()
     user = db.session.get(User, user_session.user_id)
-    if user.status == "suspended":
-        # En suspenderet konto mister adgangen med det samme, også på enheder, der allerede er logget ind.
+    if user.is_locked_out:
+        # En suspenderet eller lukket konto mister adgangen med det samme, også på enheder, der allerede er logget ind.
         session.clear()
         return
     g.user_session = user_session

@@ -9,8 +9,8 @@ from ..extensions import db, limiter
 from ..matches.queries import has_active_match
 from ..media.services import avatar_ids
 from ..profiles.services import find_user_by_handle
-from . import admin_threads, services
-from .models import Conversation, Message
+from . import admin_threads, reactions, services
+from .models import AdminMessage, Conversation, Message
 
 bp = Blueprint("messaging", __name__, url_prefix="/beskeder")
 
@@ -91,8 +91,9 @@ def admin_conversation():
         return redirect(url_for("messaging.admin_conversation") + "#bund")
     admin_threads.mark_read_by_user(g.user)
     db.session.commit()
+    messages = admin_threads.messages(g.user.id) if thread else []
     return render_template("messaging/admin_conversation.html", form=form, action_form=ActionForm(), thread=thread,
-                           messages=admin_threads.messages(g.user.id) if thread else [],
+                           messages=messages, reactions=reactions.for_admin_messages([m.id for m in messages]),
                            version=admin_threads.version(g.user.id) if thread else "0-0")
 
 
@@ -108,8 +109,10 @@ def admin_updates():
     else:
         admin_threads.mark_read_by_user(g.user)
         db.session.commit()
-        response = jsonify(version=version, html=render_template("messaging/_admin_thread.html",
-                                                                 messages=admin_threads.messages(g.user.id)))
+        messages = admin_threads.messages(g.user.id)
+        response = jsonify(version=version, html=render_template(
+            "messaging/_admin_thread.html", messages=messages, action_form=ActionForm(),
+            reactions=reactions.for_admin_messages([m.id for m in messages])))
     response.headers["Cache-Control"] = "no-store"
     return response
 
@@ -157,16 +160,23 @@ def conversation(conversation_id):
     db.session.commit()
     return render_template(
         "messaging/conversation.html",
-        conversation=conversation,
         access=current,
-        items=services.timeline(g.user, conversation),
         version=services.thread_version(g.user, conversation),
         form=form,
-        action_form=ActionForm(),
         archived=services.membership(conversation, g.user.id).archived,
-        deleted_user=services.DELETED_USER,
-        other_deleted=current.other is None,
+        **_thread_context(conversation, current),
     )
+
+
+def _thread_context(conversation, current):
+    """Det, messaging/_thread.html skal bruge. Fælles for siden og den automatiske opdatering."""
+    items = services.timeline(g.user, conversation)
+    return {
+        "conversation": conversation, "items": items, "action_form": ActionForm(),
+        "deleted_user": services.DELETED_USER, "other_deleted": current.other is None,
+        "reactions": reactions.for_messages([item.message.id for item in items if item.message is not None]),
+        "can_react": current.can_write,
+    }
 
 
 @bp.route("/<int:conversation_id>/nye")
@@ -181,9 +191,7 @@ def updates(conversation_id):
     else:
         services.mark_read(g.user, conversation)  # brugeren har samtalen åben og ser beskeden
         db.session.commit()
-        html = render_template("messaging/_thread.html", conversation=conversation, action_form=ActionForm(),
-                               items=services.timeline(g.user, conversation), deleted_user=services.DELETED_USER,
-                               other_deleted=current.other is None)
+        html = render_template("messaging/_thread.html", **_thread_context(conversation, current))
         response = jsonify(version=version, html=html)
     response.headers["Cache-Control"] = "no-store"
     return response
@@ -200,6 +208,53 @@ def delete_message(conversation_id, message_id):
         services.delete_message_for_me(g.user, message)
         db.session.commit()
     return redirect(url_for("messaging.conversation", conversation_id=conversation.id))
+
+
+def reaction_response(url, refusal=None):
+    """Svar på en reaktion. Fra JavaScript (static/js/conversation.js) 204, så tråden blot hentes igen; ellers
+    tilbage til beskeden i samtalen."""
+    if refusal is not None and request.headers.get("X-Requested-With") != "fetch":
+        flash(str(refusal), "error")
+    if request.headers.get("X-Requested-With") == "fetch":
+        return Response(status=409 if refusal else 204)
+    return redirect(url)
+
+
+@bp.route("/<int:conversation_id>/besked/<int:message_id>/reaktion", methods=["POST"])
+@login_required
+@limiter.limit("60 per minute")
+def react(conversation_id, message_id):
+    conversation, _ = _conversation_or_404(conversation_id)
+    message = db.session.get(Message, message_id)
+    if message is None or message.conversation_id != conversation.id or not ActionForm().validate_on_submit():
+        abort(404)
+    refusal = None
+    try:
+        reactions.react(g.user, conversation, message, request.form.get("reaction"))
+        db.session.commit()
+    except reactions.ReactionRefused as error:
+        db.session.rollback()
+        refusal = error
+    return reaction_response(url_for("messaging.conversation", conversation_id=conversation.id) + f"#b{message.id}",
+                             refusal)
+
+
+@bp.route("/administrator/besked/<int:message_id>/reaktion", methods=["POST"])
+@login_required
+@limiter.limit("60 per minute")
+def admin_react(message_id):
+    _admin_thread_or_404()
+    message = db.session.get(AdminMessage, message_id)
+    if message is None or message.user_id != g.user.id or not ActionForm().validate_on_submit():
+        abort(404)
+    refusal = None
+    try:
+        reactions.react_in_admin_thread(message, request.form.get("reaction"), user=g.user)
+        db.session.commit()
+    except reactions.ReactionRefused as error:
+        db.session.rollback()
+        refusal = error
+    return reaction_response(url_for("messaging.admin_conversation") + f"#a{message.id}", refusal)
 
 
 @bp.route("/<int:conversation_id>/slet", methods=["POST"])

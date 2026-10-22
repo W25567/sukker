@@ -15,7 +15,7 @@ from ..media.services import list_images
 from ..profiles.fields import display_value, profile_fields
 from ..profiles.models import Profile
 from ..profiles.services import age_of
-from .models import HIGH_PRIORITY, CaseEvent, ModerationCase, ModeratorAccessLog
+from .models import ACCOUNT_DECISIONS, HIGH_PRIORITY, CaseEvent, ModerationCase, ModeratorAccessLog
 
 ACCESS_WINDOW = timedelta(hours=2)
 EVIDENCE_MESSAGES = 50
@@ -65,14 +65,21 @@ def add_note(case, moderator, text):
 def decide(case, moderator, decision, note):
     """Afgør sagen og udfører en eventuel kontohandling. Sagen lukkes."""
     subject = db.session.get(User, case.subject_user_id) if case.subject_user_id else None
-    if decision in ("restricted", "suspended", "lifted") and subject is None:
+    if decision in ACCOUNT_DECISIONS and subject is None:
         raise ModerationError("Sagen har ingen bruger, kontohandlingen kan udføres på.")
     if subject is not None and subject.id == moderator.id:
         raise ModerationError("Du kan ikke træffe afgørelse i en sag om dig selv.")
-    if decision in ("restricted", "suspended", "lifted"):
+    if decision in ACCOUNT_DECISIONS:
+        if subject.status == "expelled" and decision != "expelled":
+            raise ModerationError("Kontoen er lukket permanent. Kun en administrator kan genåbne den.")
+        if decision == "expelled" and subject.role != "user":
+            raise ModerationError("En moderator eller administrator kan ikke lukkes. Kontakt en administrator.")
         if subject.is_deleted:
             add_event(case, moderator, "note", "Brugeren har slettet sin profil. Kontoen er lukket, så status ændres ikke.")
-        set_account_status(subject, {"restricted": "restricted", "suspended": "suspended", "lifted": "active"}[decision])
+        set_account_status(subject, ACCOUNT_DECISIONS[decision])
+        if decision == "expelled" and not subject.is_deleted:
+            add_event(case, moderator, "note", "Kontoen er lukket permanent uden klageadgang på siden. Et eventuelt "
+                                               "abonnement er ophørt.")
     case.decision, case.decision_note = decision, note
     case.status, case.closed_at = "closed", now_utc()
     add_event(case, moderator, "decision", f"{decision}: {note}" if note else decision)
@@ -82,8 +89,13 @@ def set_account_status(user, status):
     if user.is_deleted:
         return  # en slettet konto forbliver slettet; afgørelsen står i sagen
     user.status, user.status_changed_at = status, now_utc()
-    if status == "suspended":
+    if user.is_locked_out:
         revoke_sessions(user.id)
+    if status == "expelled":
+        # Grov overtrædelse: abonnementet ophører uden refusion (brugervilkårene). Genåbnes kontoen, kommer det ikke igen.
+        from ..subscriptions.services import end_periods
+
+        end_periods(user, "Ophørt: kontoen er lukket for grov overtrædelse")
 
 
 MAX_RETENTION = timedelta(days=366)

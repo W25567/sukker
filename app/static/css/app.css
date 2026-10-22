@@ -274,6 +274,21 @@ body:has(.bottomnav) .page { padding-bottom: 88px; }
 .bubble .sender { display: block; font-size: 0.8rem; color: var(--muted); }
 .bubble-meta { display: flex; gap: 10px; justify-content: flex-end; margin-top: 4px; font-size: 0.75rem; color: var(--muted); }
 .bubble-meta .link { font-size: 0.75rem; color: var(--muted); }
+/* Reaktioner (templates/messaging/_reactions.html) */
+.reactions { display: inline-flex; gap: 2px; margin-top: 4px; padding: 1px 6px; border-radius: 999px;
+  background: var(--bg); border: 1px solid var(--border); font-size: 0.9rem; line-height: 1.4; }
+.react { display: block; margin-top: 4px; }
+.react summary { list-style: none; cursor: pointer; width: fit-content; }
+.react summary.reactions { margin-top: 0; }
+.react summary.react-add { font-size: 0.85rem; color: var(--muted); padding: 0 6px; border-radius: 999px; }
+.react summary::-webkit-details-marker { display: none; }
+.react summary:hover, .react summary:focus-visible { background: var(--border); }
+.react-options { display: flex; flex-wrap: wrap; gap: 2px; margin-top: 4px; padding: 4px; border-radius: 999px;
+  background: var(--surface); border: 1px solid var(--border); }
+.react-options button { border: 0; background: none; font-size: 1.25rem; line-height: 1; padding: 6px; min-width: 40px;
+  min-height: 40px; border-radius: 999px; cursor: pointer; }
+.react-options button:hover, .react-options button:focus-visible { background: var(--border); }
+.react-options button[aria-pressed="true"] { background: var(--info-bg); outline: 1px solid var(--accent); }
 .thread-marker { align-self: center; padding: 4px 12px; border-radius: 999px; background: var(--info-bg); color: var(--muted); font-size: 0.8rem; }
 .composer textarea { min-height: 90px; }
 .conversation-actions { margin-top: 24px; }

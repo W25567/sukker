@@ -63,6 +63,21 @@ def grant_period(user, months, *, tier="premium", source, granted_by=None, note=
     return subscription
 
 
+def end_periods(user, note):
+    """Afslutter alle løbende og kommende perioder nu, fx når kontoen lukkes for grov overtrædelse. Historikken
+    bevares: løbende perioder får udløb nu, og perioder, der ikke er begyndt, slettes. Returnerer antallet."""
+    now = now_utc()
+    periods = db.session.scalars(select(Subscription).where(Subscription.user_id == user.id,
+                                                             Subscription.expires_at > now)).all()
+    for period in periods:
+        if period.starts_at >= now:
+            db.session.delete(period)
+        else:
+            period.expires_at = now
+            period.note = f"{period.note} · {note}" if period.note else note
+    return len(periods)
+
+
 # Premium for livstid gemmes som en periode, der aldrig udløber i praksis. En dag før årets udgang, så
 # omregning til dansk tid ikke løber over år 9999.
 LIFETIME_END = datetime(9999, 12, 30, tzinfo=UTC)

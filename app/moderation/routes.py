@@ -1,4 +1,4 @@
-from flask import Blueprint, abort, flash, g, redirect, render_template, request, send_file, url_for
+from flask import Blueprint, abort, current_app, flash, g, redirect, render_template, request, send_file, url_for
 from flask_wtf import FlaskForm
 from sqlalchemy import or_, select
 from wtforms import DateField, EmailField, SelectField, StringField, TextAreaField
@@ -248,8 +248,11 @@ def appeal():
         form.email.data = g.user.email
     if form.validate_on_submit():
         subject = db.session.scalar(select(User).where(User.email == form.email.data.strip().lower()))
-        services.create_case(source="appeal", category="klage", subject=subject, reporter=subject,
-                             description=form.text.data.strip())
-        db.session.commit()
+        # En permanent lukning kan ikke påklages her (brugervilkårene). Svaret er det samme, så siden ikke afslører
+        # noget; siden selv og login-beskeden henviser til virksomhedens mail.
+        if subject is None or subject.status != "expelled":
+            services.create_case(source="appeal", category="klage", subject=subject, reporter=subject,
+                                 description=form.text.data.strip())
+            db.session.commit()
         return render_template("moderation/appeal_received.html")
-    return render_template("moderation/appeal.html", form=form)
+    return render_template("moderation/appeal.html", form=form, contact_email=current_app.config["CONTACT_EMAIL"])

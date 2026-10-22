@@ -68,6 +68,7 @@ def _filters():
         "pause": ("På pause", [exists().where(Profile.user_id == User.id, Profile.paused_at.isnot(None))]),
         "begraenset": ("Begrænsede", [User.status == "restricted"]),
         "suspenderet": ("Suspenderede", [User.status == "suspended"]),
+        "lukket": ("Lukket permanent", [User.status == "expelled"]),
         "slettede": ("Slettede", [User.status == "deleted"]),
         "premium": ("Premium", [_active_tier(Subscription.tier == "premium")]),
         "premium_plus": ("Premium+", [_active_tier(Subscription.tier == "premium_plus")]),

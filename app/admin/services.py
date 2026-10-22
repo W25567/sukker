@@ -40,6 +40,10 @@ def set_status(admin, user, status, reason):
         raise AdminError("Du kan ikke ændre status på din egen konto.")
     if user.is_deleted:
         raise AdminError("Brugeren har slettet sin profil. En slettet konto kan ikke genåbnes.")
+    if status == "expelled" and not reason:
+        raise AdminError("Skriv en begrundelse for den permanente lukning.")
+    if status == "expelled" and user.role != "user":
+        raise AdminError("Fjern først brugerens rolle som moderator eller administrator.")
     old = user.status
     set_account_status(user, status)
     audit(admin, "status", user, old=old, new=status, reason=reason)

@@ -41,6 +41,7 @@ def collect():
         "paused": _count(select(Profile.user_id).where(Profile.paused_at.isnot(None), Profile.user_id.in_(real_ids))),
         "restricted": _count(select(User.id).where(REAL, User.status == "restricted")),
         "suspended": _count(select(User.id).where(REAL, User.status == "suspended")),
+        "expelled": _count(select(User.id).where(REAL, User.status == "expelled")),
         "deleted": _count(select(User.id).where(User.is_test.is_(False), User.status == "deleted")),
     }
 

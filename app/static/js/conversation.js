@@ -110,6 +110,33 @@
     return;
   }
 
+  // Reaktioner (templates/messaging/_reactions.html) sendes uden at genindlæse siden, og tråden hentes igen.
+  thread.addEventListener("submit", function (event) {
+    var form = event.target;
+    if (!form.hasAttribute || !form.hasAttribute("data-reaction")) {
+      return;
+    }
+    event.preventDefault();
+    var data = new FormData(form);
+    if (event.submitter && event.submitter.name) {
+      data.append(event.submitter.name, event.submitter.value);
+    }
+    fetch(form.action, {
+      method: "POST",
+      body: data,
+      credentials: "same-origin",
+      headers: { "X-Requested-With": "fetch" }
+    }).then(function () {
+      if (timer !== null) {
+        window.clearTimeout(timer);
+        timer = null;
+      }
+      poll();
+    }).catch(function () {
+      window.location.reload();
+    });
+  });
+
   // Aktivitet er det, brugeren selv gør. "scroll" tælles ikke, fordi siden også ruller af sig selv.
   ["wheel", "touchstart", "touchmove", "keydown", "pointerdown", "mousemove"].forEach(function (name) {
     window.addEventListener(name, function () { lastActivity = Date.now(); }, { passive: true });

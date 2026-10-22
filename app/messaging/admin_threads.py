@@ -134,10 +134,12 @@ def unread_for_admin(user_id):
 
 
 def version(user_id):
+    from .reactions import admin_thread_stamp
+
     count, last_id = db.session.execute(
         select(func.count(AdminMessage.id), func.max(AdminMessage.id)).where(AdminMessage.user_id == user_id)
     ).one()
-    return f"{count}-{last_id or 0}"
+    return f"{count}-{last_id or 0}-{admin_thread_stamp(user_id)}"
 
 
 @dataclass

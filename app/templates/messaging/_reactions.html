@@ -1,0 +1,22 @@
+{# Reaktioner på en besked (messaging/reactions.py). `shown` er reaktionerne på beskeden, `mine` min egen, og
+   `action` adressen, hvor jeg reagerer (None = jeg kan ikke reagere her, fx på mine egne beskeder).
+   Virker uden JavaScript; med JavaScript sendes valget uden at siden genindlæses (static/js/conversation.js). #}
+{% macro pill(shown) %}{% for key in shown %}<span title="{{ reaction_labels[key] }}">{{ reaction_emoji[key] }}</span>{% endfor %}{% endmacro %}
+{% macro reactions(shown, mine=None, action=None, form=None) %}
+  {% if action %}
+    {# Reaktionerne er selv knappen, man reagerer og retter med, så de ikke står to gange. #}
+    <details class="react">
+      <summary class="{{ 'reactions' if shown else 'react-add' }}" title="{{ 'Ret din reaktion' if mine else 'Reagér' }}"
+               aria-label="{{ 'Ret din reaktion' if mine else 'Reagér på beskeden' }}">{{ pill(shown) if shown else '☺︎+' }}</summary>
+      <form method="post" action="{{ action }}" class="react-options" data-reaction>
+        {{ form.hidden_tag() }}
+        {% for key, emoji, label in reaction_choices %}
+          <button type="submit" name="reaction" value="{{ key }}" title="{{ label }}{{ ' (fjern)' if key == mine }}"
+                  aria-label="{{ label }}{{ ' (fjern)' if key == mine }}" aria-pressed="{{ 'true' if key == mine else 'false' }}">{{ emoji }}</button>
+        {% endfor %}
+      </form>
+    </details>
+  {% elif shown %}
+    <span class="reactions" aria-label="Reaktioner">{{ pill(shown) }}</span>
+  {% endif %}
+{% endmacro %}

@@ -5,6 +5,8 @@
   <h1>Klag over en afgørelse</h1>
   <p class="muted">Er din konto begrænset eller suspenderet, og mener du, at afgørelsen er forkert, kan du klage her.
     En moderator vurderer sagen igen.</p>
+  <p class="muted">Er din konto lukket permanent for grov overtrædelse, kan afgørelsen ikke påklages her. Skriv i stedet
+    til <a href="mailto:{{ contact_email }}">{{ contact_email }}</a>.</p>
   <form method="post" class="form" novalidate>
     {{ form.hidden_tag() }}
     {{ field(form.email, autocomplete="email") }}

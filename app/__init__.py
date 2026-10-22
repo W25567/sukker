@@ -49,6 +49,10 @@ def create_app(config_name=None):
         FileSystemLoader(os.path.join(app.root_path, "templates")),
     ])
     app.jinja_env.globals["brand"] = brand
+    from .messaging.reactions import EMOJI, LABELS, REACTIONS
+
+    # Reaktioner på beskeder (templates/messaging/_reactions.html)
+    app.jinja_env.globals.update(reaction_emoji=EMOJI, reaction_labels=LABELS, reaction_choices=REACTIONS)
 
     db.init_app(app)
     migrate.init_app(app, db)

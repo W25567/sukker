@@ -1,6 +1,6 @@
 import re
 
-from flask import Blueprint, flash, g, jsonify, redirect, render_template, request, session, url_for
+from flask import Blueprint, current_app, flash, g, jsonify, redirect, render_template, request, session, url_for
 from flask_limiter.util import get_remote_address
 from sqlalchemy.exc import IntegrityError
 
@@ -86,6 +86,9 @@ def login():
             flash(LOGIN_FAILED, "error")
         elif user.status == "suspended":
             return render_template("auth/suspended.html"), 403
+        elif user.status == "expelled":
+            return render_template("auth/expelled.html", contact_email=current_app.config["CONTACT_EMAIL"],
+                                   company_name=current_app.config["COMPANY_NAME"]), 403
         else:
             start_session(user, remember=form.remember.data)
             db.session.commit()

@@ -32,7 +32,11 @@ DECISIONS = [
     ("suspended", "Kontoen suspenderes"),
     ("lifted", "Begrænsning eller suspendering ophæves"),
     ("content_removed", "Indhold fjernet"),
+    # Grov overtrædelse, fx salg af stoffer eller våben: lukket uden varsel og uden klage på siden, og et abonnement
+    # ophører. Kun en administrator kan genåbne kontoen (admin/services.set_status).
+    ("expelled", "Kontoen lukkes permanent (grov overtrædelse)"),
 ]
+ACCOUNT_DECISIONS = {"restricted": "restricted", "suspended": "suspended", "lifted": "active", "expelled": "expelled"}
 
 
 class ModerationCase(db.Model):

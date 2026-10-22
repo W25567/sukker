@@ -32,6 +32,7 @@
       <li>udgive sig for at være en anden eller oprette falske profiler</li>
       <li>svindle, bede om penge, gavekort eller betalingsoplysninger eller lokke andre til falske sider (phishing)</li>
       <li>tilbyde, formidle eller købe seksuelle ydelser</li>
+      <li>sælge, købe eller formidle narkotika, våben eller andre ulovlige varer eller tjenester</li>
       <li>dele seksuelt indhold eller sende seksuelle henvendelser</li>
       <li>dele indhold, der viser eller seksualiserer mindreårige</li>
       <li>dele andres billeder eller private oplysninger uden deres samtykke</li>
@@ -51,7 +52,8 @@
     <h2>6. Moderation</h2>
     <p>Alle kan anmelde profiler, samtaler og beskeder. Anmeldelser behandles af moderatorer. For at afdække misbrug, svindel og phishing kan en moderator få adgang til de oplysninger, der er gemt om en konto, herunder beskeder og billeder. Det sker kun med en begrundelse, og al adgang logges.</p>
     <p>Overtræder en bruger vilkårene, kan vi fjerne indhold, begrænse kontoen midlertidigt eller lukke den. Er der mistanke om, at en bruger er under 18 år, begrænses kontoen straks, indtil sagen er afklaret. Ved mistanke om strafbare forhold kan vi anmelde det til politiet.</p>
-    <p>Er du uenig i en afgørelse, der vedrører dig, kan du <a href="{{ url_for('moderation.appeal') }}">klage</a> og få sagen vurderet igen af en anden.</p>
+    <p>Er du uenig i en afgørelse, der vedrører dig, kan du <a href="{{ url_for('moderation.appeal') }}">klage</a> og få sagen vurderet igen af en anden. Det gælder dog ikke permanent lukning for grove overtrædelser.</p>
+    <p><strong>Grove overtrædelser:</strong> Sælger, køber eller formidler du narkotika, våben eller andet ulovligt, eller overtræder du på anden måde vilkårene groft, kan vi lukke din konto permanent uden varsel. Du bliver logget ud med det samme og må ikke oprette en ny profil. Afgørelsen kan ikke påklages her på siden. Har du spørgsmål til den, kan du skrive til <a href="mailto:{{ contact_email }}">{{ contact_email }}</a>.</p>
 
     <h2>7. Pris</h2>
     <p>{{ brand.name }} er gratis. Alle funktioner er gratis for alle, og der er ingen abonnementer eller køb på siden.</p>

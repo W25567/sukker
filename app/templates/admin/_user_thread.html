@@ -1,8 +1,13 @@
 {# Beskederne i administrationens samtale med en bruger. Bruges af siden og af den automatiske opdatering. #}
+{% from "messaging/_reactions.html" import reactions as reaction_row %}
 {% for m in messages %}
-  <li class="bubble{% if m.from_admin %} mine{% endif %}">
+  {% set given = reactions.get(m.id, {}) %}
+  <li class="bubble{% if m.from_admin %} mine{% endif %}" id="a{{ m.id }}">
     <span class="sender">{{ ('Administrator (' ~ admins.get(m.admin_id, 'tidligere administrator') ~ ')') if m.from_admin else target.display_name }}</span>
     <p>{{ m.body }}</p>
+    {{ reaction_row(given.values() | list, mine=given.get('admin'),
+                    action=url_for('admin.user_thread_react', user_id=target.id, message_id=m.id) if not m.from_admin else None,
+                    form=action_form) }}
     <span class="bubble-meta">{{ m.created_at | local_datetime }}</span>
   </li>
 {% else %}

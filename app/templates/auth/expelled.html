@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{# Vises ved login til en konto, der er lukket permanent for grov overtrædelse (moderation/services.py). #}
+{% block title %}Kontoen er lukket – {{ brand.name }}{% endblock %}
+{% block content %}
+  <h1>Kontoen er lukket</h1>
+  <div class="card">
+    <p>Din konto er lukket permanent, fordi du har overtrådt brugervilkårene groft, fx ved salg af stoffer eller
+      våben eller anden kriminalitet. Lukningen sker uden varsel og kan ikke påklages her på siden.
+      {% if brand.premium %}Et eventuelt abonnement er ophørt.{% endif %}</p>
+    <p>Har du spørgsmål til afgørelsen, kan du skrive til {{ company_name or brand.name }} på
+      <a href="mailto:{{ contact_email }}">{{ contact_email }}</a>.</p>
+  </div>
+  <p class="muted"><a href="{{ url_for('pages.terms') }}">Læs brugervilkårene</a></p>
+{% endblock %}

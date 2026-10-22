@@ -13,7 +13,8 @@ from ..location.services import kommune_name
 from ..matches.models import Like, Match
 from ..media.models import PrivateAccess, ProfileImage
 from ..messaging.admin_threads import messages as admin_messages
-from ..messaging.models import Message, MessageDeletion
+from ..messaging.models import AdminMessage, AdminMessageReaction, Message, MessageDeletion, MessageReaction
+from ..messaging.reactions import LABELS
 from ..notify import prefs as notification_prefs
 from ..profiles.fields import display_value, profile_fields
 from ..profiles.models import Profile
@@ -100,6 +101,17 @@ def export_user_data(user):
         "beskeder_med_administrator": [
             {"fra": "Administrator" if m.from_admin else "dig", "tidspunkt": _iso(m.created_at), "tekst": m.body}
             for m in admin_messages(user.id)
+        ],
+        "dine_reaktioner": [
+            {"samtale": conversation_id, "reaktion": LABELS[r.reaction], "tidspunkt": _iso(r.created_at)}
+            for r, conversation_id in db.session.execute(
+                select(MessageReaction, Message.conversation_id).join(Message, Message.id == MessageReaction.message_id)
+                .where(MessageReaction.user_id == user.id).order_by(MessageReaction.created_at))
+        ] + [
+            {"samtale": "Administrator", "reaktion": LABELS[r.reaction], "tidspunkt": _iso(r.created_at)}
+            for r in db.session.scalars(
+                select(AdminMessageReaction).join(AdminMessage, AdminMessage.id == AdminMessageReaction.message_id)
+                .where(AdminMessage.user_id == user.id, AdminMessageReaction.from_admin.is_(False)))
         ],
         # Den, der bad om adgang, ser kun godkendte adgange: en afvisning afsløres ikke ud over det, brugeren ser.
         "adgang_til_dine_private_billeder": [

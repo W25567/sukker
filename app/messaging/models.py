@@ -1,7 +1,8 @@
 """Samtaler og beskeder mellem matches (specifikation 8 og 7.2)."""
 from datetime import datetime
 
-from sqlalchemy import BigInteger, Boolean, CheckConstraint, DateTime, ForeignKey, Identity, Index, Text, UniqueConstraint, func
+from sqlalchemy import (BigInteger, Boolean, CheckConstraint, DateTime, ForeignKey, Identity, Index, String, Text,
+                        UniqueConstraint, func)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from ..extensions import db
@@ -86,6 +87,34 @@ class AdminMessage(db.Model):
     # Hvilken administrator der skrev. Vises kun i administrationen, aldrig for brugeren.
     admin_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
     body: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+
+
+class MessageReaction(db.Model):
+    """Én reaktion pr. person pr. besked, fx et hjerte (messaging/reactions.py). En ny reaktion erstatter den gamle."""
+
+    __tablename__ = "message_reactions"
+    __table_args__ = (CheckConstraint("reaction IN ('hjerte', 'tommel', 'griner', 'overrasket', 'ked', 'vred')",
+                                      name="reaction"),)
+
+    message_id: Mapped[int] = mapped_column(ForeignKey("messages.id", ondelete="CASCADE"), primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    reaction: Mapped[str] = mapped_column(String(20), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+
+
+class AdminMessageReaction(db.Model):
+    """Reaktioner i samtalen med Administrator: brugeren på Administrators beskeder og Administrator på brugerens.
+    Administratorsiden har én fælles reaktion; hvem der satte den, står kun i administrationen."""
+
+    __tablename__ = "admin_message_reactions"
+    __table_args__ = (CheckConstraint("reaction IN ('hjerte', 'tommel', 'griner', 'overrasket', 'ked', 'vred')",
+                                      name="reaction"),)
+
+    message_id: Mapped[int] = mapped_column(ForeignKey("admin_messages.id", ondelete="CASCADE"), primary_key=True)
+    from_admin: Mapped[bool] = mapped_column(Boolean, primary_key=True)
+    admin_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+    reaction: Mapped[str] = mapped_column(String(20), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
 
 

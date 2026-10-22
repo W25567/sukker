@@ -134,10 +134,13 @@ def visible_messages(user, conversation):
 def thread_version(user, conversation):
     """En kort nøgle, der ændrer sig, når brugerens synlige beskeder ændrer sig. Bruges til automatisk
     opdatering af samtalen, så serveren kun sender tråden, når der faktisk er noget nyt."""
+    from .reactions import conversation_stamp
+
     member = membership(conversation, user.id)
     visible = _visible_messages_query(user.id, member).subquery()
     count, last_id = db.session.execute(select(func.count(visible.c.id), func.max(visible.c.id))).one()
-    return f"{count}-{last_id or 0}"
+    # Første del er antallet af beskeder (static/js/conversation.js). Reaktionerne til sidst.
+    return f"{count}-{last_id or 0}-{conversation_stamp(conversation.id)}"
 
 
 def timeline(user, conversation):
