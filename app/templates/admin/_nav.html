@@ -9,7 +9,10 @@
   <a href="{{ url_for('admin.bug_reports') }}"{% if here in ('admin.bug_reports', 'admin.bug_report') %} aria-current="page"{% endif %}>Fejlrapporter{% if bugs %} <span class="unread-count">{{ bugs }}</span>{% endif %}</a>
   {% set selfies = pending_verifications() %}
   <a href="{{ url_for('verification.queue') }}"{% if here.startswith('verification.') %} aria-current="page"{% endif %}>Verificeringer{% if selfies %} <span class="unread-count">{{ selfies }}</span>{% endif %}</a>
+  {% set applications = pending_moderator_applications() %}
+  <a href="{{ url_for('admin.applications') }}"{% if here.startswith('admin.application') %} aria-current="page"{% endif %}>Ansøgninger{% if applications %} <span class="unread-count">{{ applications }}</span>{% endif %}</a>
   <a href="{{ url_for('admin.settings') }}"{% if here == 'admin.settings' %} aria-current="page"{% endif %}>Indstillinger</a>
+  <a href="{{ url_for('admin.lists') }}"{% if here == 'admin.lists' %} aria-current="page"{% endif %}>Lister</a>
   <a href="{{ url_for('admin.log') }}"{% if here == 'admin.log' %} aria-current="page"{% endif %}>Log</a>
   <a href="{{ url_for('moderation.log') }}">Moderatoradgang</a>
 </nav>

@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{# Ansøgninger om at blive moderator og de nuværende moderatorer (admin.applications). #}
+{% block title %}Ansøgninger – Administration{% endblock %}
+{% block page_class %}admin-wide{% endblock %}
+{% macro csrf() %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endmacro %}
+{% block content %}
+  {% include "admin/_nav.html" %}
+  <h1>Ansøgninger om at blive moderator</h1>
+  <p class="muted">Brugere søger under Hjælp → Bliv moderator. Godkender du, får brugeren rollen moderator. Svaret sendes
+    som besked fra Administrator, og alt registreres i administrationsloggen.</p>
+
+  {% set waiting = applications | selectattr('status', 'equalto', 'pending') | list %}
+  {% for a in waiting %}
+    {% set person = people[a.user_id] %}
+    <section class="card">
+      <h2><a href="{{ url_for('admin.user', user_id=person.id) }}">{{ person | staff_name }}</a>, {{ age_of(person) }}</h2>
+      <p class="muted">Søgte {{ a.created_at | local_datetime }} · medlem siden {{ person.created_at | local_datetime }}
+        · konto: {{ person.status }}</p>
+      <dl class="facts">
+        <div><dt>Hvorfor</dt><dd class="pre-line">{{ a.motivation }}</dd></div>
+        {% if a.experience %}<div><dt>Erfaring</dt><dd class="pre-line">{{ a.experience }}</dd></div>{% endif %}
+        {% if a.availability %}<div><dt>Tid om ugen</dt><dd>{{ a.availability }}</dd></div>{% endif %}
+      </dl>
+      <div class="actions">
+        <form method="post" data-confirm="Gør {{ person.display_name }} til moderator?">
+          {{ csrf() }}<input type="hidden" name="action" value="approve"><input type="hidden" name="application_id" value="{{ a.id }}">
+          <button type="submit" class="button">Godkend</button>
+        </form>
+        <form method="post" class="inline-form">
+          {{ csrf() }}<input type="hidden" name="action" value="reject"><input type="hidden" name="application_id" value="{{ a.id }}">
+          <input name="note" type="text" placeholder="Evt. besked til ansøgeren" aria-label="Besked til ansøgeren">
+          <button type="submit" class="button secondary">Afvis</button>
+        </form>
+      </div>
+    </section>
+  {% else %}
+    <p class="card muted">Ingen ansøgninger venter.</p>
+  {% endfor %}
+
+  <section class="card">
+    <h2>Moderatorer ({{ moderators | length }})</h2>
+    {% if moderators %}
+      <ul class="person-list">
+        {% for m in moderators %}
+          <li>
+            <a href="{{ url_for('admin.user', user_id=m.id) }}">{{ m | staff_name }}</a>
+            <form method="post" class="inline" data-confirm="Fjern {{ m.display_name }} som moderator? Brugeren beholder sin profil.">
+              {{ csrf() }}<input type="hidden" name="action" value="remove_moderator"><input type="hidden" name="user_id" value="{{ m.id }}">
+              <button type="submit" class="link">Fjern som moderator</button>
+            </form>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="muted">Der er ingen moderatorer endnu.</p>
+    {% endif %}
+    <p class="muted">Du kan også ændre en brugers rolle på brugerens side. Andre administratorer ændres kun fra kommandolinjen.</p>
+  </section>
+
+  {% set decided = applications | rejectattr('status', 'equalto', 'pending') | list %}
+  {% if decided %}
+    <section class="card">
+      <h2>Tidligere ansøgninger</h2>
+      <div class="table-scroll"><table class="mod-table">
+        <thead><tr><th>Bruger</th><th>Søgte</th><th>Status</th><th>Afgjort</th><th>Besked</th></tr></thead>
+        <tbody>
+          {% for a in decided %}
+            <tr>
+              <td><a href="{{ url_for('admin.user', user_id=a.user_id) }}">{{ people[a.user_id] | staff_name }}</a></td>
+              <td>{{ a.created_at | local_datetime }}</td>
+              <td>{{ status_labels[a.status] }}</td>
+              <td>{{ a.decided_at | local_datetime }}</td>
+              <td>{{ a.decision_note or '' }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table></div>
+    </section>
+  {% endif %}
+{% endblock %}

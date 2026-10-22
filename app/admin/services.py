@@ -159,6 +159,7 @@ def audit_log_for(target, limit=100):
 
 AUDIT_LABELS = {
     "view_user": "Så brugerens data", "admin_message": "Skrev som Administrator", "status": "Skiftede status", "role": "Skiftede rolle",
+    "moderator_application": "Afgjorde ansøgning om at blive moderator",
     "grant_period": "Gav Premium-tid", "set_tier": "Skiftede niveau", "feature_grant": "Individuel regel",
     "feature_grant_removed": "Fjernede regel", "setting": "Ændrede indstilling", "tier_features": "Ændrede rettigheder",
     "disabled_features": "Slog funktioner fra", "test_account": "Testkonto",

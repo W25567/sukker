@@ -96,6 +96,14 @@ def _notify(actor, user, body):
         pass
 
 
+def _check_reach(actor, user):
+    """Altid ét niveau ned (auth/roles.outranks): ingen vurderer sig selv eller en på samme eller højere niveau."""
+    from ..auth.roles import out_of_reach_message, outranks
+
+    if not outranks(actor, user):
+        raise VerificationRefused(out_of_reach_message(user))
+
+
 def decide(actor, row, approve, note=None):
     """Godkender eller afviser. En afvisning kræver en begrundelse, som brugeren får at se."""
     from ..auth.models import User
@@ -106,6 +114,7 @@ def decide(actor, row, approve, note=None):
     if not approve and not note:
         raise VerificationRefused("Skriv en begrundelse, som brugeren kan se.")
     user = db.session.get(User, row.user_id)
+    _check_reach(actor, user)
     now = now_utc()
     row.status = "approved" if approve else "rejected"
     row.decided_at, row.decided_by_id, row.note = now, actor.id, note or None
@@ -131,6 +140,7 @@ def withdraw_pending(user):
 def revoke(actor, user, note):
     """Fjerner mærket, fx hvis profilbillederne senere er skiftet ud med billeder af en anden."""
     note = (note or "").strip()
+    _check_reach(actor, user)
     if user.photo_verified_at is None:
         raise VerificationRefused("Profilen er ikke verificeret.")
     if not note:

@@ -92,21 +92,15 @@ def test_admin_catalog_change_keeps_removed_interests(app, outbox, ctx):
 
 def test_admin_extends_name_lists_and_catalog(app, outbox, ctx):
     admin = make_user(app, outbox, "Hanne", role="admin")
-    page = admin.get("/admin/indstillinger").get_data(as_text=True)
+    page = admin.get("/admin/lister").get_data(as_text=True)
     assert 'name="name_blocked_anywhere"' in page and 'name="interest_catalog"' in page and "Gælder altid" in page
+    assert "Lister" in admin.get("/admin/indstillinger").get_data(as_text=True)
 
     form = {key: "" for key in ("name_reserved", "name_blocked_prefix", "name_allowed")}
-    form.update(name_blocked_anywhere="Grimord\nfrækkert", name_blocked_exact="bøh", name_allowed="Pikachu, Fisseha",
-                interest_catalog="Sport: Padel, Klatring")
-    from app.core.settings import SETTING_META
-    for key, _, kind in SETTING_META:
-        value = get_setting(key)
-        if kind == "bool":
-            if value:
-                form[key] = "y"
-        else:
-            form[key] = "" if value is None else str(value)
-    admin.post("/admin/indstillinger", data=form)
+    form.update(action="save_names", name_blocked_anywhere="Grimord\nfrækkert", name_blocked_exact="bøh",
+                name_allowed="Pikachu, Fisseha")
+    admin.post("/admin/lister", data=form)
+    admin.post("/admin/lister", data={"action": "save_interests", "interest_catalog": "Sport: Padel, Klatring"})
 
     assert get_setting("name_blocked_anywhere") == ["grimord", "frækkert"]
     assert get_setting("interest_catalog") == [["Sport", ["Padel", "Klatring"]]]
@@ -117,5 +111,26 @@ def test_admin_extends_name_lists_and_catalog(app, outbox, ctx):
     assert "grove, krænkende eller seksuelle ord" in response.get_data(as_text=True)
 
     form["name_blocked_exact"] = "ok, <script>"
-    response = admin.post("/admin/indstillinger", data=form, follow_redirects=True)
+    response = admin.post("/admin/lister", data=form, follow_redirects=True)
     assert get_setting("name_blocked_exact") == ["bøh"]  # intet gemt ved en fejl
+
+
+def test_admin_adds_one_interest(app, outbox, ctx):
+    """Én interesse kan tilføjes uden at skrive hele listen af, fx Knallerter."""
+    from app.profiles import interests
+
+    admin = make_user(app, outbox, "Hanne", role="admin")
+    assert get_setting("interest_catalog") is None  # standardlisten
+    admin.post("/admin/lister", data={"action": "add_interest", "group": "Teknik og spil", "label": "Knallerter"})
+    groups = dict(get_setting("interest_catalog"))
+    assert groups["Teknik og spil"][-1] == "Knallerter" and "Gåture" in groups["Natur og bevægelse"]
+    assert ("knallerter", "Knallerter") in interests.choices()
+    admin.post("/admin/lister", data={"action": "add_interest", "group": "__ny__", "new_group": "Motor", "label": "Veteranbiler"})
+    assert dict(get_setting("interest_catalog"))["Motor"] == ["Veteranbiler"]
+    # Dubletter afvises, og intet ændres
+    response = admin.post("/admin/lister", data={"action": "add_interest", "group": "Motor", "label": "knallerter"},
+                          follow_redirects=True)
+    assert "står flere gange" in response.get_data(as_text=True)
+    # Gemmes standardlisten uændret, følger den standarden igen
+    admin.post("/admin/lister", data={"action": "save_interests", "interest_catalog": interests.to_text(interests.default_catalog())})
+    assert get_setting("interest_catalog") is None

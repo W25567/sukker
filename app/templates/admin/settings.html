@@ -38,31 +38,7 @@
       <p class="muted">"Slået fra" gælder for alle, også individuelle regler.</p>
     </section>
 
-    <section class="card" id="navne">
-      <h2>Viste navne</h2>
-      <p class="muted">Ord, der ikke må bruges i viste navne, ud over dem, der altid gælder. Ét ord pr. linje eller adskilt med komma.
-        Tal og tegn, der ligner bogstaver, fanges automatisk (fx "p1k"). Reglerne gælder nye navne og navneskift.</p>
-      {% for key, label, hint, value, built_in in wordlists %}
-        <div class="field">
-          <label for="{{ key }}">{{ label }}</label>
-          <textarea id="{{ key }}" name="{{ key }}" rows="2" spellcheck="false">{{ value }}</textarea>
-          <small class="hint">{{ hint }}</small>
-          <details class="built-in"><summary>Gælder altid ({{ built_in | length }})</summary><p class="muted">{{ built_in | join(', ') }}</p></details>
-        </div>
-      {% endfor %}
-    </section>
-
-    <section class="card" id="interesser">
-      <h2>Interesser</h2>
-      <p class="muted">Det, brugerne kan vælge som interesser. Én gruppe pr. linje: <code>Gruppe: interesse, interesse</code>.
-        Lad feltet stå tomt for at bruge standardlisten. Fjerner du en interesse, vises den ikke længere, men profilerne beholder den,
-        hvis den kommer tilbage med samme navn. Undgå tro, politik, helbred og seksualitet: det er følsomme oplysninger.</p>
-      <div class="field">
-        <label for="interest_catalog">Interesser</label>
-        <textarea id="interest_catalog" name="interest_catalog" rows="8" spellcheck="false" placeholder="Tomt: standardlisten bruges">{{ interest_text }}</textarea>
-        <details class="built-in"><summary>Standardlisten</summary><pre class="muted">{{ default_interest_text }}</pre></details>
-      </div>
-    </section>
+    <p class="muted">Interesser og ord, der ikke må bruges i viste navne, retter du under <a href="{{ url_for('admin.lists') }}">Lister</a>.</p>
 
     <button type="submit" class="button wide">Gem indstillinger</button>
   </form>

@@ -5,7 +5,7 @@ from wtforms import DateField, EmailField, SelectField, StringField, TextAreaFie
 from wtforms.validators import DataRequired, Email, Length
 
 from ..auth.models import User
-from ..auth.roles import admin_required, moderator_required
+from ..auth.roles import admin_required, moderator_required, out_of_reach_message, outranks
 from ..core.settings import get_setting
 from ..extensions import db, limiter
 from ..media import storage
@@ -136,6 +136,9 @@ def user(user_id):
     target = db.session.get(User, user_id)
     if target is None:
         abort(404)
+    if not outranks(g.user, target):
+        # Altid ét niveau ned: moderatorer og administratorer håndteres af en administrator.
+        return render_template("moderation/out_of_reach.html", target=target, message=out_of_reach_message(target)), 403
     if not services.has_recent_access(g.user, target.id):
         form = AccessForm()
         open_cases = services.queue(("open", "in_progress"))
@@ -155,8 +158,12 @@ def request_access(user_id):
         abort(404)
     if form.validate_on_submit():
         case = db.session.get(ModerationCase, int(form.case_id.data)) if form.case_id.data else None
-        services.log_access(g.user, target, form.reason.data, case)
-        db.session.commit()
+        try:
+            services.log_access(g.user, target, form.reason.data, case)
+            db.session.commit()
+        except services.ModerationError as error:
+            db.session.rollback()
+            flash(str(error), "error")
     else:
         flash("Skriv en begrundelse for adgangen.", "error")
     return redirect(url_for("moderation.user", user_id=user_id))
@@ -169,6 +176,9 @@ def new_case(user_id):
     form = NewCaseForm(prefix="ny")
     if target is None:
         abort(404)
+    if not outranks(g.user, target):
+        flash(out_of_reach_message(target), "error")
+        return redirect(url_for("moderation.user", user_id=user_id))
     if not form.validate_on_submit():
         flash("Beskriv mistanken.", "error")
         return redirect(url_for("moderation.user", user_id=user_id))

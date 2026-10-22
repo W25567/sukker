@@ -79,6 +79,10 @@ Det meste klares i administrationspanelet under `/admin/`. Den første administr
 ```
 
 Moderator og administrator er adskilte roller. Moderatorer behandler sager under `/moderation/`.
+Brugere søger om at blive moderator under Hjælp → Bliv moderator, og administrator godkender under Administration →
+Ansøgninger, hvor moderatorer også kan fjernes igen. Handlinger går altid ét niveau ned (`auth/roles.outranks`): en
+moderator handler kun på brugere, en administrator på brugere og moderatorer. Andre administratorer ændres kun fra
+kommandolinjen. Interesser og ord, der ikke må bruges i viste navne, udvides under Administration → Lister.
 Administratorer ser moderatorernes revisionslog under `/moderation/log` og administrationsloggen under `/admin/log`.
 Testkonti kan kun se andre testkonti og tæller ikke med i målingerne. Passwordene vises kun, når kontiene oprettes.
 

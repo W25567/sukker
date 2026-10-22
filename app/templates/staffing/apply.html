@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% from "_forms.html" import field, checkbox %}
+{# Ansøgning om at blive moderator (staffing/routes.py). #}
+{% block title %}Bliv moderator – {{ brand.name }}{% endblock %}
+{% block content %}
+  <a class="back-link" href="{{ url_for('pages.help') }}">← Hjælp</a>
+  <h1>Bliv moderator</h1>
+  <p class="lead">Moderatorer hjælper med at holde {{ brand.name }} tryg og rar at være på.</p>
+  <section class="card">
+    <h2>Hvad laver en moderator?</h2>
+    <ul>
+      <li>Behandler anmeldelser af profiler, billeder og beskeder og afgør, hvad der skal ske.</li>
+      <li>Kan se de oplysninger, der er gemt om en bruger, når der er en god grund. Hver gang registreres, med begrundelse.</li>
+      <li>Vurderer selfies, når brugere vil have deres profil verificeret.</li>
+      <li>Har tavshedspligt om alt, hvad de ser som moderator.</li>
+    </ul>
+    <p class="muted">Du bruger din egen profil og bestemmer selv, hvor meget tid du lægger i det. Du kan altid stoppe igen.</p>
+  </section>
+
+  {% if pending %}
+    <section class="card">
+      <h2>Din ansøgning venter</h2>
+      <p>Du søgte {{ pending.created_at | local_datetime }}. Du får svar i Beskeder fra Administrator.</p>
+      <form method="post" action="{{ url_for('staffing.withdraw') }}" data-confirm="Træk din ansøgning tilbage?">
+        {{ action_form.hidden_tag() }}
+        <button type="submit" class="button secondary">Træk ansøgningen tilbage</button>
+      </form>
+    </section>
+  {% elif reason %}
+    <div class="card notice-card"><p>{{ reason }}</p></div>
+  {% else %}
+    {% if latest and latest.status == 'rejected' %}
+      <p class="muted">Du søgte senest {{ latest.created_at | local_datetime }}. Du er velkommen til at søge igen.</p>
+    {% endif %}
+    <form method="post" class="form" novalidate>
+      {{ form.hidden_tag() }}
+      {{ field(form.motivation) }}
+      {{ field(form.experience) }}
+      {{ field(form.availability) }}
+      {% call checkbox(form.confidentiality) %}{{ form.confidentiality.label.text }}{% endcall %}
+      <button type="submit" class="button wide">Send ansøgning</button>
+    </form>
+  {% endif %}
+{% endblock %}

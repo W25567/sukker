@@ -15,6 +15,7 @@ from ..media.models import PrivateAccess, ProfileImage
 from ..messaging.admin_threads import messages as admin_messages
 from ..messaging.models import AdminMessage, AdminMessageReaction, Message, MessageDeletion, MessageReaction
 from ..messaging.reactions import LABELS
+from ..staffing.models import ModeratorApplication
 from ..notify import prefs as notification_prefs
 from ..profiles.fields import display_value, profile_fields
 from ..profiles.models import Profile
@@ -101,6 +102,12 @@ def export_user_data(user):
         "beskeder_med_administrator": [
             {"fra": "Administrator" if m.from_admin else "dig", "tidspunkt": _iso(m.created_at), "tekst": m.body}
             for m in admin_messages(user.id)
+        ],
+        "ansoegninger_om_at_blive_moderator": [
+            {"soegt": _iso(a.created_at), "status": a.status, "hvorfor": a.motivation, "erfaring": a.experience,
+             "tid": a.availability, "afgjort": _iso(a.decided_at), "besked": a.decision_note}
+            for a in db.session.scalars(select(ModeratorApplication).where(ModeratorApplication.user_id == user.id)
+                                        .order_by(ModeratorApplication.created_at))
         ],
         "dine_reaktioner": [
             {"samtale": conversation_id, "reaktion": LABELS[r.reaction], "tidspunkt": _iso(r.created_at)}

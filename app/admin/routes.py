@@ -14,11 +14,12 @@ from ..messaging.routes import reaction_response
 from ..moderation import content, userdata
 from ..moderation.models import DECISIONS, REASON_LABELS, STATUSES
 from ..profiles.zodiac import zodiac_for
-from ..auth.roles import admin_required
+from ..auth.roles import admin_required, out_of_reach_message, outranks
 from ..core import features
 from ..core.name_rules import BUILT_IN as NAME_RULES_BUILT_IN
 from ..core.settings import SETTING_META, WORDLIST_META, get_setting
 from ..profiles import interests
+from ..profiles.services import age_of
 from ..core.timeutil import DANISH_TZ
 from ..extensions import db
 from ..subscriptions.services import TIER_LABELS, active_subscription, effective_tier
@@ -139,6 +140,7 @@ def user(user_id):
         form, action = request.form, request.form.get("action")
         note = (form.get("note") or "").strip() or None
         try:
+            _guard(target)
             if action == "status":
                 if form.get("status") not in ("active", "restricted", "suspended"):
                     raise services.AdminError("Ukendt status.")
@@ -212,6 +214,13 @@ def user(user_id):
     )
 
 
+def _guard(target):
+    """Altid ét niveau ned: en administrator ændrer ikke andre administratorer her (kun fra kommandolinjen).
+    Egne handlinger (fx Premium til sig selv) er tilladt; status og rolle afvises i services."""
+    if target.id != g.user.id and not outranks(g.user, target):
+        raise services.AdminError(out_of_reach_message(target) + " Andre administratorer ændres fra kommandolinjen.")
+
+
 @bp.route("/bruger/<int:user_id>/billede/<public_id>/fjern", methods=["POST"])
 @admin_required
 def remove_image(user_id, public_id):
@@ -222,12 +231,13 @@ def remove_image(user_id, public_id):
         abort(404)
     if FlaskForm().validate_on_submit():
         try:
+            _guard(owner)
             case = content.remove_image(g.user, image, owner, request.form.get("reason"))
             services.audit(g.user, "image_removed", owner, image=image.public_id, reason=image.moderation_reason,
                            case_id=case.id)
             db.session.commit()
             flash(f"Billedet er fjernet og registreret i loggen (sag {case.id}).", "success")
-        except content.ContentError as error:
+        except (content.ContentError, services.AdminError) as error:
             db.session.rollback()
             flash(str(error), "error")
     return redirect(url_for("admin.user", user_id=user_id) + "#billeder")
@@ -243,13 +253,14 @@ def restore_image(user_id, public_id):
         abort(404)
     if FlaskForm().validate_on_submit():
         try:
+            _guard(owner)
             note = request.form.get("note")
             case = content.restore_image(g.user, image, owner, note)
             services.audit(g.user, "image_restored", owner, image=image.public_id, case_id=case.id if case else None,
                            note=(note or "").strip() or None)
             db.session.commit()
             flash("Billedet er genskabt og registreret i loggen. Brugeren har fået besked.", "success")
-        except content.ContentError as error:
+        except (content.ContentError, services.AdminError) as error:
             db.session.rollback()
             flash(str(error), "error")
     return redirect(url_for("admin.user", user_id=user_id) + "#billeder")
@@ -361,11 +372,6 @@ def settings():
             abort(400)
         try:
             values = {key: services.parse_setting(kind, request.form.get(key)) for key, _, kind in SETTING_META}
-            values.update({key: services.parse_wordlist(request.form.get(key)) for key, _, _ in WORDLIST_META})
-            try:
-                values["interest_catalog"] = interests.parse_text(request.form.get("interest_catalog"))
-            except interests.CatalogError as error:
-                raise services.AdminError(f"Interesser: {error}")
             mapping = {tier: [f for f in features.FEATURES if request.form.get(f"tier:{tier}:{f}")] for tier in features.TIERS}
             disabled = [f for f in features.FEATURES if request.form.get(f"disabled:{f}")]
             services.update_settings(g.user, values)
@@ -384,10 +390,96 @@ def settings():
         tier_labels=TIER_LABELS,
         mapping=features.tier_features(),
         disabled=features.disabled_features(),
+        form=FlaskForm(),
+    )
+
+
+@bp.route("/ansoegninger", methods=["GET", "POST"])
+@admin_required
+def applications():
+    """Ansøgninger om at blive moderator, og de nuværende moderatorer, som kan fjernes igen (staffing/services.py)."""
+    from ..staffing import services as staffing
+    from ..staffing.models import STATUS_LABELS, ModeratorApplication
+
+    if request.method == "POST":
+        if not FlaskForm().validate_on_submit():
+            abort(400)
+        action = request.form.get("action")
+        try:
+            if action in ("approve", "reject"):
+                application = db.session.get(ModeratorApplication, int(request.form.get("application_id") or 0))
+                if application is None:
+                    abort(404)
+                staffing.decide(g.user, application, action == "approve", request.form.get("note"))
+                message = "Ansøgningen er godkendt, og brugeren er nu moderator." if action == "approve" else \
+                    "Ansøgningen er afvist."
+            elif action == "remove_moderator":
+                target = db.session.get(User, int(request.form.get("user_id") or 0))
+                if target is None or target.role != "moderator":
+                    abort(404)
+                _guard(target)
+                services.set_role(g.user, target, "user")
+                message = f"{target.display_name} er ikke længere moderator."
+            else:
+                abort(400)
+            db.session.commit()
+            flash(f"{message} Ændringen er registreret i revisionsloggen.", "success")
+        except (staffing.ApplicationRefused, services.AdminError) as error:
+            db.session.rollback()
+            flash(str(error), "error")
+        return redirect(url_for("admin.applications"))
+    rows = staffing.all_applications()
+    people = {u.id: u for u in db.session.scalars(select(User).where(User.id.in_({a.user_id for a in rows})))}
+    return render_template(
+        "admin/applications.html", applications=rows, people=people, status_labels=STATUS_LABELS,
+        moderators=db.session.scalars(select(User).where(User.role == "moderator").order_by(User.display_name)).all(),
+        age_of=age_of, form=FlaskForm(),
+    )
+
+
+@bp.route("/lister", methods=["GET", "POST"])
+@admin_required
+def lists():
+    """Lister, administrator kan udvide uden at ændre i koden: interesser og ord, der ikke må bruges i viste navne."""
+    if request.method == "POST":
+        if not FlaskForm().validate_on_submit():
+            abort(400)
+        action, anchor = request.form.get("action"), "interesser"
+        try:
+            if action == "add_interest":
+                group = request.form.get("new_group") if request.form.get("group") == "__ny__" else request.form.get("group")
+                label = (request.form.get("label") or "").strip()
+                catalog = interests.add(group, label)
+                services.update_settings(g.user, {"interest_catalog": interests.for_storage(catalog)})
+                message = f"\"{label}\" er tilføjet til interesserne."
+            elif action == "save_interests":
+                catalog = interests.parse_text(request.form.get("interest_catalog"))
+                services.update_settings(g.user, {"interest_catalog": interests.for_storage(catalog) if catalog else None})
+                message = "Interesserne er gemt."
+            elif action == "save_names":
+                anchor = "navne"
+                services.update_settings(g.user, {key: services.parse_wordlist(request.form.get(key))
+                                                  for key, _, _ in WORDLIST_META})
+                message = "Ordlisterne er gemt."
+            else:
+                abort(400)
+            db.session.commit()
+            flash(f"{message} Ændringen er registreret i revisionsloggen.", "success")
+        except interests.CatalogError as error:
+            db.session.rollback()
+            flash(f"Interesser: {error}", "error")
+        except services.AdminError as error:
+            db.session.rollback()
+            flash(str(error), "error")
+        return redirect(url_for("admin.lists") + f"#{anchor}")
+    return render_template(
+        "admin/lists.html",
+        groups=interests.current_groups(),
+        interest_text=interests.to_text(interests.current_groups()),
+        using_default=not get_setting("interest_catalog"),
+        default_interest_text=interests.to_text(interests.default_catalog()),
         wordlists=[(key, label, hint, "\n".join(get_setting(key) or []), NAME_RULES_BUILT_IN[key])
                    for key, label, hint in WORDLIST_META],
-        interest_text=interests.to_text(get_setting("interest_catalog")) if get_setting("interest_catalog") else "",
-        default_interest_text=interests.to_text(interests.default_catalog()),
         form=FlaskForm(),
     )
 

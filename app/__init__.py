@@ -79,6 +79,7 @@ def create_app(config_name=None):
     from .pages import legal, onboarding, prerelease
     from .pages.routes import bp as pages_bp
     from .support.routes import bp as support_bp
+    from .staffing.routes import bp as staffing_bp
 
     security.init_app(app)
     sessions.init_app(app)
@@ -103,6 +104,7 @@ def create_app(config_name=None):
     app.register_blueprint(support_bp)
     app.register_blueprint(notify_bp)
     app.register_blueprint(verification_bp)
+    app.register_blueprint(staffing_bp)
 
     from .core.timeutil import DANISH_TZ
     from .messaging.services import total_unread
@@ -152,12 +154,14 @@ def create_app(config_name=None):
         # En funktion, så databasen kun spørges, når sidefoden faktisk vises (kun for besøgende).
         from .messaging.admin_threads import total_unread_for_admins
         from .support.services import open_count as open_bug_reports
+        from .staffing.services import pending_count as pending_moderator_applications
         from .subscriptions.services import early_bird_open
         from .location.distance import distance_visible, kommune_visible
 
         return {"footer_pages": lambda: visible_pages()[1:], "current_year": datetime.now(DANISH_TZ).year,
                 "early_bird_open": early_bird_open, "admin_unread_threads": total_unread_for_admins,
                 "admin_open_bug_reports": open_bug_reports,
+                "pending_moderator_applications": pending_moderator_applications,
                 # Administrators valg af, om afstand og kommune vises (core/settings.py)
                 "distance_visible": distance_visible, "kommune_visible": kommune_visible}
 

@@ -13,6 +13,12 @@
     <h2>Kontakt</h2>
     <p>Skriv til <a href="mailto:{{ contact_email }}">{{ contact_email }}</a>. Vil du anmelde en profil eller en besked, så brug Anmeld ved profilen eller i samtalen.</p>
   </section>
+  {% if current_user.role == 'user' %}
+    <section class="card">
+      <h2>Bliv moderator</h2>
+      <p class="muted">Vil du hjælpe med at holde {{ brand.name }} tryg? <a href="{{ url_for('staffing.apply') }}">Søg om at blive moderator</a>.</p>
+    </section>
+  {% endif %}
   <section class="card">
     <h2>Dine data</h2>
     <p class="muted">Hent dine data, log ud på andre enheder eller slet din profil under <a href="{{ url_for('account.overview') }}">Konto</a>.</p>

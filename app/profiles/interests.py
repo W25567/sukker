@@ -1,7 +1,7 @@
 """Interesser: et fast katalog, brugerne vælger fra, så profiler kan sammenlignes og filtreres
 ("I har 3 interesser til fælles").
 
-Kataloget kan redigeres af administrator under Administration → Indstillinger (indstillingen interest_catalog) uden
+Kataloget kan redigeres af administrator under Administration → Lister (indstillingen interest_catalog) uden
 at ændre i koden. Uden en gemt udgave bruges brandets standard (DEFAULT_CATALOGS). Profilen gemmer en kode pr. interesse (slug af
 navnet). Fjernes en interesse fra kataloget, vises den ikke længere, men den bliver liggende på profilerne og kommer
 frem igen, hvis den tilføjes igen med samme navn. Omdøbes en interesse, er det en ny interesse.
@@ -95,6 +95,34 @@ def to_text(groups=None):
 
 class CatalogError(ValueError):
     pass
+
+
+def current_groups():
+    """Kataloget, som det gælder nu, som [[gruppe, [navn, ...]], ...]."""
+    return [[group, [label for _, label in items]] for group, items in catalog()]
+
+
+def add(group, label):
+    """Tilføjer én interesse til en eksisterende eller ny gruppe og returnerer det nye katalog (kontrolleret som
+    tekst). Fx "Knallerter" under "Teknik og spil"."""
+    group, label = (group or "").strip(), (label or "").strip()
+    if not group or not label:
+        raise CatalogError("Vælg en gruppe og skriv interessen.")
+    if ":" in group or "," in label or ":" in label:
+        raise CatalogError("Gruppe og interesse må ikke indeholde kolon eller komma.")
+    groups = current_groups()
+    for existing in groups:
+        if existing[0].lower() == group.lower():
+            existing[1].append(label)
+            break
+    else:
+        groups.append([group, [label]])
+    return parse_text(to_text(groups))
+
+
+def for_storage(groups):
+    """None, hvis kataloget er brandets standard, så fremtidige ændringer af standarden slår igennem."""
+    return None if groups == [[group, list(labels_)] for group, labels_ in default_catalog()] else groups
 
 
 def parse_text(raw):

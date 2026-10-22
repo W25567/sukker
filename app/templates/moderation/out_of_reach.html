@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{# Moderatorer handler kun på brugere: altid ét niveau ned (auth/roles.outranks). #}
+{% block title %}{{ target.display_name }} – Moderation{% endblock %}
+{% block content %}
+  <a class="back-link" href="{{ url_for('moderation.queue') }}">← Moderation</a>
+  <h1>{{ target.display_name }}</h1>
+  <div class="card notice-card">
+    <p>{{ message }}</p>
+    <p>Sager om moderatorer og administratorer kan lukkes uden handling her. Skal kontoen ændres, så giv en administrator
+      besked, fx med en note i sagen.</p>
+  </div>
+{% endblock %}

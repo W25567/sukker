@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{# Lister, administrator kan udvide uden at ændre i koden (admin.lists). #}
+{% block title %}Lister – Administration{% endblock %}
+{% block content %}
+  {% include "admin/_nav.html" %}
+  <h1>Lister</h1>
+  <p class="muted">Lister, du kan udvide uden at ændre i koden. Alle ændringer registreres i administrationsloggen.</p>
+
+  <section class="card" id="interesser">
+    <h2>Interesser</h2>
+    <p class="muted">Det, brugerne kan vælge som interesser{% if using_default %}. Lige nu bruges standardlisten{% endif %}.
+      Undgå tro, politik, helbred og seksualitet: det er følsomme oplysninger.</p>
+
+    <h3 class="subheading">Tilføj en interesse</h3>
+    <form method="post" class="form">
+      {{ form.hidden_tag() }}<input type="hidden" name="action" value="add_interest">
+      <div class="field">
+        <label for="group">Gruppe</label>
+        <select id="group" name="group">
+          {% for group, labels in groups %}<option value="{{ group }}">{{ group }}</option>{% endfor %}
+          <option value="__ny__">Ny gruppe …</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="new_group">Navn på ny gruppe</label>
+        <input id="new_group" name="new_group" type="text" maxlength="40">
+        <small class="hint">Kun hvis du har valgt "Ny gruppe".</small>
+      </div>
+      <div class="field">
+        <label for="label">Interesse</label>
+        <input id="label" name="label" type="text" maxlength="30" required placeholder="Fx Knallerter">
+      </div>
+      <button type="submit" class="button">Tilføj interesse</button>
+    </form>
+
+    <details class="built-in">
+      <summary>Ret hele listen (omdøb, flyt eller fjern)</summary>
+      <form method="post" class="form">
+        {{ form.hidden_tag() }}<input type="hidden" name="action" value="save_interests">
+        <p class="muted">Én gruppe pr. linje: <code>Gruppe: interesse, interesse</code>. Fjerner du en interesse, vises den ikke
+          længere, men profilerne beholder den, hvis den kommer tilbage med samme navn. Et omdøbt navn er en ny interesse.
+          Tøm feltet for at gå tilbage til standardlisten.</p>
+        <div class="field">
+          <label for="interest_catalog">Interesser</label>
+          <textarea id="interest_catalog" name="interest_catalog" rows="10" spellcheck="false">{{ interest_text }}</textarea>
+        </div>
+        <button type="submit" class="button secondary">Gem listen</button>
+      </form>
+      <p class="muted">Standardlisten:</p>
+      <pre class="muted">{{ default_interest_text }}</pre>
+    </details>
+  </section>
+
+  <section class="card" id="navne">
+    <h2>Viste navne</h2>
+    <p class="muted">Ord, der ikke må bruges i viste navne, ud over dem, der altid gælder. Ét ord pr. linje eller adskilt med komma.
+      Tal og tegn, der ligner bogstaver, fanges automatisk (fx "p1k"). Reglerne gælder nye navne og navneskift.</p>
+    <form method="post" class="form">
+      {{ form.hidden_tag() }}<input type="hidden" name="action" value="save_names">
+      {% for key, label, hint, value, built_in in wordlists %}
+        <div class="field">
+          <label for="{{ key }}">{{ label }}</label>
+          <textarea id="{{ key }}" name="{{ key }}" rows="2" spellcheck="false">{{ value }}</textarea>
+          <small class="hint">{{ hint }}</small>
+          <details class="built-in"><summary>Gælder altid ({{ built_in | length }})</summary><p class="muted">{{ built_in | join(', ') }}</p></details>
+        </div>
+      {% endfor %}
+      <button type="submit" class="button">Gem ordlisterne</button>
+    </form>
+  </section>
+{% endblock %}

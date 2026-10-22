@@ -105,7 +105,9 @@ def _tool(name):
 def _run_tool(args, **kwargs):
     """subprocess.run, men et manglende program giver en forståelig fejl i stedet for et stacktrace."""
     try:
-        return subprocess.run(args, capture_output=True, text=True, **kwargs)
+        # Altid UTF-8: på Windows er standarden cp1252, og et enkelt ukendt tegn i fx pg_restore --list fik ellers
+        # læsningen af output til at fejle.
+        return subprocess.run(args, capture_output=True, text=True, encoding="utf-8", errors="replace", **kwargs)
     except FileNotFoundError:
         raise BackupError(f"Programmet {os.path.basename(args[0])!r} blev ikke fundet. Installér det, eller åbn en ny "
                           "terminal, hvis du lige har installeret det.")

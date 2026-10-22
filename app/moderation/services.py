@@ -7,6 +7,7 @@ from flask import current_app
 from sqlalchemy import select
 
 from ..auth.models import User
+from ..auth.roles import out_of_reach_message, outranks
 from ..auth.sessions import revoke_sessions
 from ..core.timeutil import now_utc, today_local
 from ..extensions import db
@@ -69,6 +70,10 @@ def decide(case, moderator, decision, note):
         raise ModerationError("Sagen har ingen bruger, kontohandlingen kan udføres på.")
     if subject is not None and subject.id == moderator.id:
         raise ModerationError("Du kan ikke træffe afgørelse i en sag om dig selv.")
+    if subject is not None and decision not in ("no_action", "warning") and not outranks(moderator, subject):
+        # Altid ét niveau ned: en sag om en moderator eller administrator kan kun lukkes uden kontohandling her.
+        # Kontoen ændres af en administrator (admin.user).
+        raise ModerationError(out_of_reach_message(subject) + " Luk sagen uden handling, og giv en administrator besked.")
     if decision in ACCOUNT_DECISIONS:
         if subject.status == "expelled" and decision != "expelled":
             raise ModerationError("Kontoen er lukket permanent. Kun en administrator kan genåbne den.")
@@ -211,6 +216,8 @@ def log_access(moderator, target, reason, case=None):
     reason = (reason or "").strip()
     if not reason:
         raise ModerationError("Skriv en begrundelse for adgangen.")
+    if not outranks(moderator, target):
+        raise ModerationError(out_of_reach_message(target))
     entry = ModeratorAccessLog(
         moderator_id=moderator.id, moderator_username=moderator.display_name,
         target_user_id=target.id, target_username=target.display_name,
