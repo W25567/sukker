@@ -197,17 +197,23 @@ def updates(conversation_id):
     return response
 
 
-@bp.route("/<int:conversation_id>/besked/<int:message_id>/slet", methods=["POST"])
+@bp.route("/<int:conversation_id>/besked/<int:message_id>/slet", methods=["GET", "POST"])
 @login_required
 def delete_message(conversation_id, message_id):
+    """Sletter en besked for brugeren. Kræver bekræftelse, så det ikke sker ved et uheld: med JavaScript i en dialog
+    (static/js/confirm.js sender bekraeft=1), ellers på en side med beskeden."""
     conversation, _ = _conversation_or_404(conversation_id)
     message = db.session.get(Message, message_id)
     if message is None or message.conversation_id != conversation.id:
         abort(404)
-    if ActionForm().validate_on_submit():
+    form = ActionForm()
+    back = url_for("messaging.conversation", conversation_id=conversation.id)
+    if request.method == "GET" or request.form.get("bekraeft") != "1":
+        return render_template("messaging/confirm_delete_message.html", message=message, form=form, back=back)
+    if form.validate_on_submit():
         services.delete_message_for_me(g.user, message)
         db.session.commit()
-    return redirect(url_for("messaging.conversation", conversation_id=conversation.id))
+    return redirect(back)
 
 
 def reaction_response(url, refusal=None):

@@ -41,7 +41,8 @@ def test_react_change_and_remove_in_conversation(app, outbox, ctx):
     page = anna.get(url).get_data(as_text=True)
     assert 'value="hjerte" title="Hjerte (fjern)"' in page and 'aria-pressed="true"' in page
     # Reaktionen er selv knappen, man retter med, så hjertet ikke står to gange
-    assert '<summary class="reactions" title="Ret din reaktion"' in page and 'class="reactions" aria-label' not in page
+    assert '<summary class="reaction-pill" title="Ret din reaktion"' in page
+    assert 'class="reaction-pill" aria-label' not in page and "has-reactions" in page
     # Den automatiske opdatering opdager reaktionen
     assert anna.get(url + f"/nye?version={version}").status_code == 200
 

@@ -110,6 +110,23 @@
     return;
   }
 
+  // Vælgeren til reaktioner lukkes ved klik udenfor eller Escape. Kun én er åben ad gangen.
+  function closePickers(except) {
+    Array.prototype.forEach.call(thread.querySelectorAll("details.react[open]"), function (details) {
+      if (details !== except) {
+        details.open = false;
+      }
+    });
+  }
+  document.addEventListener("click", function (event) {
+    closePickers(event.target.closest ? event.target.closest("details.react") : null);
+  });
+  document.addEventListener("keydown", function (event) {
+    if (event.key === "Escape") {
+      closePickers(null);
+    }
+  });
+
   // Reaktioner (templates/messaging/_reactions.html) sendes uden at genindlæse siden, og tråden hentes igen.
   thread.addEventListener("submit", function (event) {
     var form = event.target;

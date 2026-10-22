@@ -169,7 +169,12 @@ def test_delete_message_only_for_me_and_it_never_returns(app, outbox, ctx):
     send(anna, url, "Hemmelig")
     message_id = db.session.scalar(select(Message.id))
 
-    anna.post(f"{url}/besked/{message_id}/slet")
+    # Uden bekræftelse slettes intet: der vises en side, hvor sletningen bekræftes (med JavaScript en dialog)
+    page = anna.post(f"{url}/besked/{message_id}/slet").get_data(as_text=True)
+    assert "Slet beskeden?" in page and "Hemmelig" in page
+    assert "Hemmelig" in anna.get(url).get_data(as_text=True)
+    assert 'data-confirm="Slet beskeden for dig?' in anna.get(url).get_data(as_text=True)
+    anna.post(f"{url}/besked/{message_id}/slet", data={"bekraeft": "1"})
     assert "Hemmelig" not in anna.get(url).get_data(as_text=True)
     assert "Hemmelig" in bodil.get(url).get_data(as_text=True)
 

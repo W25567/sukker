@@ -274,19 +274,28 @@ body:has(.bottomnav) .page { padding-bottom: 88px; }
 .bubble .sender { display: block; font-size: 0.8rem; color: var(--muted); }
 .bubble-meta { display: flex; gap: 10px; justify-content: flex-end; margin-top: 4px; font-size: 0.75rem; color: var(--muted); }
 .bubble-meta .link { font-size: 0.75rem; color: var(--muted); }
-/* Reaktioner (templates/messaging/_reactions.html) */
-.reactions { display: inline-flex; gap: 2px; margin-top: 4px; padding: 1px 6px; border-radius: 999px;
-  background: var(--bg); border: 1px solid var(--border); font-size: 0.9rem; line-height: 1.4; }
-.react { display: block; margin-top: 4px; }
-.react summary { list-style: none; cursor: pointer; width: fit-content; }
-.react summary.reactions { margin-top: 0; }
-.react summary.react-add { font-size: 0.85rem; color: var(--muted); padding: 0 6px; border-radius: 999px; }
+/* Reaktioner (templates/messaging/_reactions.html) hænger på boblens nederste kant til venstre, både på modtagne og
+   afsendte beskeder, væk fra Slet og Anmeld. */
+.bubble { position: relative; }
+.bubble.has-reactions { margin-bottom: 14px; padding-bottom: 14px; }
+.reaction-pill {
+  position: absolute; left: 10px; bottom: -14px; display: inline-flex; align-items: center; gap: 1px;
+  min-height: 28px; padding: 0 8px; border-radius: 999px; background: var(--surface); border: 1px solid var(--border);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12); font-size: 0.95rem; line-height: 1;
+}
+.react summary { list-style: none; cursor: pointer; }
 .react summary::-webkit-details-marker { display: none; }
-.react summary:hover, .react summary:focus-visible { background: var(--border); }
-.react-options { display: flex; flex-wrap: wrap; gap: 2px; margin-top: 4px; padding: 4px; border-radius: 999px;
-  background: var(--surface); border: 1px solid var(--border); }
-.react-options button { border: 0; background: none; font-size: 1.25rem; line-height: 1; padding: 6px; min-width: 40px;
-  min-height: 40px; border-radius: 999px; cursor: pointer; }
+/* Større trykflade end det synlige, så den er let at ramme på mobil. */
+.react summary::after { content: ""; position: absolute; inset: -10px -8px; }
+.react summary.empty { color: var(--muted); font-size: 0.85rem; }
+.react summary:hover, .react summary:focus-visible, .react[open] summary { border-color: var(--accent); }
+.react-options {
+  position: absolute; left: 0; top: calc(100% + 18px); z-index: 5; display: flex; gap: 2px;
+  width: max-content; max-width: calc(100vw - 32px); padding: 4px; border-radius: 999px; background: var(--surface);
+  border: 1px solid var(--border); box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+}
+.react-options button { border: 0; background: none; font-size: 1.35rem; line-height: 1; min-width: 44px; min-height: 44px;
+  border-radius: 999px; cursor: pointer; }
 .react-options button:hover, .react-options button:focus-visible { background: var(--border); }
 .react-options button[aria-pressed="true"] { background: var(--info-bg); outline: 1px solid var(--accent); }
 .thread-marker { align-self: center; padding: 4px 12px; border-radius: 999px; background: var(--info-bg); color: var(--muted); font-size: 0.8rem; }

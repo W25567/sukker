@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{# Vises, når en besked slettes uden JavaScript (ellers spørger static/js/confirm.js i en dialog). #}
+{% block title %}Slet besked – {{ brand.name }}{% endblock %}
+{% block content %}
+  <a class="back-link" href="{{ back }}">← Samtalen</a>
+  <h1>Slet beskeden?</h1>
+  <div class="card">
+    <p class="quoted-message">{{ message.body }}</p>
+    <p>Beskeden forsvinder kun for dig. Den anden person kan stadig se den. Det kan ikke fortrydes.</p>
+    <form method="post" class="actions">
+      {{ form.hidden_tag() }}
+      <input type="hidden" name="bekraeft" value="1">
+      <button type="submit" class="button danger-fill">Ja, slet beskeden</button>
+      <a class="button secondary" href="{{ back }}">Fortryd</a>
+    </form>
+  </div>
+{% endblock %}

@@ -37,7 +37,8 @@
       {{ action_form.hidden_tag() }}
       <button type="submit" class="button secondary">{{ 'Hent frem fra arkiv' if archived else 'Arkivér samtale' }}</button>
     </form>
-    <form method="post" action="{{ url_for('messaging.clear', conversation_id=conversation.id) }}">
+    <form method="post" action="{{ url_for('messaging.clear', conversation_id=conversation.id) }}"
+          data-confirm="Slet hele samtalen for dig? Den anden person kan stadig se den. Det kan ikke fortrydes.">
       {{ action_form.hidden_tag() }}
       <button type="submit" class="button secondary danger">Slet samtalen for mig</button>
     </form>
